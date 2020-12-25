@@ -101,13 +101,15 @@ function mousePressed(){
 			noteNode.play("8n");
 		}
 	}
-	let lexer = new HandelLexer(`play C2 for 1b \n 
-	play C2 for 1b \n
-	play G2 for 1b \n
-	play G2 for 1b \n
-	play A2 for 1b \n
-	play A2 for 1b \n
-	play G2 for 1b \n
+	let lexer = new HandelLexer(`
+		play C2 for 1b \n 
+		save mynote = C2 for 1b \n
+		play mynote \n
+		play mynote \n
+		play G2 for 1b \n
+		play A2 for 1b \n
+		play A2 for 1b \n
+		play G2 for 1b \n
 	`);
 	let events = new HandelInterpreter(lexer).statement_list(); 
 }

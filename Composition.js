@@ -12,7 +12,7 @@ class Composition {
 
     configurePart(playEvents){
         for(let playEvent of playEvents){
-            if(playEvent.note !== 'X'){
+            if(playEvent.notes){
                 this.part.add({notes: playEvent.notes, time: this.currentTime, length: playEvent.length});
             }
             this.currentTime += new Tone.Time(playEvent.length);
@@ -32,15 +32,6 @@ class Composition {
     }
 
 }
-
-/*
-class PlayEvent {
-    constructor(note, length){
-        this.length = length;
-        this.note = note
-    }
-}
-*/
 
 class PlayEvent {
     constructor(notes, length){

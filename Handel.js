@@ -1,7 +1,7 @@
 // Token types
 const [NOTE, BEAT, FOR, SEP, CHUNK, 
-    ENDCHUNK, ID, FINISH, SAVE, DOT, PLAY, ASSIGN, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
-    "ENDCHUNK", "ID", "FINISH", "SAVE", "DOT", "PLAY", "ASSIGN", "EOF"];
+    ENDCHUNK, ID, FINISH, SAVE, DOT, PLAY, REST, ASSIGN, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
+    "ENDCHUNK", "ID", "FINISH", "SAVE", "DOT", "PLAY", "REST", "ASSIGN", "EOF"];
 
 
 class Token {
@@ -16,7 +16,8 @@ const RESERVED_KEYWORDS = {
     chunk: new Token(CHUNK, 'chunk'),
     endchunk: new Token(ENDCHUNK, 'endchunk'),
     save: new Token(SAVE, 'save'),
-    play: new Token(PLAY, 'play')
+    play: new Token(PLAY, 'play'),
+    rest: new Token(REST, 'rest'),
 }
 
 class HandelLexer {
@@ -157,6 +158,7 @@ class HandelInterpreter {
             3: '2n.',
             4: '1m'
         }
+        this.globalVariables = {};
     }
 
     error(){
@@ -190,12 +192,16 @@ class HandelInterpreter {
     }
 
     statement_list(){
-        let playEvents = [];
-        while(this.currentToken && (this.currentToken.type === PLAY || this.currentToken.typ === SAVE)){
+        //let playEvents = [];
+        while(this.currentToken && 
+                (this.currentToken.type === PLAY || 
+                this.currentToken.type === REST ||
+                this.currentToken.type === SAVE)
+            ){
             //playEvents.push(this.expr());
             this.statement();
         }
-        return playEvents;
+        //return playEvents;
     }
 
     play(){
@@ -206,13 +212,36 @@ class HandelInterpreter {
         this.composition.play();
     }
 
+    rest(){
+        this.eat(REST);
+        this.for();
+        let beat = this.beat();
+        let events = [new PlayEvent(null, this.beatToValue[beat.value])];
+        this.composition.configurePart(events);
+    }
+
+    assign(){
+        this.eat(SAVE);
+        let varName = this.currentToken.value;
+        this.eat(ID);
+        this.eat(ASSIGN);
+        let value = this.expr();
+        this.globalVariables[varName] = value;
+    }
+
     statement(){
         if(this.currentToken.type === PLAY){
             this.play();
             console.log("Should play")
         }
+        else if(this.currentToken.type === REST){
+            this.rest();
+            console.log("Should rest")
+        }
         else if(this.currentToken.type === SAVE){
             //TODO: variable assignment
+            this.assign();
+            console.log("Should assign")
         }
     }
 
@@ -248,10 +277,30 @@ class HandelInterpreter {
         return beat;
     }
 
+    id(){
+        let idToken = this.currentToken;
+        this.eat(ID);
+        return idToken;
+    }
+
     expr(){
-        const notes = this.note_list();
-        this.for();
-        const beat = this.beat(); 
-        return new PlayEvent(notes, this.beatToValue[beat.value]);
+        if(this.currentToken.type === NOTE){
+            console.log("NOTE");
+            const notes = this.note_list();
+            this.for();
+            const beat = this.beat(); 
+            return new PlayEvent(notes, this.beatToValue[beat.value]);
+        }
+        else{
+            console.log(this.currentToken);
+            let varName = this.id().value;
+            console.log(this.globalVariables);
+            if(varName in this.globalVariables){
+                return this.globalVariables[varName];
+            }
+            else{
+                this.error();
+            }
+        }
     }
 }
