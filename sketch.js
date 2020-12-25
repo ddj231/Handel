@@ -101,12 +101,15 @@ function mousePressed(){
 			noteNode.play("8n");
 		}
 	}
-	let lexer = new HandelLexer("C#2, Eb2, G2, Bb2 for 3b");
-	let event = new HandelInterpreter(lexer).expr(); 
-	let myComposition = new Composition(Tone.AMSynth, 140);
-	console.log(event);
-	myComposition.configurePart([event]);
-	myComposition.play();
+	let lexer = new HandelLexer(`play C2 for 1b \n 
+	play C2 for 1b \n
+	play G2 for 1b \n
+	play G2 for 1b \n
+	play A2 for 1b \n
+	play A2 for 1b \n
+	play G2 for 1b \n
+	`);
+	let events = new HandelInterpreter(lexer).statement_list(); 
 }
 
 class NoteNode {

@@ -1,20 +1,22 @@
 // Token types
 const [NOTE, BEAT, FOR, SEP, CHUNK, 
-    ENDCHUNK, ID, FINISH, SAVE, ASSIGN, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
-    "ENDCHUNK", "ID", "FINISH", "SAVE", "ASSIGN", "EOF"];
+    ENDCHUNK, ID, FINISH, SAVE, DOT, PLAY, ASSIGN, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
+    "ENDCHUNK", "ID", "FINISH", "SAVE", "DOT", "PLAY", "ASSIGN", "EOF"];
 
-const RESERVED_KEYWORDS = {
-    for: new Token(FOR, 'for'),
-    chunk: new Token(CHUNK, 'chunk'),
-    endchunk: new Token(ENDCHUNK, 'endchunk'),
-    save: new Token(SAVE, 'save')
-}
 
 class Token {
     constructor(type, value){
         this.type = type;
         this.value = value;
     }
+}
+
+const RESERVED_KEYWORDS = {
+    for: new Token(FOR, 'for'),
+    chunk: new Token(CHUNK, 'chunk'),
+    endchunk: new Token(ENDCHUNK, 'endchunk'),
+    save: new Token(SAVE, 'save'),
+    play: new Token(PLAY, 'play')
 }
 
 class HandelLexer {
@@ -24,6 +26,10 @@ class HandelLexer {
         this.currentChar = this.text[this.pos];
         this.possibleChars = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
         this.possibleNums= ['0', '1', '2', '3', '4', '5', '6', '7'];
+    }
+
+    error(){
+        throw new Error("error analyzing input");
     }
 
     peek(){
@@ -46,7 +52,7 @@ class HandelLexer {
     }
 
     isSpace(ch){
-        return ch === ' '  || ch === '\t';
+        return ch === ' '  || ch === '\t' || ch === '\n' || ch === '\r';
     }
 
     isAlpha(ch){
@@ -68,19 +74,20 @@ class HandelLexer {
         }
 
         if(result !== ""){
+            if(result in RESERVED_KEYWORDS){
+                return RESERVED_KEYWORDS[result];
+            }
             return new Token(ID, result);
         }
-        
-        this.error();
     }
 
     getNextToken(){
         // Lexical analyzer
+        this.skipWhitespace();
+
         if(this.pos >= this.text.length){
             return new Token(EOF, null)
         }
-
-        this.skipWhitespace();
         
         if(this.possibleChars.includes(this.currentChar)){
             let note = this.currentChar;
@@ -110,27 +117,20 @@ class HandelLexer {
             return new Token(SEP, 'sep');
         }
 
+        if(this.currentChar === '.'){
+            this.advance();
+            return new Token(DOT, 'dot');
+        }
+
         if(this.currentChar === '='){
             this.advance();
             return new Token(ASSIGN, 'assign');
         }
 
-        if(this.currentChar === 'f'){
-            this.advance();
-            if(this.currentChar === 'o'){
-                this.advance();
-                if(this.currentChar === 'r'){
-                    this.advance();
-                    return new Token(FOR, 'for');
-                }
-            }
+        let idResult = this.id();
+        if(idResult){
+            return idResult;
         }
-
-        let saveToken = this.save();
-        if(save){
-            return saveToken;
-        }
-
 
         const beatValue = this.currentChar;
         const parsed = Number.parseInt(beatValue);
@@ -150,6 +150,7 @@ class HandelInterpreter {
     constructor(lexer){
         this.lexer = lexer;
         this.currentToken = this.lexer.getNextToken();
+	    this.composition = new Composition(Tone.AMSynth, 140);
         this.beatToValue = {
             1: '4n',
             2: '2n',
@@ -162,7 +163,6 @@ class HandelInterpreter {
         throw new Error("error parsing input");
     }
 
-    
     eat(type){
         if(this.currentToken.type === type){
             this.currentToken = this.lexer.getNextToken();
@@ -172,10 +172,64 @@ class HandelInterpreter {
         }
     }
 
+    finish(){
+        this.eat(FINISH);
+    }
+
+    program(){
+        this.compoundStatement();
+        this.finish();
+    }
+
+    chunk(){
+        this.eat(CHUNK);
+    }
+
+    endchunk(){
+        this.eat(ENDCHUNK);
+    }
+
+    statement_list(){
+        let playEvents = [];
+        while(this.currentToken && (this.currentToken.type === PLAY || this.currentToken.typ === SAVE)){
+            //playEvents.push(this.expr());
+            this.statement();
+        }
+        return playEvents;
+    }
+
+    play(){
+        this.eat(PLAY);
+        let events = [];
+        events.push(this.expr());
+        this.composition.configurePart(events);
+        this.composition.play();
+    }
+
+    statement(){
+        if(this.currentToken.type === PLAY){
+            this.play();
+            console.log("Should play")
+        }
+        else if(this.currentToken.type === SAVE){
+            //TODO: variable assignment
+        }
+    }
+
     note(){
         const note = this.currentToken;
         this.eat(NOTE);
         return note.value;
+    }
+
+    note_list(){
+        const notes = [];
+        notes.push(this.note());
+        while(this.currentToken && this.currentToken.type === SEP){
+            this.sep();
+            notes.push(this.note());
+        }
+        return notes;
     }
 
     sep(){
@@ -183,24 +237,21 @@ class HandelInterpreter {
         this.eat(SEP);
     }
 
-    expr(){
-        /*
-        const note = this.currentToken;
-        this.eat(NOTE);
-        */
-        const notes = [];
-        notes.push(this.note());
-        while(this.currentToken && this.currentToken.type === SEP){
-            this.sep();
-            notes.push(this.note());
-        }
-
+    for(){
         const op = this.currentToken;
         this.eat(FOR);
+    }
 
+    beat(){
         const beat = this.currentToken;
         this.eat(BEAT);
+        return beat;
+    }
 
+    expr(){
+        const notes = this.note_list();
+        this.for();
+        const beat = this.beat(); 
         return new PlayEvent(notes, this.beatToValue[beat.value]);
     }
 }
