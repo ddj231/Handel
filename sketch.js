@@ -105,11 +105,15 @@ function mousePressed(){
 		play C2 for 1b \n 
 		save mynote = C2 for 1b \n
 		play mynote \n
+		save awhile = 1b \n
+		rest awhile\n
+		play G2 for 1b \n
+		play A2 for 1b \n
+		save chord = A2, C2, Fb2 for 3b \n
+		play chord \n
+		play A2 for 1b \n
+		play G2 for 1b \n
 		play mynote \n
-		play G2 for 1b \n
-		play A2 for 1b \n
-		play A2 for 1b \n
-		play G2 for 1b \n
 	`);
 	let events = new HandelInterpreter(lexer).statement_list(); 
 }

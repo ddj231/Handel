@@ -214,8 +214,17 @@ class HandelInterpreter {
 
     rest(){
         this.eat(REST);
-        this.for();
-        let beat = this.beat();
+        let beat;
+        if(this.currentToken.type === FOR){
+            this.for();
+            beat = this.beat();
+        }
+        else if(this.currentToken.type === ID){
+            beat = this.id().value;
+        }
+        else{
+            this.error();
+        }
         let events = [new PlayEvent(null, this.beatToValue[beat.value])];
         this.composition.configurePart(events);
     }
@@ -225,8 +234,14 @@ class HandelInterpreter {
         let varName = this.currentToken.value;
         this.eat(ID);
         this.eat(ASSIGN);
-        let value = this.expr();
-        this.globalVariables[varName] = value;
+        if(this.currentToken.type === NOTE){
+            let value = this.expr();
+            this.globalVariables[varName] = value;
+        }
+        else if(this.currentToken.type === BEAT){
+            let beat = this.beat();
+            this.globalVariables[varName] = beat;
+        }
     }
 
     statement(){
