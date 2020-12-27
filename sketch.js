@@ -102,20 +102,27 @@ function mousePressed(){
 		}
 	}
 	let lexer = new HandelLexer(`
+		start
+
+		chunk hello using chord, friend
 		play C2 for 1b \n 
 		save mynote = C2 for 1b \n
 		play mynote \n
-		save awhile = 1b \n
+		chunk insidehello
+		play mynote
+		endchunk
+		save awhile = 2b \n
 		rest awhile\n
 		play G2 for 1b \n
-		play A2 for 1b \n
-		save chord = A2, C2, Fb2 for 3b \n
-		play chord \n
-		play A2 for 1b \n
-		play G2 for 1b \n
-		play mynote \n
+		endchunk
+
+		chunk goodbye
+		play C2 for 3b
+		endchunk
+
+		finish
 	`);
-	let events = new HandelInterpreter(lexer).statement_list(); 
+	let events = new HandelInterpreter(lexer).program(); 
 }
 
 class NoteNode {

@@ -1,7 +1,7 @@
 // Token types
 const [NOTE, BEAT, FOR, SEP, CHUNK, 
-    ENDCHUNK, ID, FINISH, SAVE, DOT, PLAY, REST, ASSIGN, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
-    "ENDCHUNK", "ID", "FINISH", "SAVE", "DOT", "PLAY", "REST", "ASSIGN", "EOF"];
+    ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY, REST, ASSIGN, USING, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
+    "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", "REST", "ASSIGN", "USING", "EOF"];
 
 
 class Token {
@@ -18,6 +18,71 @@ const RESERVED_KEYWORDS = {
     save: new Token(SAVE, 'save'),
     play: new Token(PLAY, 'play'),
     rest: new Token(REST, 'rest'),
+    using: new Token(USING, 'using'),
+    start: new Token(START, 'start'),
+    finish: new Token(FINISH, 'finish')
+}
+
+class HandelSymbol {
+    constructor(name, type=null){
+        this.name = name;
+        this.type = type;
+    }
+}
+
+class BuiltInTypeSymbol extends HandelSymbol {
+    constructor(name){
+        super(name);
+    }
+}
+
+class VarSymbol extends HandelSymbol{
+    constructor(name, type){
+        super(name, type)
+    }
+}
+
+class ProcedureSymbol extends HandelSymbol{
+    constructor(name, type, params = null){
+        super(name);
+        this.params = []; 
+    }
+}
+
+class HandelSymbolTable {
+    constructor(scopeName, scopeLevel, enclosingScope = null){
+        this.symbols = {};
+        this.scopeName = scopeName;
+        this.scopeLevel = scopeLevel;
+        this.enclosingScope = enclosingScope;
+        this.initbuiltins();
+    }
+    initbuiltins(){
+        let beat = new BuiltInTypeSymbol('BEAT');
+        let note = new BuiltInTypeSymbol('PLAYABLE');
+        this.define(beat);
+        this.define(note);
+    }
+    define(symbol){
+        this.symbols[symbol.name] = symbol;
+    }
+
+    lookup(name){
+        let symbol = this.symbols[name];
+        console.log("LOOKING FOR", name, "in", this.scopeName);
+        if(symbol){
+            console.log("FOUND", name);
+            return symbol;
+        }
+
+        if(this.enclosingScope){
+            return this.enclosingScope.lookup(name);
+        }
+    }
+
+    error(varName){
+        throw Error(`Symbol ${varName} not found`)
+    }
 }
 
 class HandelLexer {
@@ -112,7 +177,6 @@ class HandelLexer {
             }
         }
 
-
         if(this.currentChar === ','){
             this.advance();
             return new Token(SEP, 'sep');
@@ -158,6 +222,7 @@ class HandelInterpreter {
             3: '2n.',
             4: '1m'
         }
+        this.currentScope; 
         this.globalVariables = {};
     }
 
@@ -178,11 +243,6 @@ class HandelInterpreter {
         this.eat(FINISH);
     }
 
-    program(){
-        this.compoundStatement();
-        this.finish();
-    }
-
     chunk(){
         this.eat(CHUNK);
     }
@@ -191,15 +251,79 @@ class HandelInterpreter {
         this.eat(ENDCHUNK);
     }
 
+    using(){
+        this.eat(USING);
+    }
+
+    program(){
+        this.eat(START);
+        this.currentScope = new HandelSymbolTable('global', 1);
+        console.log('Enter scope: global');
+        while(this.currentToken && 
+            (this.currentToken.type === CHUNK || 
+            this.currentToken.type === PLAY ||
+            this.currentToken.type === REST ||
+            this.currentToken.type === SAVE)){
+                if(this.currentToken.type === CHUNK){
+                    this.section_declaration();
+                }
+                else{
+                    this.statement();
+                }
+            }
+        this.eat(FINISH);
+        console.log(this.currentScope)
+        console.log('Leaving scope: global');
+    }
+    section_declaration(){
+        this.chunk();
+        let procName = this.id().value;
+        let procSymbol = new ProcedureSymbol(procName);
+        this.currentScope.define(procSymbol);
+        console.log('Enter scope:', procName);
+
+        //create symbol table
+        let procScope = new HandelSymbolTable(procName, 
+            this.currentScope.scopeLevel + 1,
+             this.currentScope);
+        this.currentScope = procScope;
+
+        if(this.currentToken.type === USING){
+           this.using(); 
+           this.parameter_list(procSymbol);
+        }
+        this.statement_list();
+        this.endchunk();
+        console.log(this.currentScope)
+        this.currentScope = this.currentScope.enclosingScope;
+        console.log('Leave scope:', procName);
+    }
+
+    parameter_list(procSymbol){
+        let paramToken = this.id();
+        procSymbol.params.push(paramToken.value);
+        while(this.currentToken.type && this.currentToken.type === SEP){
+            this.sep();
+            let paramToken = this.id();
+            procSymbol.params.push(paramToken.value);
+        }
+    }
+
     statement_list(){
         //let playEvents = [];
         while(this.currentToken && 
-                (this.currentToken.type === PLAY || 
+                (this.currentToken.type === CHUNK || 
+                this.currentToken.type === PLAY || 
                 this.currentToken.type === REST ||
                 this.currentToken.type === SAVE)
             ){
             //playEvents.push(this.expr());
-            this.statement();
+            if(this.currentToken.type === CHUNK){
+                this.section_declaration();
+            }
+            else{
+                this.statement();
+            }
         }
         //return playEvents;
     }
@@ -220,7 +344,9 @@ class HandelInterpreter {
             beat = this.beat();
         }
         else if(this.currentToken.type === ID){
-            beat = this.id().value;
+            let varName = this.id().value;
+            beat = this.globalVariables[varName];
+            if(!this.currentScope.lookup(varName)){ this.currentScope.error(varName) }
         }
         else{
             this.error();
@@ -229,7 +355,7 @@ class HandelInterpreter {
         this.composition.configurePart(events);
     }
 
-    assign(){
+    save(){
         this.eat(SAVE);
         let varName = this.currentToken.value;
         this.eat(ID);
@@ -237,26 +363,32 @@ class HandelInterpreter {
         if(this.currentToken.type === NOTE){
             let value = this.expr();
             this.globalVariables[varName] = value;
+            this.defineVarSymbol(varName, 'PLAYABLE');
         }
         else if(this.currentToken.type === BEAT){
             let beat = this.beat();
             this.globalVariables[varName] = beat;
+            this.defineVarSymbol(varName, 'BEAT');
         }
+    }
+
+    defineVarSymbol(varName, typeName){
+        let typeSymbol = this.currentScope.lookup(typeName);
+        let symbol = new VarSymbol(varName, typeSymbol);
+        console.log("DEFINE ", varName, "in", this.currentScope.scopeName)
+        this.currentScope.define(symbol);
     }
 
     statement(){
         if(this.currentToken.type === PLAY){
             this.play();
-            console.log("Should play")
         }
         else if(this.currentToken.type === REST){
             this.rest();
-            console.log("Should rest")
         }
         else if(this.currentToken.type === SAVE){
-            //TODO: variable assignment
-            this.assign();
-            console.log("Should assign")
+            //variable assignment
+            this.save();
         }
     }
 
@@ -300,21 +432,24 @@ class HandelInterpreter {
 
     expr(){
         if(this.currentToken.type === NOTE){
-            console.log("NOTE");
             const notes = this.note_list();
             this.for();
             const beat = this.beat(); 
             return new PlayEvent(notes, this.beatToValue[beat.value]);
         }
         else{
-            console.log(this.currentToken);
             let varName = this.id().value;
-            console.log(this.globalVariables);
+            console.log("VARIABLE NAME", varName)
+            let symbol = this.currentScope.lookup(varName);
+            if(!symbol){
+                console.log(symbol);
+                this.currentScope.error(varName)
+            }
             if(varName in this.globalVariables){
                 return this.globalVariables[varName];
             }
             else{
-                this.error();
+                this.currentScope.error(varName);
             }
         }
     }
