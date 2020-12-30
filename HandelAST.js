@@ -199,6 +199,7 @@ class HandelParser {
             this.error();
         }
         let programNode = new ProgramAST(startToken, statementList);
+        console.log(this.currentToken);
         this.eat(FINISH);
         return programNode;
     }
@@ -249,10 +250,12 @@ class HandelParser {
         let procedureToken = this.currentToken;
         procedureToken.category = "PROCEDURECALL";
         this.eat(ID);
-        this.eat(USING);
-        let actualParams = []; 
-        if(this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID){
-            actualParams = this.argumentList();
+        let actualParams = [];
+        if(this.currentToken.type === USING){
+            this.eat(USING);
+            if(this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID){
+                actualParams = this.argumentList();
+            }
         }
         return new ProcedureCallAST(procedureToken, actualParams);
     }
@@ -387,12 +390,14 @@ class HandelInterpreterAST {
             3: '2n.',
             4: '1m'
         }
-        this.composition = new Composition(Tone.AMSynth, 140);
+        this.currentComposition;
         this.callStack = new HandelCallStack();
     }
 
     visitProgram(node){
         let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
+        this.currentComposition = new Composition(Tone.AMSynth, 140);
+        this.currentComposition.enclosingComposition = null;
         this.callStack.push(ar);
         this.visitStatementList(node.child);
         this.callStack.pop();
@@ -405,6 +410,11 @@ class HandelInterpreterAST {
         let procSymbol = node.procSymbol;
         let ar = new HandelActivationRecord(node.value, ARTYPES.PROCEDURE, procSymbol.scopeLevel + 1);
         console.log(ar);
+
+        let prevCompositon = this.currentComposition;
+        this.currentComposition = new Composition(Tone.AMSynth, 140);
+        this.currentComposition.enclosingComposition =  prevCompositon;
+
         let formalParams = procSymbol.params;
         let actualParams = node.actualParams;
         for(let i = 0; i < formalParams.length; i++){
@@ -426,7 +436,8 @@ class HandelInterpreterAST {
         //execute body
         this.visitStatementList(procSymbol.statementList);
 
-        this.callStack.pop(ar);;
+        this.callStack.pop(ar);
+        this.currentComposition = this.currentComposition.enclosingComposition;
     }
 
     visitStatementList(node){
@@ -451,7 +462,7 @@ class HandelInterpreterAST {
             else {
                 this.error();
             }
-            this.composition.play();
+            this.currentComposition.play();
             console.log("should play");
         }
     }
@@ -462,10 +473,10 @@ class HandelInterpreterAST {
         if(node.child.token.type === FOR){
             let forNode = node.child;
            // this.visitFor(forNode)
-            this.composition.configurePart([this.visitFor(forNode)]);
+            this.currentComposition.configurePart([this.visitFor(forNode)]);
         }
         else if(node.child.token.type === ID){
-            this.composition.configurePart([this.visitId(node.child)]);
+            this.currentComposition.configurePart([this.visitId(node.child)]);
         }
     }
 
@@ -483,7 +494,7 @@ class HandelInterpreterAST {
             this.error();
         }
 
-        this.composition.configurePart(events);
+        this.currentComposition.configurePart(events);
     }
 
     visitSave(node){

@@ -1,7 +1,7 @@
 // Token types
-const [NOTE, BEAT, FOR, SEP, CHUNK, 
+const [NOTE, BEAT, DIGIT, FOR, SEP, CHUNK, 
     ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
-     REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
+     REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
     "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
     "REST", "WITH", "RUN", "ASSIGN", "USING", "EOF"];
 
@@ -222,12 +222,24 @@ class HandelLexer {
                 this.advance();
                 return new Token(BEAT, beatValue, this.lineno);
             }
+            else {
+                let digit = beatValue;
+                let current = Number.parseInt(this.currentChar);
+                while(!Number.isNaN(current)){
+                    digit += this.currentChar;
+                    this.advance();
+                    current = Number.parseInt(this.currentChar);
+                }
+                console.log("DIGIT is", Number.parseInt(digit));
+                return new Token(DIGIT, Number.parseInt(digit), this.lineno);
+            }
         }
         
         this.error();
     }
 }
 
+/*
 class HandelInterpreter {
     constructor(lexer){
         this.lexer = lexer;
@@ -537,3 +549,4 @@ class HandelInterpreter {
         }
     }
 }
+*/

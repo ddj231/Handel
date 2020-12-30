@@ -103,18 +103,36 @@ function mousePressed(){
 	}
 	let lexer = new HandelLexer(`
 		start
-			chunk hello using chord, awhile 
+			chunk hello using chord 
+				rest for 2b
 				play chord
-				rest awhile 
+				rest for 2b
 				play chord
-					chunk goodbye using chord
-					play chord
-					endchunk
-				run goodbye using chord
+				rest for 2b
+				play chord
 			endchunk
-			save boom = C2, E2, B2 for 1b
-			save myrest = for 1b
-			run hello using boom, myrest 
+
+			save boom = C4 for 1b
+			run hello using boom 
+
+			chunk goodbye 
+				play F4 for 1b
+				rest for 1b
+				play E4 for 1b 
+				rest for 1b
+				play F4 for 1b
+				rest for 1b
+				play E4 for 1b
+				play E4 for 1b
+			endchunk
+
+
+			play C3, E3, G3 for 1b
+			rest for 3b
+			play D3, F3, A3 for 1b
+			rest for 3b
+			play F3, A3, C3 for 1b
+			run goodbye
 		finish
 	`);
 
