@@ -1,13 +1,16 @@
 // Token types
 const [NOTE, BEAT, FOR, SEP, CHUNK, 
-    ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY, REST, ASSIGN, USING, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
-    "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", "REST", "ASSIGN", "USING", "EOF"];
+    ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
+     REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BEAT", "FOR", "SEP", "CHUNK", 
+    "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
+    "REST", "WITH", "RUN", "ASSIGN", "USING", "EOF"];
 
 
 class Token {
-    constructor(type, value){
+    constructor(type, value, lineno){
         this.type = type;
         this.value = value;
+        this.lineno = lineno
     }
 }
 
@@ -20,7 +23,9 @@ const RESERVED_KEYWORDS = {
     rest: new Token(REST, 'rest'),
     using: new Token(USING, 'using'),
     start: new Token(START, 'start'),
-    finish: new Token(FINISH, 'finish')
+    finish: new Token(FINISH, 'finish'),
+    run: new Token(RUN, 'run'),
+    with: new Token(WITH, 'with')
 }
 
 class HandelSymbol {
@@ -46,6 +51,7 @@ class ProcedureSymbol extends HandelSymbol{
     constructor(name, type, params = null){
         super(name);
         this.params = []; 
+        this.statementList = null;
     }
 }
 
@@ -60,19 +66,25 @@ class HandelSymbolTable {
     initbuiltins(){
         let beat = new BuiltInTypeSymbol('BEAT');
         let note = new BuiltInTypeSymbol('PLAYABLE');
+        let any = new BuiltInTypeSymbol('ANY');
         this.define(beat);
         this.define(note);
+        this.define(any);
     }
     define(symbol){
+        symbol.scopeLevel = this.scopeLevel;
         this.symbols[symbol.name] = symbol;
     }
-
-    lookup(name){
+    lookup(name, currentScopeOnly = false){
         let symbol = this.symbols[name];
-        console.log("LOOKING FOR", name, "in", this.scopeName);
+        //console.log("LOOKING FOR", name, "in", this.scopeName);
         if(symbol){
-            console.log("FOUND", name);
+            //console.log("FOUND", name);
             return symbol;
+        }
+
+        if(currentScopeOnly){
+            return null;
         }
 
         if(this.enclosingScope){
@@ -85,17 +97,19 @@ class HandelSymbolTable {
     }
 }
 
+
 class HandelLexer {
     constructor(text){
         this.text = text;
         this.pos = 0;
         this.currentChar = this.text[this.pos];
+        this.lineno = 1;
         this.possibleChars = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
         this.possibleNums= ['0', '1', '2', '3', '4', '5', '6', '7'];
     }
 
     error(){
-        throw new Error("error analyzing input");
+        throw new Error("error analyzing input at line", this.lineno);
     }
 
     peek(){
@@ -118,6 +132,9 @@ class HandelLexer {
     }
 
     isSpace(ch){
+        if(ch === '\n'){
+            this.lineno += 1;
+        }
         return ch === ' '  || ch === '\t' || ch === '\n' || ch === '\r';
     }
 
@@ -143,7 +160,7 @@ class HandelLexer {
             if(result in RESERVED_KEYWORDS){
                 return RESERVED_KEYWORDS[result];
             }
-            return new Token(ID, result);
+            return new Token(ID, result, this.lineno);
         }
     }
 
@@ -152,7 +169,7 @@ class HandelLexer {
         this.skipWhitespace();
 
         if(this.pos >= this.text.length){
-            return new Token(EOF, null)
+            return new Token(EOF, null, this.lineno);
         }
         
         if(this.possibleChars.includes(this.currentChar)){
@@ -161,7 +178,7 @@ class HandelLexer {
             if(this.possibleNums.includes(this.currentChar)){
                 note += this.currentChar;
                 this.advance();
-                return new Token(NOTE, note);
+                return new Token(NOTE, note, this.lineno);
             }
             else if(this.currentChar === 'b' || this.currentChar === "#"){
                 note += this.currentChar;
@@ -169,7 +186,7 @@ class HandelLexer {
                 if(this.possibleNums.includes(this.currentChar)){
                     note += this.currentChar;
                     this.advance();
-                    return new Token(NOTE, note);
+                    return new Token(NOTE, note, this.lineno);
                 }
             }
             else{
@@ -179,17 +196,17 @@ class HandelLexer {
 
         if(this.currentChar === ','){
             this.advance();
-            return new Token(SEP, 'sep');
+            return new Token(SEP, 'sep', this.lineno);
         }
 
         if(this.currentChar === '.'){
             this.advance();
-            return new Token(DOT, 'dot');
+            return new Token(DOT, 'dot', this.lineno);
         }
 
         if(this.currentChar === '='){
             this.advance();
-            return new Token(ASSIGN, 'assign');
+            return new Token(ASSIGN, 'assign', this.lineno);
         }
 
         let idResult = this.id();
@@ -203,7 +220,7 @@ class HandelLexer {
             this.advance();
             if(this.currentChar === 'b'){
                 this.advance();
-                return new Token(BEAT, beatValue);
+                return new Token(BEAT, beatValue, this.lineno);
             }
         }
         
@@ -223,11 +240,16 @@ class HandelInterpreter {
             4: '1m'
         }
         this.currentScope; 
-        this.globalVariables = {};
+        //this.globalVariables = {};
+        this.callStack = new HandelCallStack();
     }
 
-    error(){
-        throw new Error("error parsing input");
+    error(lineno){
+        throw new Error(`error parsing input at line ${lineno}`);
+    }
+    
+    varNotFoundError(varName, lineno){
+        throw new Error(`no variable ${lineno} exists`);
     }
 
     eat(type){
@@ -235,7 +257,7 @@ class HandelInterpreter {
             this.currentToken = this.lexer.getNextToken();
         }
         else{
-            this.error();
+            this.error(this.currentToken.lineno);
         }
     }
 
@@ -258,11 +280,14 @@ class HandelInterpreter {
     program(){
         this.eat(START);
         this.currentScope = new HandelSymbolTable('global', 1);
+        let ar = new HandelActivationRecord("GLOBAL", ARTYPES.PROGRAM, 1);
+        this.callStack.push(ar);
         console.log('Enter scope: global');
         while(this.currentToken && 
             (this.currentToken.type === CHUNK || 
             this.currentToken.type === PLAY ||
             this.currentToken.type === REST ||
+            this.currentToken.type === RUN ||
             this.currentToken.type === SAVE)){
                 if(this.currentToken.type === CHUNK){
                     this.section_declaration();
@@ -274,7 +299,10 @@ class HandelInterpreter {
         this.eat(FINISH);
         console.log(this.currentScope)
         console.log('Leaving scope: global');
+        this.currentScope = this.currentScope.enclosingScope; 
+        this.callStack.push(ar);
     }
+
     section_declaration(){
         this.chunk();
         let procName = this.id().value;
@@ -301,10 +329,14 @@ class HandelInterpreter {
 
     parameter_list(procSymbol){
         let paramToken = this.id();
+        let paramName = paramToken.value;
+        this.defineVarSymbol(paramName, 'PLAYABLE');
         procSymbol.params.push(paramToken.value);
         while(this.currentToken.type && this.currentToken.type === SEP){
             this.sep();
             let paramToken = this.id();
+            let paramName = paramToken.value;
+            this.defineVarSymbol(paramName, 'PLAYABLE');
             procSymbol.params.push(paramToken.value);
         }
     }
@@ -359,15 +391,22 @@ class HandelInterpreter {
         this.eat(SAVE);
         let varName = this.currentToken.value;
         this.eat(ID);
+        if(this.currentScope.lookup(varName, true)){
+            throw Error(`${varName} is already defined`);
+        }
         this.eat(ASSIGN);
         if(this.currentToken.type === NOTE){
             let value = this.expr();
-            this.globalVariables[varName] = value;
+            //this.globalVariables[varName] = value;
+            let ar = this.callStack.peek();
+            ar.setItem(varName, value); 
             this.defineVarSymbol(varName, 'PLAYABLE');
         }
         else if(this.currentToken.type === BEAT){
             let beat = this.beat();
-            this.globalVariables[varName] = beat;
+            //this.globalVariables[varName] = beat;
+            let ar = this.callStack.peek();
+            ar.setItem(varName, value); 
             this.defineVarSymbol(varName, 'BEAT');
         }
     }
@@ -386,10 +425,53 @@ class HandelInterpreter {
         else if(this.currentToken.type === REST){
             this.rest();
         }
+        else if(this.currentToken.type === RUN){
+            this.procedure_call();
+        }
         else if(this.currentToken.type === SAVE){
             //variable assignment
             this.save();
         }
+    }
+
+    run(){
+        this.eat(RUN);
+    }
+
+    argument_list(){
+        //TODO
+        let actualParams = []; 
+        actualParams.push(this.expr());
+        while(this.currentToken && this.currentToken.type === SEP){
+            this.sep();
+            actualParams.push(this.expr());
+        }
+        return actualParams;
+    }
+
+    procedure_call(){
+        this.eat(RUN);
+        let procedureName = this.currentToken.value;
+        let procedureSymbol = this.currentScope.lookup(procedureName);
+        this.eat(ID);
+        this.eat(WITH);
+        let actualParams = []; 
+        if(this.currentToken.type === NOTE || this.currentToken.type === ID){
+            actualParams = this.argument_list();
+        }
+        let formalParams = procedureSymbol.params;
+        if(formalParams.length != actualParams.length){
+            this.error(this.currentToken.lineno);
+        }
+        let ar = new HandelActivationRecord(procedureName, ARTYPES.PROCEDURE, 2);
+        for(let i =0; i < formalParams.length; i++){
+            ar.setItem(formalParams[i], actualParams[i]);
+        }
+        this.callStack.push(ar);
+
+        //TODO: execute with body of procedure
+
+        this.callStack.pop();
     }
 
     note(){
@@ -445,11 +527,12 @@ class HandelInterpreter {
                 console.log(symbol);
                 this.currentScope.error(varName)
             }
-            if(varName in this.globalVariables){
-                return this.globalVariables[varName];
+            let ar = this.callStack.peek();
+            if(ar.get(varName)){
+                return ar.get(varName);
             }
             else{
-                this.currentScope.error(varName);
+                this.error(this.currentToken.lineno);
             }
         }
     }

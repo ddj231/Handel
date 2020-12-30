@@ -103,26 +103,30 @@ function mousePressed(){
 	}
 	let lexer = new HandelLexer(`
 		start
-
-		chunk hello using chord, friend
-		play C2 for 1b \n 
-		save mynote = C2 for 1b \n
-		play mynote \n
-		chunk insidehello
-		play mynote
-		endchunk
-		save awhile = 2b \n
-		rest awhile\n
-		play G2 for 1b \n
-		endchunk
-
-		chunk goodbye
-		play C2 for 3b
-		endchunk
-
+			chunk hello using chord, awhile 
+				play chord
+				rest awhile 
+				play chord
+					chunk goodbye using chord
+					play chord
+					endchunk
+				run goodbye using chord
+			endchunk
+			save boom = C2, E2, B2 for 1b
+			save myrest = for 1b
+			run hello using boom, myrest 
 		finish
 	`);
-	let events = new HandelInterpreter(lexer).program(); 
+
+
+	let parser = new HandelParser(lexer);
+	let interpreter = new HandelInterpreterAST(parser);
+	let symbolTableBuilder = new SymbolTableBuilder();
+	let program = parser.program();
+	console.log(program);
+	symbolTableBuilder.visitProgram(program);
+	interpreter.visitProgram(program);
+	//let events = new HandelInterpreter(lexer).program(); 
 }
 
 class NoteNode {
