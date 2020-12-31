@@ -1,12 +1,11 @@
 function clicked(){
     RunHandel(`
     start
-        chunk example using somePlayable 
-            play somePlayable 
-            rest for 1b
+        chunk withargs using somechord 
+            play somechord 
         endchunk
-        save myPlayable = Eb3 for 1b
-        run example using myPlayable with sound piano, loop for 5 
+
+        run withargs using E3, G3, F3 for 1b with bpm 100, loop for 8, sound piano 
     finish
     `)
 }
