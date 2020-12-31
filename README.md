@@ -277,7 +277,7 @@ Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100
 
 ## Reference 
 
-Note: A musical note. 7 octaves are available.
+**Note**: A musical note. 7 octaves are available.
 *Examples*
 ```
 C3
@@ -285,23 +285,23 @@ Eb2
 G#7
 ```
 
-Notelist: A list of notes. Together this list of notes forms a chord. (6 notes maximum).
+**Notelist**: A list of notes. Together this list of notes forms a chord. (6 notes maximum).
 *Examples*
 ```
 C2, E2, G2
 C4, Eb4, G#3
 ```
 
-Beat: A number of beats. Only 4 possible (1b, 2b, 3b, and 4b).
+**Beat**: A number of beats. Only 4 possible (1b, 2b, 3b, and 4b).
 
-Duration: An expression that represents the amount of beats to play or hold for.
+**Duration**: An expression that represents the amount of beats to play or hold for.
 *Examples*
 ```
 for 1b
 for 2b
 ```
 
-Playable: A note or a notelist, followed by a duration. 
+**Playable**: A note or a notelist, followed by a duration. 
 *Examples*
 ```
 C1, F1, E1, D1, for 1b
@@ -309,7 +309,7 @@ D1 for 2b
 ```
 
 
-play: A command to play a note or notelist for a given duration.
+**play**: A command to play a note or notelist for a given duration.
 *Examples*
 ```
 play C1, F1, E1, D1, for 1b
@@ -317,21 +317,21 @@ play D1 for 2b
 ```
 
 
-rest: A command to rest for a given duration.
+**rest**: A command to rest for a given duration.
 *Examples*
 ```
 rest for 1b
 rest for 2b
 ```
 
-save: A command to save a variable (see above section on variables for more details). Only playabes and durations can be saved in variables.
+**save**: A command to save a variable (see above section on variables for more details). Only playabes and durations can be saved in variables.
 *Examples*
 ```
 save myplayable = E2 for 1b
 save myduration = for 1b
 ```
 
-chunk: Used to declare a procedure. (see above section on procedures for more details)
+**chunk**: Used to declare a procedure. (see above section on procedures for more details)
 *Examples*
 ```
 chunk mybassline
@@ -339,7 +339,7 @@ chunk mybassline
 endchunk
 ```
 
-using: Used to prepend a list of paramaters for a chunk.
+**using**: Used to prepend a list of paramaters for a chunk.
 
 ```
 chunk mypiano using nicechord
@@ -347,48 +347,65 @@ chunk mypiano using nicechord
 endchunk
 ```
 
-run: Used to run a chunk. (see above section on running procedures for more details).
+**run**: Used to run a chunk. (see above section on running procedures for more details).
 *Examples*
 ```
 run mypiano using E2, C#2 for 1b 
 ```
 
-with: Used to customize a given run of a chunk. (see section on procedures above for more details)
+**with**: Used to customize a given run of a chunk. (see section on procedures above for more details)
 
 ```
 run mybassline with bpm 115
 ```
 
-bpm (beats per minute), loop, sound: Follows the **with** keyword. Used to customize a run of a chunk.
+**bpm** (beats per minute), **loop**, sound: Follows the **with** keyword. Used to customize a run of a chunk.
 
 ```
 run mybassline with bpm 90, loop for 2, sound kick
 ```
 
-Sounds: possible sounds that can be used to customize a run of a chunk. (piano, synth, casio, kick, snare, hihat)
+**Sounds**: possible sounds that can be used to customize a run of a chunk. (piano, synth, casio, kick, snare, hihat)
 
 
 ## Reserved Keywords
-start
-finish
-play
-rest
-save
-chunk
-endchunk
-using
-run
-with
-bpm
-loop
-sound
-piano
-synth
-casio
-kick
-snare
+### start
 
-All notes names are reserved, ex. C4, Bb1. 
+### finish
+
+### play
+
+### rest
+
+### save
+
+### chunk
+
+### endchunk
+
+### using
+
+### run
+
+### with
+
+### bpm
+
+### loop
+
+### sound
+
+### piano
+
+### synth
+
+### casio
+
+### kick
+
+### snare
+
+All notes names are reserved, ex. **C4**, **Bb1**. 
 For this reason use only lowercase letters with no numbers in variable names.
 
 
