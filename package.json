@@ -1,0 +1,20 @@
+{
+  "name": "handel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Composition.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddj231/handel-dev-space.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ddj231/handel-dev-space/issues"
+  },
+  "homepage": "https://github.com/ddj231/handel-dev-space#readme"
+}
