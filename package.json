@@ -1,20 +1,21 @@
 {
   "name": "handel",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
-  "main": "Composition.js",
+  "main": "HandelExport.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": ["HandelExport.js", "/Sounds"],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ddj231/handel-dev-space.git"
+    "url": "git+https://github.com/ddj231/Handel.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ddj231/handel-dev-space/issues"
+    "url": "https://github.com/ddj231/Handel/issues"
   },
-  "homepage": "https://github.com/ddj231/handel-dev-space#readme"
+  "homepage": "https://github.com/ddj231/Handel#readme"
 }

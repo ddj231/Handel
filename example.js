@@ -1,8 +1,12 @@
 function clicked(){
-    console.log("clicked");
     RunHandel(`
     start
-    play E3 for 1b
+        chunk example using somePlayable 
+            play somePlayable 
+            rest for 1b
+        endchunk
+        save myPlayable = Eb3 for 1b
+        run example using myPlayable with sound piano, loop for 5 
     finish
     `)
 }
