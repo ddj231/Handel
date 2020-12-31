@@ -6,6 +6,8 @@ Handel is a small procedural programming language for writting songs in browser.
 
 The Handel Interpreter plays sounds in browser, thanks to [Tone.js](https://tonejs.github.io/).
 
+
+
 ## Installation
 
 Add the below to your html file:
@@ -17,7 +19,10 @@ Add the below to your html file:
 
 You're all set!
 
+
+
 ## Usage
+
 
 ### Example Handel Snippet
 
@@ -29,6 +34,7 @@ start
     run example with sound piano, loop for 5 
 finish
 ```
+
 
 ### Example Using Handel In Browser
 
@@ -48,6 +54,7 @@ function clicked(){
 document.addEventListener("click", clicked);
 ```
 
+
 ## Getting started
 
 A Handel program must be contained within the **start** and **finish** keywords. Below is a complete Handel program (and the shortest syntactically correct program):
@@ -57,6 +64,7 @@ finish
 ```
 
 The program above does nothing. But it's a start!
+
 
 ### Let's play something
 
@@ -75,6 +83,7 @@ Lastly a duration is needed. The play command above ends with 'for 1b', which st
 
 Phew! We're getting somewhere.
 
+
 ### Let's rest
 
 Similar to the play command, a rest can played using the rest command. Below is an example program that rests for 1 beat then plays a note for 2 beats.
@@ -85,6 +94,7 @@ start
     play G5 for 2b
 finish
 ```
+
 
 ### But are there Variables?
 
@@ -143,6 +153,7 @@ finish
 
 OK! So far so good!
 
+
 ### Procedures (I thought this was a procedural programming language?)
 
 Procedures in Handel are called chunks. A **chunk** can be conceptualized as a song track. When ran,
@@ -177,7 +188,9 @@ finish
 Both the 'backbeat' chunk and the 'mykeys' chunk above play together (not one after the other). This
 behavior allows multitrack songs to be created with Handel. 
 
+
 ### More on procedures (chunks) and their syntax
+
 
 #### Procedure declaration (creating chunks) 
 
@@ -192,6 +205,7 @@ Together you get the following: `chunk somechunkname using someparam, anotherpar
 After the optional parameter list, a body can be added to the chunk. This is a function body (what you would like to happen when the chunk is ran).
 
 Lastly the chunk must be ended with the **endchunk** keyword.
+
 
 #### Running Procedures 
 
@@ -223,6 +237,7 @@ finish
 Note that saved variables, playables, or durations, can be used as arguments when running a chunk.
 
 OK! Now to configuring a run of a chunk.
+
 
 #### Configuring a run of a chunk
 
@@ -259,7 +274,8 @@ finish
 Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100!
 
 
-### Reference 
+
+## Reference 
 
 Note: A musical note. 7 octaves are available.
 *Examples*
@@ -350,6 +366,7 @@ run mybassline with bpm 90, loop for 2, sound kick
 ```
 
 Sounds: possible sounds that can be used to customize a run of a chunk. (piano, synth, casio, kick, snare, hihat)
+
 
 ## Reserved Keywords
 start
