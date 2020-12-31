@@ -405,7 +405,7 @@ run mybassline with bpm 90, loop for 2, sound kick
 
 ### snare
 
-All notes names are reserved, ex. **C4**, **Bb1**. 
+All note names are reserved, ex. **C4**, **Bb1**. 
 For this reason use only lowercase letters with no numbers in variable names.
 
 
