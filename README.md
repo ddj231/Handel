@@ -66,7 +66,7 @@ finish
 The program above does nothing. But it's a start!
 
 
-### Let's play something
+## Let's play something
 
 A note or a chord can be played using the play command. Below is an example program that plays a note, then a chord:
 
@@ -84,7 +84,7 @@ Lastly a duration is needed. The play command above ends with 'for 1b', which st
 Phew! We're getting somewhere.
 
 
-### Let's rest
+## Let's rest
 
 Similar to the play command, a rest can played using the rest command. Below is an example program that rests for 1 beat then plays a note for 2 beats.
 
@@ -96,7 +96,7 @@ finish
 ```
 
 
-### But are there Variables?
+## But are there Variables?
 
 tl;dr
 Here is some example usage of variables in Handel
@@ -154,7 +154,7 @@ finish
 OK! So far so good!
 
 
-### Procedures (I thought this was a procedural programming language?)
+## Procedures (I thought this was a procedural programming language?)
 
 Procedures in Handel are called chunks. A **chunk** can be conceptualized as a song track. When ran,
 chunks play at the same time as other run chunks and the global track. Chunks must begin with the **chunk**
@@ -189,10 +189,10 @@ Both the 'backbeat' chunk and the 'mykeys' chunk above play together (not one af
 behavior allows multitrack songs to be created with Handel. 
 
 
-### More on procedures (chunks) and their syntax
+## More on procedures (chunks) and their syntax
 
 
-#### Procedure declaration (creating chunks) 
+### Procedure declaration (creating chunks) 
 
 As noted above a chunk is created with the **chunk** keyword. The name of the **chunk** (the chunk name) then follows.
 
@@ -207,7 +207,7 @@ After the optional parameter list, a body can be added to the chunk. This is a f
 Lastly the chunk must be ended with the **endchunk** keyword.
 
 
-#### Running Procedures 
+### Running Procedures 
 
 A chunk can be ran using the **run** keyword.
 
@@ -239,7 +239,7 @@ Note that saved variables, playables, or durations, can be used as arguments whe
 OK! Now to configuring a run of a chunk.
 
 
-#### Configuring a run of a chunk
+### Configuring a run of a chunk
 
 A run of chunk can be configured by adding the **with** keyword and a comma separated list of customizations to the end of a run command.
 
