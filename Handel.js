@@ -1,7 +1,8 @@
 // Token types
-const [NOTE, BEAT, DIGIT, FOR, SEP, CHUNK, 
+const [NOTE, BPM, SOUND, LOOP, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
     ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
-     REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
+     REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "INSTRUMENT",
+     "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
     "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
     "REST", "WITH", "RUN", "ASSIGN", "USING", "EOF"];
 
@@ -25,7 +26,16 @@ const RESERVED_KEYWORDS = {
     start: new Token(START, 'start'),
     finish: new Token(FINISH, 'finish'),
     run: new Token(RUN, 'run'),
-    with: new Token(WITH, 'with')
+    with: new Token(WITH, 'with'),
+    bpm: new Token(BPM, 'bpm'),
+    loop: new Token(LOOP, 'loop'),
+    sound: new Token(SOUND, 'sound'),
+    casio: new Token(INSTRUMENT, 'casio'),
+    kick: new Token(INSTRUMENT, 'kick'),
+    snare: new Token(INSTRUMENT, 'snare'),
+    synth: new Token(INSTRUMENT, 'synth'),
+    piano: new Token(INSTRUMENT, 'piano'),
+    hihat: new Token(INSTRUMENT, 'hihat'),
 }
 
 class HandelSymbol {

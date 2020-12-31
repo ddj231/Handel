@@ -8,8 +8,8 @@ function setup(){
 	createCanvas(noteWidth * 7, noteHeight * 7);
 	const synth = new Tone.PolySynth({voice: Tone.FMSynth}).toDestination(); 
 	const synth2 = new Tone.Synth().toDestination(); 
-	const synth3 = kick; 
-	const synth4 = hihat; 
+	//const synth3 = kick; 
+	//const synth4 = hihat; 
 	const reverb = new Tone.Reverb(3.0).toDestination();
 	//synth.connect(reverb);
 	//const synth = new Tone.Synth().toMaster();
@@ -103,36 +103,34 @@ function mousePressed(){
 	}
 	let lexer = new HandelLexer(`
 		start
-			chunk hello using chord 
-				rest for 2b
-				play chord
-				rest for 2b
-				play chord
-				rest for 2b
-				play chord
-			endchunk
-
-			save boom = C4 for 1b
-			run hello using boom 
-
 			chunk goodbye 
-				play F4 for 1b
+				play F3, A3, C3 for 1b
 				rest for 1b
-				play E4 for 1b 
+				play E3, G3, B3 for 1b 
 				rest for 1b
-				play F4 for 1b
+				play F3, A3, C3 for 1b
 				rest for 1b
-				play E4 for 1b
-				play E4 for 1b
+				play E3, G3, B3 for 1b 
+				play E3, G3, B3 for 1b 
+			endchunk
+			
+			chunk kicks 
+				play A1 for 1b
+				rest for 1b 
+				play A1 for 1b 
+				rest for 1b 
 			endchunk
 
+			chunk snares 
+				rest for 1b 
+				play A2 for 1b
+				rest for 1b 
+				play A2 for 1b 
+			endchunk
 
-			play C3, E3, G3 for 1b
-			rest for 3b
-			play D3, F3, A3 for 1b
-			rest for 3b
-			play F3, A3, C3 for 1b
-			run goodbye
+			run goodbye with bpm 90, loop for 4, sound piano 
+			run kicks with bpm 90, loop for 8, sound kick 
+			run snares with bpm 90, loop for 8, sound hihat 
 		finish
 	`);
 

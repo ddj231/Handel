@@ -73,11 +73,36 @@ class SectionDeclarationAST{
     }
 }
 
+class BPMAST{
+    constructor(token, bpm){
+        this.token = token;
+        this.value = bpm;
+        this.bpm = bpm;
+    }
+}
+
+class LoopAST{
+    constructor(token, loopTimes){
+        this.token = token;
+        this.value = loopTimes;
+        this.loopTimes = loopTimes;
+    }
+}
+
+class InstrumentAST{
+    constructor(token, instrument){
+        this.token = token;
+        this.value = instrument;
+        this.instrument = instrument;
+    }
+}
+
 class ProcedureCallAST{
-    constructor(token, actualParams){
+    constructor(token, actualParams, customizationList){
         this.token = token;
         this.value = this.token.value;
         this.actualParams = actualParams;
+        this.customizationList = customizationList;
         this.procSymbol = null;
     }
 }
@@ -199,7 +224,7 @@ class HandelParser {
             this.error();
         }
         let programNode = new ProgramAST(startToken, statementList);
-        console.log(this.currentToken);
+        //console.log(this.currentToken);
         this.eat(FINISH);
         return programNode;
     }
@@ -244,6 +269,45 @@ class HandelParser {
         }
         return actualParams;
     }
+
+    customization(){
+        if(this.currentToken.type === BPM){
+            let bpmToken = this.currentToken;
+            this.eat(BPM);
+            let digit = this.currentToken.value;
+            //console.log("CURRENT TOKEN", this.currentToken)
+            this.eat(DIGIT);
+            return new BPMAST(bpmToken, digit);
+        }
+        else if(this.currentToken.type === SOUND){
+            let soundToken = this.currentToken;
+            this.eat(SOUND);
+            let instrument = this.currentToken.value;
+            this.eat(INSTRUMENT);
+            return new InstrumentAST(soundToken, instrument);
+        }
+        else if(this.currentToken.type === LOOP){
+            let loopToken = this.currentToken;
+            this.eat(LOOP);
+            this.eat(FOR);
+            let digit = this.currentToken.value;
+            this.eat(DIGIT);
+            return new LoopAST(loopToken, digit);
+        }
+        else{
+            this.error();
+        }
+    }
+
+    customizationList(){
+        let customizations = [];
+        customizations.push(this.customization());
+        while(this.currentToken && this.currentToken.type === SEP){
+            this.eat(SEP);
+            customizations.push(this.customization());
+        }
+        return customizations;
+    }
     
     procedureCall(){
         this.eat(RUN);
@@ -257,7 +321,13 @@ class HandelParser {
                 actualParams = this.argumentList();
             }
         }
-        return new ProcedureCallAST(procedureToken, actualParams);
+        let customizationList = [];
+        if(this.currentToken.type === WITH){
+            this.eat(WITH);
+           customizationList = this.customizationList(); 
+        }
+        //console.log(customizationList);
+        return new ProcedureCallAST(procedureToken, actualParams, customizationList);
     }
 
     statementList(){
@@ -395,12 +465,17 @@ class HandelInterpreterAST {
     }
 
     visitProgram(node){
+        Tone.Transport.cancel(0);
         let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
         this.currentComposition = new Composition(Tone.AMSynth, 140);
         this.currentComposition.enclosingComposition = null;
         this.callStack.push(ar);
         this.visitStatementList(node.child);
         this.callStack.pop();
+        //Tone.start().then(() => {
+        //});
+        Tone.Transport.stop();
+        Tone.Transport.start(Tone.now() + 0.1);
     }
 
     visitSectionDeclaration(node){
@@ -409,7 +484,7 @@ class HandelInterpreterAST {
     visitProcedureCall(node){
         let procSymbol = node.procSymbol;
         let ar = new HandelActivationRecord(node.value, ARTYPES.PROCEDURE, procSymbol.scopeLevel + 1);
-        console.log(ar);
+        //console.log(ar);
 
         let prevCompositon = this.currentComposition;
         this.currentComposition = new Composition(Tone.AMSynth, 140);
@@ -433,11 +508,69 @@ class HandelInterpreterAST {
         }
         this.callStack.push(ar);;
 
+        for(let customization of node.customizationList){
+            if(customization.token.type === BPM){
+                this.visitBPM(customization);
+            }
+            else if(customization.token.type === SOUND){
+                this.visitSound(customization);
+            }
+            else if(customization.token.type === LOOP){
+                this.visitLoop(customization);
+            }
+        }
+
         //execute body
         this.visitStatementList(procSymbol.statementList);
+        //console.log(this.currentComposition);
 
         this.callStack.pop(ar);
         this.currentComposition = this.currentComposition.enclosingComposition;
+    }
+
+    visitBPM(node){
+        //console.log(this.currentComposition);
+        let bpm = node.bpm;
+        console.log("BPM", bpm);
+        this.currentComposition.bpm = bpm;
+        return
+    }
+
+    visitSound(node){
+        let instrument = node.instrument;
+        if(instrument === 'kick'){
+            let kick = new Kick().synth;
+            //this.currentComposition.synth = new Tone.PolySynth({voice: Tone.MembraneSynth}).toDestination();
+            this.currentComposition.synth = kick;
+        }
+        else if(instrument === 'snare'){
+            let snare = new Snare().synth;
+            //this.currentComposition.synth = new Tone.PolySynth({voice: Tone.MembraneSynth}).toDestination();
+            this.currentComposition.synth = snare;
+        }
+        else if(instrument === 'hihat'){
+            let hihat = new HiHat().synth;
+            //this.currentComposition.synth = new Tone.PolySynth({voice: Tone.MembraneSynth}).toDestination();
+            this.currentComposition.synth = hihat;
+        }
+        else if(instrument === 'casio'){
+            let casio = new Casio().synth;
+            this.currentComposition.synth = casio;
+        }
+        else if(instrument === 'synth'){
+            let synth = new FMSynth().synth;
+            this.currentComposition.synth = synth;
+        }
+        else if(instrument === 'piano'){
+            let piano = new Piano().synth;
+            this.currentComposition.synth = piano;
+        }
+    }
+
+    visitLoop(node){
+        let loopTimes = node.loopTimes;
+        this.currentComposition.loopTimes = loopTimes;
+        return;
     }
 
     visitStatementList(node){
@@ -469,7 +602,7 @@ class HandelInterpreterAST {
 
     visitPlay(node){
         //let forNode = node.child;
-        console.log("configure part");
+        //console.log("configure part");
         if(node.child.token.type === FOR){
             let forNode = node.child;
            // this.visitFor(forNode)
@@ -557,7 +690,7 @@ class SymbolTableBuilder {
         //subtree
         this.visitStatementList(node.child);
 
-        console.log("GLOBAL Scope", this.currentScope);
+        //console.log("GLOBAL Scope", this.currentScope);
         console.log('leave global scope')
         this.currentScope = this.currentScope.enclosingScope;
     }
@@ -592,6 +725,15 @@ class SymbolTableBuilder {
         this.currentScope = this.currentScope.enclosingScope;
     }
 
+    visitBPM(node){
+    }
+
+    visitLoop(node){
+    }
+
+    visitSound(node){
+    }
+
     visitProcedureCall(node){
         let procSymbol = this.currentScope.lookup(node.value)
         let formalParams = procSymbol.params
@@ -604,6 +746,18 @@ class SymbolTableBuilder {
         for(let param of actualParams){
         }
         */
+
+        for(let customization of node.customizationList){
+            if(customization.token.type === BPM){
+                this.visitBPM(customization);
+            }
+            else if(customization.token.type === SOUND){
+                this.visitSound(customization);
+            }
+            else if(customization.token.type === LOOP){
+                this.visitLoop(customization);
+            }
+        }
     }
 
     visitStatementList(node){
@@ -682,7 +836,7 @@ class SymbolTableBuilder {
     }
 
     visitFor(node){
-        console.log("FOR", node)
+        //console.log("FOR", node)
         let right = node.right;
         let left = node.left;
         if(left.token.type === NOTE){
