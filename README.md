@@ -263,9 +263,11 @@ Note that saved variables, playables, or durations, can be used as arguments whe
 OK! Now to configuring a run of a chunk.
 
 
+<br/>
+
 ### Configuring a run of a chunk
 
-You can be configure a run of chunk by adding the **with** keyword and a comma separated list of customizations to the end of a run command.
+You can configure a run of chunk by adding the **with** keyword and a comma separated list of customizations to the end of a run command.
 
 There are three main customizations: **bpm**, **sound**, and **loop**.
 
@@ -283,7 +285,7 @@ You can use the **loop** keyword to set the amount of times the run of a chunk s
 
 For example ```loop for 10```
 
-All together a run of a chunk can be configured as follows:
+All together you can configure a run of a chunk as follows:
 
 ```
 start
