@@ -54,7 +54,7 @@ function clicked(){
 document.addEventListener("click", clicked);
 ```
 
-Note the Handel program is passed into the **RunHandel** function, this function is globally available. 
+Note the Handel program is passed into the **RunHandel** function. This function is globally available. 
 
 ## Getting started
 
