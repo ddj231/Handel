@@ -12,12 +12,19 @@ function clicked(){
 
         chunk backbeat
             rest for 1b
+            rest for 1b
             play E1 for 1b
         endchunk
 
-        run gerand with sound piano, loop for 5
-        run gerand with sound snare, loop for 5
-        run backbeat with sound kick, loop for 15 
+        chunk hats 
+            rest for 1b
+            play E1 for 1b
+            rest for 1b
+        endchunk
+
+        run gerand with bpm 120, sound synth, loop for 50
+        run hats with bpm 240, sound hihat, loop for 100
+        run backbeat with bpm 240, sound kick, loop for 100
     finish
     `)
 }

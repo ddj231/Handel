@@ -1,12 +1,13 @@
 # Handel
 
-*soli deo gloria*
-
 Handel is a small procedural programming language for writting songs in browser. 
 
 The Handel Interpreter interprets Handel programs and plays compositions in browser, thanks to [Tone.js](https://tonejs.github.io/).
 
 
+*soli deo gloria*
+
+<br/>
 
 ## Installation
 
@@ -19,10 +20,11 @@ Add the below to your html file:
 
 You're all set!
 
-
+<br/>
 
 ## Usage
 
+<br/>
 
 ### Example Handel Snippet
 
@@ -54,11 +56,22 @@ function clicked(){
 document.addEventListener("click", clicked);
 ```
 
-Note the Handel program is passed into the **RunHandel** function. This function is globally available. 
+Note that you pass the Handel code into the **RunHandel** function. This function is globally available. 
+
+Additionally you can use the **StopHandel** function to stop a running Handel program. 
+
+```
+StopHandel();
+```
+
+This function is also globally available.
+
+<br/>
 
 ## Getting started
 
-A Handel program must be contained within the **start** and **finish** keywords. Below is a complete Handel program (and the shortest syntactically correct program):
+Handel programs are contained within the **start** and **finish** keywords. Below is a complete Handel program (and the shortest syntactically correct program):
+
 ```
 start
 finish
@@ -66,10 +79,11 @@ finish
 
 The program above does nothing. But it's a start!
 
+<br/>
 
 ## Let's play something
 
-A note or a chord can be played using the play command. Below is an example program that plays a note, then a chord:
+You can be play notes and chords using the play command. Below is an example program that plays a note, then a chord:
 
 ```
 start
@@ -78,12 +92,14 @@ start
 finish
 ```
 
-Note the syntax above. A **play** command begins with the **play** keyword, then a note or chord (a list of notes separated by commas) follow.
+Note the syntax above. A **play** command begins with the **play** keyword, then a note or chord (a list of notes separated by commas) follows.
 
-Lastly a duration is needed. The play command above ends with 'for 1b', which states how long the particular note or notelist (chord) should be held. Currently the available beat lenghts are 1b, 2b, 3b, and 4b. 
+Lastly play commands need a duration. The play command above ends with 'for 1b'. This states how long the particular note or notelist (chord) should be held. Currently the available beat lenghts are 1b, 2b, 3b, and 4b. 
 
 Phew! We're getting somewhere.
 
+
+<br/>
 
 ## Let's rest
 
@@ -96,6 +112,7 @@ start
 finish
 ```
 
+<br/>
 
 ## But are there Variables?
 
@@ -110,7 +127,7 @@ play myplayable
 rest myduration
 ```
 
-Variables can be declared that store two builtin types in Handel: Playables and Durations.
+You can declare Variables in Handel. Variables store two builtin types in Handel: Playables and Durations.
 
 We've already seen **Playables** above. Playables are a note or notelist (chord) followed by a duration.
 Here are some example playables.
@@ -122,7 +139,8 @@ D#6, E#6, G3 for 1b
 
 *no promises that the above chord sounds pleasing to the ear :p*
 
-A **Duration** is the keyword **for** followed by a beat length.
+**Durations** are the keyword **for** followed by a beat length.
+
 Here are all available durations: 
 
 ```
@@ -136,7 +154,7 @@ Finally variables!
 
 To store a playable or a duration use the **save** keyword, followed by a variable name, an equal sign and a playable or a duration.
 
-Variable names must be only lowercase letters, and contain no numbers. Variable names must also not be any of the reserved keywords in Handel. (See the Reserved Keywords section below).
+Variable name must contain only lowercase letters, and no numbers. Variable names must also not be any of the reserved keywords in Handel. (See the Reserved Keywords section below).
 
 Below is an example program using variables.
 
@@ -155,13 +173,13 @@ finish
 OK! So far so good!
 
 
+<br/>
+
 ## Procedures (I thought this was a procedural programming language?)
 
-Procedures in Handel are called chunks. A **chunk** can be conceptualized as a song track. When ran,
+Procedures in Handel are called chunks. You can conceptualize a **chunk** as a song track. When ran,
 chunks play at the same time as other run chunks and the global track. Chunks must begin with the **chunk**
 keyword and end with the **endchunk** keyword.
-
-Maybe it will be easier to show rather than tell.
 
 Below is an example program with a kick drum and a piano, playing together.
 
@@ -190,31 +208,36 @@ Both the 'backbeat' chunk and the 'mykeys' chunk above play together (not one af
 behavior allows multitrack songs to be created with Handel. 
 
 
+<br/>
+
 ## More on procedures (chunks) and their syntax
 
 
+<br/>
+
 ### Procedure declaration (creating chunks) 
 
-As noted above a chunk is created with the **chunk** keyword. The name of the **chunk** (the chunk name) then follows.
+As noted above you can create chunks with the **chunk** keyword. The name of the **chunk** (the chunk name) follows the keyword.
 
 This chunk name must be all lowercase letters, no numbers and cannot be one of Handel's reserved keywords. (See the Reserved Keywords section below).
 
-After the chunk name, parameters can optionally be added. A list of comma separated parameters can follow the **using** keyword.
+After the chunk name, you can optionally add parameters. A list of comma separated parameters can follow the **using** keyword.
 
 Together you get the following: `chunk somechunkname using someparam, anotherparam`
 
-After the optional parameter list, a body can be added to the chunk. This is a function body (what you would like to happen when the chunk is ran).
+After the optional parameter list, you can add a body to the chunk. This is a function body (what you would like to happen when the chunk is ran).
 
 Lastly the chunk must be ended with the **endchunk** keyword.
 
+<br/>
 
 ### Running Procedures 
 
-A chunk can be ran using the **run** keyword.
+You can run a chunk using the **run** keyword.
 
 To run a chunk use the **run** command followed by the name of the chunk. 
 
-If the chunk has parameters, a matching number of comma separated arguments must be used.
+If the chunk has parameters, a you must use a matching number of comma separated arguments.
 
 Here is an example running two chunks. One chunk requires arguments the other does not.
 
@@ -242,21 +265,21 @@ OK! Now to configuring a run of a chunk.
 
 ### Configuring a run of a chunk
 
-A run of chunk can be configured by adding the **with** keyword and a comma separated list of customizations to the end of a run command.
+You can be configure a run of chunk by adding the **with** keyword and a comma separated list of customizations to the end of a run command.
 
 There are three main customizations: **bpm**, **sound**, and **loop**.
 
-The **bpm** keyword can be used to set the bpm of the run of the chunk.
+You can use **bpm** keyword to set the bpm of a run of a chunk.
 
 For example ```bpm 120```
 
-The **sound** keyword can be used to set the instrument of the run of the chunk.
+You can use the **sound** keyword to set the instrument of a run of a chunk.
 
 For example ```sound piano```
 
 The current available sounds to choose from are: piano, synth, casio, kick, snare, hihat
 
-The **loop** keyword can be used to set the amount of times the run of the chunk shoud loop for.
+You can use the **loop** keyword to set the amount of times the run of a chunk shoud loop for.
 
 For example ```loop for 10```
 
@@ -274,7 +297,7 @@ finish
 
 Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100!
 
-
+<br/>
 
 ## Reference 
 
@@ -286,6 +309,8 @@ Eb2
 G#7
 ```
 
+<br/>
+
 **Notelist**: A list of notes. Together this list of notes forms a chord. (6 notes maximum).
 *Examples*
 ```
@@ -293,7 +318,11 @@ C2, E2, G2
 C4, Eb4, G#3
 ```
 
+<br/>
+
 **Beat**: A number of beats. Only 4 possible (1b, 2b, 3b, and 4b).
+
+<br/>
 
 **Duration**: An expression that represents the amount of beats to play or hold for.
 *Examples*
@@ -302,6 +331,8 @@ for 1b
 for 2b
 ```
 
+<br/>
+
 **Playable**: A note or a notelist, followed by a duration. 
 *Examples*
 ```
@@ -309,6 +340,7 @@ C1, F1, E1, D1, for 1b
 D1 for 2b
 ```
 
+<br/>
 
 **play**: A command to play a note or notelist for a given duration.
 *Examples*
@@ -317,6 +349,7 @@ play C1, F1, E1, D1, for 1b
 play D1 for 2b
 ```
 
+<br/>
 
 **rest**: A command to rest for a given duration.
 *Examples*
@@ -325,12 +358,16 @@ rest for 1b
 rest for 2b
 ```
 
+<br/>
+
 **save**: A command to save a variable (see above section on variables for more details). Only playabes and durations can be saved in variables.
 *Examples*
 ```
 save myplayable = E2 for 1b
 save myduration = for 1b
 ```
+
+<br/>
 
 **chunk**: Used to declare a procedure. (see above section on procedures for more details)
 *Examples*
@@ -340,6 +377,8 @@ chunk mybassline
 endchunk
 ```
 
+<br/>
+
 **using**: Used to prepend a list of paramaters for a chunk.
 
 ```
@@ -348,11 +387,15 @@ chunk mypiano using nicechord
 endchunk
 ```
 
+<br/>
+
 **run**: Used to run a chunk. (see above section on running procedures for more details).
 *Examples*
 ```
 run mypiano using E2, C#2 for 1b 
 ```
+
+<br/>
 
 **with**: Used to customize a given run of a chunk. (see section on procedures above for more details)
 
@@ -360,14 +403,19 @@ run mypiano using E2, C#2 for 1b
 run mybassline with bpm 115
 ```
 
+<br/>
+
 **bpm** (beats per minute), **loop**, sound: Follows the **with** keyword. Used to customize a run of a chunk.
 
 ```
 run mybassline with bpm 90, loop for 2, sound kick
 ```
 
+<br/>
+
 **Sounds**: possible sounds that can be used to customize a run of a chunk. (piano, synth, casio, kick, snare, hihat)
 
+<br/>
 
 ## Reserved Keywords
 ### start
