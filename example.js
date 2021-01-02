@@ -22,7 +22,7 @@ function clicked(){
             rest for 1b
         endchunk
 
-        run gerand with bpm 120, sound synth, loop for 50
+        run gerand with bpm 120, sound piano, loop for 50
         run hats with bpm 240, sound hihat, loop for 100
         run backbeat with bpm 240, sound kick, loop for 100
     finish

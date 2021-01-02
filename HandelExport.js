@@ -1,3 +1,10 @@
+let production = true 
+let baseUrl = './Sounds/'
+
+if(production){
+    baseUrl = "./node_modules/handel-pl/Sounds/";
+}
+
 const Handel = (function(){
     class FMSynth{
         constructor(){
@@ -20,7 +27,7 @@ const Handel = (function(){
             urls: {
                 D2: "Snare_D2.wav",
             },
-            baseUrl: "./Sounds/",
+            baseUrl: baseUrl,
             }).toDestination();
             this.synth.volume.value = -3;
         }
@@ -32,7 +39,7 @@ const Handel = (function(){
                 C5: "Piano_C5.wav",
                 A4: "Piano_A4.wav",
             },
-            baseUrl: "./Sounds/",
+            baseUrl: baseUrl,
             }).toDestination();
         }
     }
@@ -43,7 +50,7 @@ const Handel = (function(){
             urls: {
                 C1: "Kick_C.wav",
             },
-            baseUrl: "./Sounds/",
+            baseUrl: baseUrl,
             }).toDestination();
         }
     }
@@ -54,7 +61,7 @@ const Handel = (function(){
             urls: {
                 G3: "HiHat_G.wav",
             },
-            baseUrl: "./Sounds/",
+            baseUrl: baseUrl,
             }).toDestination();
         }
     }
