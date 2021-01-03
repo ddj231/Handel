@@ -1,0 +1,25 @@
+start
+	chunk mysoundtrack using chordplayable, noteplayable
+    	play chordplayable
+        rest for 1b
+    	play noteplayable 
+    endchunk
+    
+    chunk somehats 
+    	play E3 for 1b
+    endchunk
+    
+    save chordplayable = E3, Gb3, A#3 for 2b
+   	save noteplayable = A3 for 1b
+    
+    run mysoundtrack
+    using chordplayable, noteplayable
+    with sound synth, loop for 20, bpm 120
+    
+    run mysoundtrack
+    using chordplayable, noteplayable
+    with sound casio, loop for 20, bpm 120
+    
+    run somehats with sound hihat, bpm 240, loop for 300
+    
+finish

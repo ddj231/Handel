@@ -38,6 +38,7 @@ start
 finish
 ```
 
+See the examples folder [here](./Examples/) for example Handel programs and inspiration.
 
 ### Example Using Handel In Browser
 
