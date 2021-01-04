@@ -1,0 +1,26 @@
+start
+	chunk main
+    	play D3, F3, G3, B3 for 1b
+       	play F3, A3, C3, E3 for 1b
+       	play C3, E3, G3, B3 for 1b
+       	play D4, F3, G4, B3 for 1b
+       	play F4, G3, B4, D3 for 1b
+       	play D4, F3, G4, B3 for 1b
+       	play F4, G3, B4, D3 for 1b
+       	play D4, F3, G4, B3 for 1b
+    endchunk
+    
+    chunk kickdrums 
+    	play E1 for 1b
+        rest for 3b
+    endchunk
+    
+    chunk hats 
+    	play E4 for 1b
+    endchunk
+    
+    run main with sound piano, loop for 10
+    run kickdrums with sound kick, loop for 20
+    run hats with bpm 280, sound hihat, loop for 200
+    
+finish
