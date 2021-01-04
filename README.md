@@ -398,9 +398,8 @@ run mybassline with bpm 90, loop for 2, sound kick
 
 **Sounds**: possible sounds that can be used to customize a run of a chunk. (piano, synth, casio, kick, snare, hihat)
 
-<br/>
+# Reserved Keywords
 
-## Reserved Keywords
 ### start
 
 ### finish
