@@ -94,22 +94,17 @@ const Handel = (function(){
         }
     
         secondsFromBPM(beats){
-            let valueToBeat = {
-                '4n': 1,
-                '2n': 2,
-                '2n.': 3,
-                '1m': 4,
-            } 
-           return valueToBeat[beats]/(this.bpm / 60);
+           return beats/(this.bpm / 60);
         }
     
         configurePart(playEvents){
             for(let playEvent of playEvents){
                 this.playEvents.push(playEvent);
+                let length = this.secondsFromBPM(playEvent.numBeats);
                 if(playEvent.notes){
-                    this.part.add({notes: playEvent.notes, time: this.currentTime, length: playEvent.length});
+                    this.part.add({notes: playEvent.notes, time: this.currentTime, length: length});
                 }
-                this.currentTime += this.secondsFromBPM(playEvent.length);
+                this.currentTime += length;
             }
         }
     
@@ -120,20 +115,17 @@ const Handel = (function(){
         }
     
         play(){
-            //Tone.Transport.bpm.value = this.bpm;
-            console.log(this.bpm);
             this.configureLoop(this.loopTimes);
-            //Tone.Transport.bpm.rampTo(this.bpm, 0.05);
             this.part.start(0.1);
-            //Tone.Transport.start();
         }
     
     }
     
     class PlayEvent {
-        constructor(notes, length){
+        constructor(notes, length, numBeats){
             this.length = length;
-            this.notes = notes
+            this.notes = notes;
+            this.numBeats = numBeats;
         }
     }
 
@@ -305,7 +297,10 @@ const Handel = (function(){
 
             if(result !== ""){
                 if(result in RESERVED_KEYWORDS){
-                    return RESERVED_KEYWORDS[result];
+                    let token = RESERVED_KEYWORDS[result];
+                    token.lineno = this.lineno
+                    return token;
+                    //return RESERVED_KEYWORDS[result];
                 }
                 return new Token(ID, result, this.lineno);
             }
@@ -376,6 +371,10 @@ const Handel = (function(){
                         digit += this.currentChar;
                         this.advance();
                         current = Number.parseInt(this.currentChar);
+                    }
+                    if(this.currentChar === 'b'){
+                        this.advance();
+                        return new Token(BEAT, digit, this.lineno);
                     }
                     return new Token(DIGIT, Number.parseInt(digit), this.lineno);
                 }
@@ -540,8 +539,8 @@ const Handel = (function(){
             this.currentToken = this.lexer.getNextToken();
         }
 
-        error(lineno){
-            throw new Error(`error parsing input at line ${lineno}`);
+        error(){
+            throw new Error(`error parsing input at line ${this.currentToken.lineno}`);
         }
 
         eat(type){
@@ -549,7 +548,7 @@ const Handel = (function(){
                 this.currentToken = this.lexer.getNextToken();
             }
             else{
-                this.error(this.currentToken.lineno);
+                this.error();
             }
         }
 
@@ -1070,10 +1069,10 @@ const Handel = (function(){
 
         visitFor(node){
             if(node.right){
-                return new PlayEvent(this.visitNoteList(node.left), this.beatToValue[node.right.value]);
+                return new PlayEvent(this.visitNoteList(node.left), this.beatToValue[node.right.value], node.right.value);
             }
             else{
-                return new PlayEvent(null, this.beatToValue[node.left.value]);
+                return new PlayEvent(null, this.beatToValue[node.left.value], node.left.value);
             }
         }
 

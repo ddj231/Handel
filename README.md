@@ -72,14 +72,15 @@ This function is also globally available.
 
 ## Getting started
 
-Handel programs are contained within the **start** and **finish** keywords. Below is a complete Handel program (and the shortest syntactically correct program):
+Handel programs are contained within the **start** and **finish** keywords. Below is a complete Handel program:
 
 ```
 start
+    play E4 for 1b
 finish
 ```
 
-The program above does nothing. But it's a start!
+The program above only plays 1 note. But it's a start!
 
 <br/>
 
@@ -96,10 +97,9 @@ finish
 
 Note the syntax above. A **play** command begins with the **play** keyword, then a note or chord (a list of notes separated by commas) follows.
 
-Lastly play commands need a duration. The play command above ends with 'for 1b'. This states how long the particular note or notelist (chord) should be held. Currently the available beat lenghts are 1b, 2b, 3b, and 4b. 
+Lastly play commands need a duration. The play commands above end with 'for 1b'. This states how long the particular note or notelist (chord) should be held.  
 
 Phew! We're getting somewhere.
-
 
 <br/>
 
@@ -141,15 +141,17 @@ D#6, E#6, G3 for 1b
 
 *no promises that the above chord sounds pleasing to the ear :p*
 
-**Durations** are the keyword **for** followed by a beat length.
+**Durations** are the keyword **for** followed by a beat.
 
-Here are all available durations: 
+A **beat** is any whole number followed by the letter 'b' 
+
+All together, here some example durations: 
 
 ```
 for 1b
 for 2b
-for 3b
-for 4b
+for 16b
+for 32b
 ```
 
 Finally variables!
@@ -324,7 +326,12 @@ C4, Eb4, G#3
 
 <br/>
 
-**Beat**: A number of beats. Only 4 possible (1b, 2b, 3b, and 4b).
+**Beat**: A number of beats. A whole number followed by the character 'b'.
+*Examples*
+```
+1b
+20b
+```
 
 <br/>
 
