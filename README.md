@@ -290,7 +290,6 @@ Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100
 # Reference 
 
 **Note**: A musical note. 7 octaves are available.
-*Examples*
 ```
 C3
 Eb2
@@ -300,7 +299,6 @@ G#7
 <br/>
 
 **Notelist**: A list of notes. Together this list of notes forms a chord. (6 notes maximum).
-*Examples*
 ```
 C2, E2, G2
 C4, Eb4, G#3
@@ -309,7 +307,6 @@ C4, Eb4, G#3
 <br/>
 
 **Beat**: A number of beats. A whole number followed by the character 'b'.
-*Examples*
 ```
 1b
 20b
@@ -318,7 +315,6 @@ C4, Eb4, G#3
 <br/>
 
 **Duration**: An expression that represents the amount of beats to play or hold for.
-*Examples*
 ```
 for 1b
 for 2b
@@ -327,7 +323,6 @@ for 2b
 <br/>
 
 **Playable**: A note or a notelist, followed by a duration. 
-*Examples*
 ```
 C1, F1, E1, D1, for 1b
 D1 for 2b
@@ -336,7 +331,6 @@ D1 for 2b
 <br/>
 
 **play**: A command to play a note or notelist for a given duration.
-*Examples*
 ```
 play C1, F1, E1, D1, for 1b
 play D1 for 2b
@@ -345,7 +339,6 @@ play D1 for 2b
 <br/>
 
 **rest**: A command to rest for a given duration.
-*Examples*
 ```
 rest for 1b
 rest for 2b
@@ -354,7 +347,6 @@ rest for 2b
 <br/>
 
 **save**: A command to save a variable (see above section on variables for more details). Only playabes and durations can be saved in variables.
-*Examples*
 ```
 save myplayable = E2 for 1b
 save myduration = for 1b
@@ -363,7 +355,6 @@ save myduration = for 1b
 <br/>
 
 **chunk**: Used to declare a procedure. (see above section on procedures for more details)
-*Examples*
 ```
 chunk mybassline
     play G1 for 2b
@@ -383,7 +374,6 @@ endchunk
 <br/>
 
 **run**: Used to run a chunk. (see above section on running procedures for more details).
-*Examples*
 ```
 run mypiano using E2, C#2 for 1b 
 ```
