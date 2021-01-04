@@ -8,9 +8,8 @@ Try the Handel Web Editor here: [Handel Web Editor](https://ddj231.github.io/Han
 
 *soli deo gloria*
 
-<br/>
 
-## Installation
+# Installation
 
 Add the below to your html file:
 
@@ -21,13 +20,9 @@ Add the below to your html file:
 
 You're all set!
 
-<br/>
+# Usage
 
-## Usage
-
-<br/>
-
-### Example Handel Snippet
+## Example Handel Snippet
 
 ```
 start
@@ -40,7 +35,7 @@ finish
 
 See the Examples folder [here](./Examples/) for example Handel programs and inspiration.
 
-### Example Using Handel In Browser
+## Example Using Handel In Browser
 
 ```
 function clicked(){
@@ -68,9 +63,8 @@ StopHandel();
 
 This function is also globally available.
 
-<br/>
 
-## Getting started
+# Getting started
 
 Handel programs are contained within the **start** and **finish** keywords. Below is a complete Handel program:
 
@@ -82,9 +76,8 @@ finish
 
 The program above only plays 1 note. But it's a start!
 
-<br/>
 
-## Let's play something
+# Let's play something
 
 You can be play notes and chords using the play command. Below is an example program that plays a note, then a chord:
 
@@ -101,9 +94,8 @@ Lastly play commands need a duration. The play commands above end with 'for 1b'.
 
 Phew! We're getting somewhere.
 
-<br/>
 
-## Let's rest
+# Let's rest
 
 Similar to the play command, a rest can played using the rest command. Below is an example program that rests for 1 beat then plays a note for 2 beats.
 
@@ -114,9 +106,8 @@ start
 finish
 ```
 
-<br/>
 
-## But are there Variables?
+# But are there Variables?
 
 tl;dr
 Here is some example usage of variables in Handel
@@ -177,9 +168,8 @@ finish
 OK! So far so good!
 
 
-<br/>
 
-## Procedures (I thought this was a procedural programming language?)
+# Procedures (I thought this was a procedural programming language?)
 
 Procedures in Handel are called chunks. You can conceptualize a **chunk** as a song track. When ran,
 chunks play at the same time as other run chunks and the global track. Chunks must begin with the **chunk**
@@ -212,14 +202,11 @@ Both the 'backbeat' chunk and the 'mykeys' chunk above play together (not one af
 behavior allows multitrack songs to be created with Handel. 
 
 
-<br/>
 
-## More on procedures (chunks) and their syntax
+# More on procedures (chunks) and their syntax
 
 
-<br/>
-
-### Procedure declaration (creating chunks) 
+## Procedure declaration (creating chunks) 
 
 As noted above you can create chunks with the **chunk** keyword. The name of the **chunk** (the chunk name) follows the keyword.
 
@@ -233,9 +220,8 @@ After the optional parameter list, you can add a body to the chunk. This is a fu
 
 Lastly the chunk must be ended with the **endchunk** keyword.
 
-<br/>
 
-### Running Procedures 
+## Running Procedures 
 
 You can run a chunk using the **run** keyword.
 
@@ -267,9 +253,7 @@ Note that saved variables, playables, or durations, can be used as arguments whe
 OK! Now to configuring a run of a chunk.
 
 
-<br/>
-
-### Configuring a run of a chunk
+## Configuring a run of a chunk
 
 You can configure a run of chunk by adding the **with** keyword and a comma separated list of customizations to the end of a run command.
 
@@ -303,9 +287,7 @@ finish
 
 Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100!
 
-<br/>
-
-## Reference 
+# Reference 
 
 **Note**: A musical note. 7 octaves are available.
 *Examples*
