@@ -10,7 +10,7 @@ function clicked(){
             rest for 4b
             play E3, G3, B3 for 10b
         endchunk
-        run arb with bpm 200, sound kick 
+        run arb with bpm 200, sound piano 
     finish
     `)
 }

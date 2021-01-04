@@ -2,7 +2,7 @@ let production = true
 let baseUrl = './Sounds/'
 
 if(production){
-    baseUrl = "https://unpkg.com/handel-pl@0.1.8/Sounds/";
+    baseUrl = "https://unpkg.com/handel-pl@0.1.9/Sounds/";
 }
 
 const Handel = (function(){
