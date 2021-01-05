@@ -1038,7 +1038,7 @@ const Handel = (function(){
                 events = [this.visitFor(child)];
             }
             else if(child.token.type === ID){
-                events = [this.visitId(child)];
+                events = [new PlayEvent(null, "", this.visitId(child))];
             }
             else{
                 this.error();
