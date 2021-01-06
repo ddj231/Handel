@@ -2,7 +2,7 @@ let production = true
 let baseUrl = './Sounds/'
 
 if(production){
-    baseUrl = "https://unpkg.com/handel-pl@0.1.16/Sounds/";
+    baseUrl = "https://unpkg.com/handel-pl@0.1.17/Sounds/";
 }
 
 const Handel = (function(){
@@ -96,25 +96,30 @@ const Handel = (function(){
             this.playEvents = [];
             this.currentTime = 0;
             this.startTime = 0;
-            //console.log(Tone.now());
             this.loopTimes = 1;
             // Create Part
             this.part = new Tone.Part((time, value) => {
-                this.synth.triggerAttackRelease(value.notes, value.length, time);
+                this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
             });
         }
     
         secondsFromBPM(beats){
-           return beats/(this.bpm / 60);
+            return beats/(Tone.Transport.bpm.value / 60);
         }
-    
+
+        holdFor(beats){
+            let convertedBeats = beats * (Tone.Transport.bpm.value / this.bpm)
+            return convertedBeats/(Tone.Transport.bpm.value / 60);
+        }
+        
         configurePart(playEvents){
             for(let playEvent of playEvents){
                 this.playEvents.push(playEvent);
                 let length = this.secondsFromBPM(playEvent.numBeats);
+                let holdFor = this.holdFor(playEvent.numBeats);
                 for(let i = 0; i < playEvent.rep; i++){
                     if(playEvent.notes){
-                        this.part.add({notes: playEvent.notes, time: this.currentTime, length: length});
+                        this.part.add({notes: playEvent.notes, time: this.currentTime, length: holdFor});
                     }
                     this.currentTime += length;
                 }
@@ -122,12 +127,13 @@ const Handel = (function(){
         }
     
         configureLoop(times){
-            this.part.loopStart = this.startTime;
-            this.part.loopEnd = this.currentTime;
+            this.part.loopStart = Tone.Time(this.startTime);
+            this.part.loopEnd = Tone.Time(this.currentTime); 
             this.part.loop = times;
         }
     
         play(){
+            this.part.playbackRate = this.bpm / Tone.Transport.bpm.value 
             this.configureLoop(this.loopTimes);
             this.part.start(0.1);
         }
@@ -929,6 +935,7 @@ const Handel = (function(){
 
         visitProgram(node){
             Tone.Transport.cancel(0);
+            Tone.Transport.bpm.value = 1000 
             let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
             this.currentComposition = new Composition(Tone.AMSynth, 140);
             this.currentComposition.enclosingComposition = null;

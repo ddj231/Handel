@@ -389,8 +389,9 @@ run mybassline with bpm 115
 
 <br/>
 
-**bpm** (beats per minute), **loop**, sound: Follows the **with** keyword. Used to customize a run of a chunk.
-
+**bpm**: beats per minute (bpms are best synced when under 1000). 
+**loop**: amount of times to loop
+**sound**:  instrument to use. Follows the **with** keyword.
 ```
 run mybassline with bpm 90, loop for 2, sound kick
 ```
