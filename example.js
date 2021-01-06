@@ -1,11 +1,12 @@
 function clicked(){
     RunHandel(`
-    start
-    save myplayablenote = E2 for 2b
-    save help = for 2b
-    rest help 
-    play myplayablenote
-    finish
+        start
+            chunk somechunk 
+                play E4 for 1b loop for 3
+                rest for 1b
+            endchunk
+            run somechunk with sound piano, loop for 2 
+        finish
     `)
 }
 document.addEventListener("click", clicked);

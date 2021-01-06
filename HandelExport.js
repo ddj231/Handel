@@ -101,10 +101,12 @@ const Handel = (function(){
             for(let playEvent of playEvents){
                 this.playEvents.push(playEvent);
                 let length = this.secondsFromBPM(playEvent.numBeats);
-                if(playEvent.notes){
-                    this.part.add({notes: playEvent.notes, time: this.currentTime, length: length});
+                for(let i = 0; i < playEvent.rep; i++){
+                    if(playEvent.notes){
+                        this.part.add({notes: playEvent.notes, time: this.currentTime, length: length});
+                    }
+                    this.currentTime += length;
                 }
-                this.currentTime += length;
             }
         }
     
@@ -122,17 +124,18 @@ const Handel = (function(){
     }
     
     class PlayEvent {
-        constructor(notes, length, numBeats){
+        constructor(notes, length, numBeats, rep = 1){
             this.length = length;
             this.notes = notes;
             this.numBeats = numBeats;
+            this.rep = rep
         }
     }
 
     // Token types
-    const [NOTE, BPM, SOUND, LOOP, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
+    const [NOTE, BPM, SOUND, LOOP, REP, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
         ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
-        REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "INSTRUMENT",
+        REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "REP", "INSTRUMENT",
         "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
         "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
         "REST", "WITH", "RUN", "ASSIGN", "USING", "EOF"];
@@ -167,6 +170,7 @@ const Handel = (function(){
         synth: new Token(INSTRUMENT, 'synth'),
         piano: new Token(INSTRUMENT, 'piano'),
         hihat: new Token(INSTRUMENT, 'hihat'),
+        rep: new Token(REP, 'rep'),
     }
 
     class HandelSymbol {
@@ -398,10 +402,11 @@ const Handel = (function(){
     }
 
     class PlayAST{
-        constructor(token, child = null){
+        constructor(token, child = null, rep = null){
         this.token = token;
         this.value = token.value;
         this.child = child;
+        this.rep = rep;
         }
     }
 
@@ -472,6 +477,14 @@ const Handel = (function(){
             this.token = token;
             this.value = loopTimes;
             this.loopTimes = loopTimes;
+        }
+    }
+
+    class RepAST {
+        constructor(token, repTimes){
+            this.token = token;
+            this.value = repTimes;
+            this.repTimes = repTimes;
         }
     }
 
@@ -556,7 +569,22 @@ const Handel = (function(){
             let token = this.currentToken;
             this.eat(PLAY);
             let child = this.expr();
-            return new PlayAST(token, child);
+            let rep;
+            if(this.currentToken.type === LOOP){
+                rep = this.rep();
+            }
+            return new PlayAST(token, child, rep);
+        }
+
+        rep(){
+            let token = this.currentToken;
+            console.log("enter rep")
+            this.eat(LOOP);
+            this.eat(FOR);
+            let digit = this.currentToken;
+            this.eat(DIGIT);
+            console.log("got rep")
+            return new RepAST(token, digit.value);
         }
 
         rest(){
@@ -1019,14 +1047,12 @@ const Handel = (function(){
         }
 
         visitPlay(node){
-            //let forNode = node.child;
             if(node.child.token.type === FOR){
                 let forNode = node.child;
-            // this.visitFor(forNode)
-                this.currentComposition.configurePart([this.visitFor(forNode)]);
+                this.currentComposition.configurePart([this.visitFor(forNode, node.rep)]);
             }
             else if(node.child.token.type === ID){
-                this.currentComposition.configurePart([this.visitId(node.child)]);
+                this.currentComposition.configurePart([this.visitId(node.child, node.rep)]);
             }
         }
 
@@ -1067,12 +1093,14 @@ const Handel = (function(){
             return this.callStack.peek().get(node.value);
         }
 
-        visitFor(node){
+        visitFor(node, rep){
+            let value = rep ? rep.value : 1
+
             if(node.right){
-                return new PlayEvent(this.visitNoteList(node.left), this.beatToValue[node.right.value], node.right.value);
+                return new PlayEvent(this.visitNoteList(node.left), this.beatToValue[node.right.value], node.right.value, value);
             }
             else{
-                return new PlayEvent(null, this.beatToValue[node.left.value], node.left.value);
+                return new PlayEvent(null, this.beatToValue[node.left.value], node.left.value, value);
             }
         }
 
@@ -1199,6 +1227,13 @@ const Handel = (function(){
             else if(node.child.token.type === ID){
                 this.visitId(node.child)
             }
+            
+            if(node.rep){
+                this.visitRep(node.rep);
+            }
+        }
+
+        visitRep(node){
         }
 
         visitRest(node){
