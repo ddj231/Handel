@@ -1,8 +1,8 @@
-let production = true 
+let production = false 
 let baseUrl = './Sounds/'
 
 if(production){
-    baseUrl = "https://unpkg.com/handel-pl@0.1.14/Sounds/";
+    baseUrl = "https://unpkg.com/handel-pl@0.1.15/Sounds/";
 }
 
 const Handel = (function(){
@@ -48,7 +48,7 @@ const Handel = (function(){
         constructor(){
             this.synth = new Tone.Sampler({
             urls: {
-                D3: "Guitar_D.mp3",
+                D3: "Guitar_D_extended.wav",
             },
             baseUrl: baseUrl,
             }).toDestination();
