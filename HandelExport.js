@@ -2,7 +2,7 @@ let production = true
 let baseUrl = './Sounds/'
 
 if(production){
-    baseUrl = "https://unpkg.com/handel-pl@0.1.11/Sounds/";
+    baseUrl = "https://unpkg.com/handel-pl@0.1.13/Sounds/";
 }
 
 const Handel = (function(){
@@ -38,6 +38,17 @@ const Handel = (function(){
             urls: {
                 C5: "Piano_C5.wav",
                 A4: "Piano_A4.wav",
+            },
+            baseUrl: baseUrl,
+            }).toDestination();
+        }
+    }
+
+    class Guitar {
+        constructor(){
+            this.synth = new Tone.Sampler({
+            urls: {
+                D2: "Guitar_D.mp3",
             },
             baseUrl: baseUrl,
             }).toDestination();
@@ -133,9 +144,9 @@ const Handel = (function(){
     }
 
     // Token types
-    const [NOTE, BPM, SOUND, LOOP, REP, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
+    const [NOTE, BPM, SOUND, LOOP, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
         ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
-        REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "REP", "INSTRUMENT",
+        REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "INSTRUMENT",
         "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
         "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
         "REST", "WITH", "RUN", "ASSIGN", "USING", "EOF"];
@@ -170,7 +181,7 @@ const Handel = (function(){
         synth: new Token(INSTRUMENT, 'synth'),
         piano: new Token(INSTRUMENT, 'piano'),
         hihat: new Token(INSTRUMENT, 'hihat'),
-        rep: new Token(REP, 'rep'),
+        guitar: new Token(INSTRUMENT, 'guitar'),
     }
 
     class HandelSymbol {
@@ -578,12 +589,10 @@ const Handel = (function(){
 
         rep(){
             let token = this.currentToken;
-            console.log("enter rep")
             this.eat(LOOP);
             this.eat(FOR);
             let digit = this.currentToken;
             this.eat(DIGIT);
-            console.log("got rep")
             return new RepAST(token, digit.value);
         }
 
@@ -1010,6 +1019,10 @@ const Handel = (function(){
             }
             else if(instrument === 'piano'){
                 let piano = new Piano().synth;
+                this.currentComposition.synth = piano;
+            }
+            else if(instrument === 'guitar'){
+                let piano = new Guitar().synth;
                 this.currentComposition.synth = piano;
             }
         }

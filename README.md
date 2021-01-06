@@ -330,10 +330,11 @@ D1 for 2b
 
 <br/>
 
-**play**: A command to play a note or notelist for a given duration.
+**play**: A command to play a note or notelist for a given duration. Play commands also take a loop customization.
 ```
 play C1, F1, E1, D1, for 1b
-play D1 for 2b
+play D1 for 2b 
+play E3 for 2b loop for 5
 ```
 
 <br/>
@@ -396,7 +397,7 @@ run mybassline with bpm 90, loop for 2, sound kick
 
 <br/>
 
-**Sounds**: possible sounds that can be used to customize a run of a chunk. (piano, synth, casio, kick, snare, hihat)
+**Sounds**: possible sounds that can be used to customize a run of a chunk. (piano, guitar, synth, casio, kick, snare, hihat)
 
 # Reserved Keywords
 
@@ -431,6 +432,8 @@ run mybassline with bpm 90, loop for 2, sound kick
 ### synth
 
 ### casio
+
+### guitar 
 
 ### kick
 
