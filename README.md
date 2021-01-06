@@ -330,7 +330,7 @@ D1 for 2b
 
 <br/>
 
-**play**: A command to play a note or notelist for a given duration. Play commands also take a loop customization.
+**play**: A command to play a note or notelist for a given duration. Play commands can also take a loop customization.
 ```
 play C1, F1, E1, D1, for 1b
 play D1 for 2b 
