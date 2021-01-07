@@ -176,8 +176,8 @@ Handel (v0.2.0 and greater) supports block loops.  Block loops begin with the **
 Here is an example of a block loop in Handel.
 ```
 block 
-play C3, E3, G3 for 1b 
-play D3, F3, A3 for 1b 
+    play C3, E3, G3 for 1b 
+    play D3, F3, A3 for 1b 
 endblock loop for 10 
 ```
 
