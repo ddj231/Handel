@@ -1,8 +1,8 @@
 function clicked(){
     RunHandel(`
     start
-        save myplayable = E4 for 1b
         chunk hello
+            save myplayable = E4 for 1b
             save myplayabletwo = myplayable
             play myplayabletwo
         endchunk

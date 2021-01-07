@@ -165,6 +165,8 @@ start
 finish
 ```
 
+*Note: in Handel all variables are constants*
+
 OK! So far so good!
 
 # Blocks loops
