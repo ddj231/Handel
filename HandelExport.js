@@ -189,7 +189,6 @@ const Handel = (function(){
         piano: new Token(INSTRUMENT, 'piano'),
         hihat: new Token(INSTRUMENT, 'hihat'),
         guitar: new Token(INSTRUMENT, 'guitar'),
-        do: new Token(DO, 'do'),
         block: new Token(BLOCK, 'BLOCK'),
         endblock: new Token(ENDBLOCK, 'ENDBLOCK'),
     }
@@ -840,13 +839,11 @@ const Handel = (function(){
                 let beat = this.beat();
                 return new AssignAST(assignToken, varNode, beat);
             }
-            /*
             else if(this.currentToken.type === ID){
                 let idNode = new IdAST(this.currentToken);
                 this.eat(ID);
                 return new AssignAST(assignToken, varNode, idNode);
             }
-            */
         }
 
         note(){
@@ -1327,9 +1324,12 @@ const Handel = (function(){
             let varSymbol;
             if(valueNode.token.type === ID){
                 this.visitId(valueNode);
-                let type = this.currentScope.lookup(valueNode.value);
-                console.log(type);
-                varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('BEAT'));
+                let symbol = this.currentScope.lookup(valueNode.value, true);
+                if(!symbol){
+                    throw Error(`Name error in line ${valueNode.token.lineno}: ${valueNode.value} does not exist`);
+                }
+                let type = symbol.type;
+                varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup(type.name));
             }
             else if(valueNode.token.type === BEAT){
                 this.visitBeat(valueNode);
