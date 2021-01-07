@@ -167,7 +167,23 @@ finish
 
 OK! So far so good!
 
+# Blocks loops
 
+Handel (v0.2.0 and greater) supports block loops.  Block loops begin with the **block** keyword and end with the **endblock** keyword and the amount of times a block should loop (a loop customization).
+
+Here is an example of a block loop in Handel.
+```
+block 
+play C3, E3, G3 for 1b 
+play D3, F3, A3 for 1b 
+endblock loop for 10 
+```
+
+Block loops use the global scope, if used globally, or use the scope of the chunk they are in.
+
+Block loops are blocking (no pun intended), and should not be confused with Handel's procedures (chunks).
+
+More on procedures below.
 
 # Procedures (I thought this was a procedural programming language?)
 
@@ -201,7 +217,7 @@ finish
 Both the 'backbeat' chunk and the 'mykeys' chunk above play together (not one after the other). This
 behavior allows multitrack songs to be created with Handel. 
 
-
+Note that each chunk has its own scope.
 
 # More on procedures (chunks) and their syntax
 
@@ -411,6 +427,10 @@ run mybassline with bpm 90, loop for 2, sound kick
 ### rest
 
 ### save
+
+### block 
+
+### endblock 
 
 ### chunk
 

@@ -1,38 +1,34 @@
 function clicked(){
     RunHandel(`
     start
-	chunk mykeys 
-    	play E3, G3, A3, C3 for 1b
-        rest for 1b
-    	play G3, B3, D3, B3 for 1b
-        rest for 1b
-    	play F3, A3, C3, E3 for 1b
-        rest for 1b
-    	play B3, D3, F3, A3 for 1b
-        rest for 1b
-    endchunk
-    
-    chunk mykick
-    	rest for 1b
-    	play E2 for 1b
-    endchunk 
-    
-    chunk mysnare
-    	play E2 for 1b
-    	rest for 1b
-    endchunk 
-    
-    chunk myhats
-    	play E2 for 1b
-    	rest for 1b
-    endchunk 
-    
-    run mykeys with bpm 100, sound piano, loop for 300
-    run mykick with bpm 100, sound kick, loop for 300
-    run myhats with sound hihat, bpm 300, loop for 300
-    run mysnare with sound snare, bpm 100, loop for 300
-    
-finish
+        block 
+            play C3, E3, G3 for 1b loop for 2
+            play D3, F3, A3 for 1b 
+            play E3, G3, B3 for 1b 
+            play C4, E3, G4 for 1b 
+        endblock loop for 2 
+
+        block 
+            play C2, E2, G2 for 4b 
+            block
+                play C3, E3, G3 for 1b 
+                play D3, F3, A3 for 1b 
+                play E3, G3, B3 for 1b 
+                play C4, E3, G4 for 1b 
+            endblock loop for 2
+        endblock loop for 2 
+
+        chunk mypiano
+            block
+                play C2 for 2b
+                rest for 2b
+                play E2 for 2b
+                rest for 2b
+            endblock loop for 5
+        endchunk
+
+        run mypiano with sound piano
+    finish
     `)
 }
 
