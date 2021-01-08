@@ -373,6 +373,17 @@ save myduration = for 1b
 
 <br/>
 
+**block**: Used to declare a loop. (see above section on block loops for more details)
+```
+block
+    play Gb3 for 2b
+    rest for 2b
+endblock loop for 10
+```
+
+<br/>
+
+
 **chunk**: Used to declare a procedure. (see above section on procedures for more details)
 ```
 chunk mybassline
