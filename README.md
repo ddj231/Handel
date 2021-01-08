@@ -18,8 +18,6 @@ Add the below to the your html document:
 <script src="https://unpkg.com/handel-pl@0.2.0"></script>
 ```
 
-You're all set!
-
 *Bonus*: add the below to the head of your html document, if you would like to use Handel's sampler instruments (piano, guitar, kick, snare, hihat)
 
 ```
@@ -30,6 +28,8 @@ You're all set!
 <link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/Kick_C.wav" as="audio" crossorigin/>
 <link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/HiHat_G.wav" as="audio" crossorigin/>
 ```
+
+You're all set!
 
 # Usage
 
