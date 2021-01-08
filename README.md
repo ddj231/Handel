@@ -11,14 +11,25 @@ Try the Handel Web Editor here: [Handel Web Editor](https://ddj231.github.io/Han
 
 # Installation
 
-Add the below to your html file:
+Add the below to the your html document:
 
 ```
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.74/Tone.js"></script>
-<script src="https://unpkg.com/handel-pl"></script>
+<script src="https://unpkg.com/handel-pl@0.2.0"></script>
 ```
 
 You're all set!
+
+*Bonus*: add the below to the head of your html document, if you would like to use Handel's sampler instruments (piano, guitar, kick, snare, hihat)
+
+```
+<link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/Piano_C5.wav" as="audio" type="audio/wav" crossorigin/>
+<link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/Piano_A4.wav" as="audio" crossorigin/>
+<link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/Snare_D2.wav" as="audio" crossorigin/>
+<link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/Guiar_D_extended.wav" as="audio" crossorigin/>
+<link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/Kick_C.wav" as="audio" crossorigin/>
+<link rel="preload" href="https://unpkg.com/handel-pl@0.2.0/Sounds/HiHat_G.wav" as="audio" crossorigin/>
+```
 
 # Usage
 
