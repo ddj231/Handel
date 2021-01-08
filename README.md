@@ -11,7 +11,7 @@ Try the Handel Web Editor here: [Handel Web Editor](https://ddj231.github.io/Han
 
 # Installation
 
-Add the below to the your html document:
+Add the below to your html document:
 
 ```
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.74/Tone.js"></script>
