@@ -68,7 +68,7 @@ document.addEventListener("click", clicked);
 
 Note that you pass the Handel code into the **RunHandel** function ```Handel.RunHandel(someHandelCode)```.
 
-To compile to midi, also pass a config object to the RunHandel function with outputMidi set to true. 
+To compile to midi, pass a config object to the RunHandel function with **outputMidi** set to true. 
 
 ```
 const config = {outputMidi: true};
