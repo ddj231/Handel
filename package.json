@@ -1,6 +1,6 @@
 {
-  "name": "handel-pl-dev",
-  "version": "0.3.5",
+  "name": "handel-pl",
+  "version": "0.3.0",
   "description": "",
   "main": "dist/HandelExport.js",
   "scripts": {
