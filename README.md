@@ -64,15 +64,9 @@ function clicked(){
 document.addEventListener("click", clicked);
 ```
 
-Note that you pass the Handel code into the **RunHandel** function ```Handel.RunHandel(someCode)```
+Note that you pass the Handel code into the **RunHandel** function ```Handel.RunHandel(someHandelCode)```
 
-Additionally you can use the **StopHandel** function to stop a running Handel program. ```Handel.StopHandel```
-
-```
-StopHandel();
-```
-
-This function is also globally available.
+Additionally you can use the **StopHandel** function to stop a running Handel program. ```Handel.StopHandel()```
 
 
 # Getting started
