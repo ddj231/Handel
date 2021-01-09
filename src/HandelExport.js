@@ -1,4 +1,5 @@
 import * as Tone from 'tone';
+import { Midi } from '@tonejs/midi'
 
 import pianoA4 from './Sounds/Piano_A4.wav'
 import pianoC5 from './Sounds/Piano_C5.wav'
@@ -93,17 +94,25 @@ export const Handel = (function(){
     }
 
     class Composition {
-        constructor(synth, bpm){
+        constructor(synth, bpm, midiOption){
             this.synth = new Tone.PolySynth({voice: synth}).toDestination();
             this.bpm = bpm;
             this.playEvents = [];
             this.currentTime = 0;
+            this.midiTime = 0;
             this.startTime = 0;
             this.loopTimes = 1;
             // Create Part
             this.part = new Tone.Part((time, value) => {
                 this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
             });
+            //each composition also represents a midi track
+            if(midiOption.midi){
+                this.midi = midiOption.midi;
+                this.track = midiOption.midi.addTrack();
+                this.track.name = midiOption.trackName;
+                this.notes = [];
+            }
         }
     
         secondsFromBPM(beats){
@@ -123,8 +132,36 @@ export const Handel = (function(){
                 for(let i = 0; i < playEvent.rep; i++){
                     if(playEvent.notes){
                         this.part.add({notes: playEvent.notes, time: this.currentTime, length: holdFor});
+                        this.addNotesToTrack(playEvent.notes, this.midiTime, holdFor, length)
                     }
                     this.currentTime += length;
+                    this.midiTime += holdFor;
+                }
+            }
+        }
+
+        addNotesToTrack(notes, time, holdFor, length){
+            if(!this.midi){ return}
+            for(let note of notes){
+                this.track.addNote({
+                    name: note, 
+                    time: time,
+                    duration: holdFor 
+                });
+            }
+        }
+
+        configureMidiLoop(times){
+            if(!this.midi){ return}
+            for(let i = 1; i < times; i++){
+                for(let playEvent of this.playEvents){
+                    let holdFor = this.holdFor(playEvent.numBeats);
+                    for(let i = 0; i < playEvent.rep; i++){
+                        if(playEvent.notes){
+                            this.addNotesToTrack(playEvent.notes, this.midiTime, holdFor, length)
+                        }
+                        this.midiTime += holdFor;
+                    }
                 }
             }
         }
@@ -138,6 +175,7 @@ export const Handel = (function(){
         play(){
             this.part.playbackRate = this.bpm / Tone.Transport.bpm.value 
             this.configureLoop(this.loopTimes);
+            this.configureMidiLoop(this.loopTimes);
             this.part.start(0.1);
         }
     
@@ -957,7 +995,7 @@ export const Handel = (function(){
     }
 
     class HandelInterpreterAST {
-        constructor(parser){
+        constructor(parser, config, midi){
             this.parser = parser;
             this.beatToValue = {
                 1: '4n',
@@ -966,20 +1004,37 @@ export const Handel = (function(){
                 4: '1m'
             }
             this.currentComposition;
+            this.config = config;
+            this.midi = midi;
             this.callStack = new HandelCallStack();
+        }
+
+        exportMidi(){
+            let a = document.createElement("a");
+            let file = new Blob([this.midi.toArray()], {type: 'audio/midi'});
+            a.href = URL.createObjectURL(file);
+            a.download = "my-midi.mid"
+            a.click();
+            URL.revokeObjectURL(a.href);
         }
 
         visitProgram(node){
             Tone.Transport.cancel(0);
             Tone.Transport.bpm.value = 1000 
             let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
-            this.currentComposition = new Composition(Tone.AMSynth, 140);
+            this.currentComposition = new Composition(Tone.AMSynth, 140, 
+                {trackName: 'global', midi: this.midi});
             this.currentComposition.enclosingComposition = null;
             this.callStack.push(ar);
             this.visitStatementList(node.child);
             this.callStack.pop();
             Tone.Transport.stop();
-            Tone.Transport.start(Tone.now() + 0.1);
+            if(this.config && this.config.outputMidi){
+                this.exportMidi();
+            }
+            else{
+                Tone.Transport.start(Tone.now() + 0.1);
+            }
         }
 
         visitSectionDeclaration(node){
@@ -990,7 +1045,7 @@ export const Handel = (function(){
             let ar = new HandelActivationRecord(node.value, ARTYPES.PROCEDURE, procSymbol.scopeLevel + 1);
 
             let prevCompositon = this.currentComposition;
-            this.currentComposition = new Composition(Tone.AMSynth, 140);
+            this.currentComposition = new Composition(Tone.AMSynth, 140, {trackName: node.value, midi: this.midi});
             this.currentComposition.enclosingComposition =  prevCompositon;
 
             let formalParams = procSymbol.params;
@@ -1098,8 +1153,8 @@ export const Handel = (function(){
                 else {
                     this.error();
                 }
-                this.currentComposition.play();
             }
+            this.currentComposition.play();
         }
 
         visitBlockLoop(node){
@@ -1383,11 +1438,16 @@ export const Handel = (function(){
     })
 })();
 
-export function RunHandel(code){
+export function RunHandel(code, config){
     Tone.start().then(() => {
         const lexer = new Handel.Lexer(code);
         const parser = new Handel.Parser(lexer);
-        const interpreter = new Handel.Interpreter(parser);
+
+        //(handle midi config in interpreter)
+        let midi;
+        if(config && config.outputMidi){ midi = new Midi()}
+        const interpreter = new Handel.Interpreter(parser, config, midi);
+
         const symTableBuilder = new Handel.SymbolTableBuilder();
         const programNode = parser.program();
         symTableBuilder.visitProgram(programNode);

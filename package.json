@@ -28,6 +28,7 @@
     "webpack-cli": "^4.3.1"
   },
   "dependencies": {
+    "@tonejs/midi": "^2.0.25",
     "tone": "^14.7.58"
   }
 }
