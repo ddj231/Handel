@@ -4,9 +4,13 @@
   "description": "",
   "main": "HandelExport.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
   },
-  "files": ["HandelExport.js", "/Sounds"],
+  "files": [
+    "HandelExport.js",
+    "/Sounds"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ddj231/Handel.git"
@@ -17,5 +21,13 @@
   "bugs": {
     "url": "https://github.com/ddj231/Handel/issues"
   },
-  "homepage": "https://github.com/ddj231/Handel#readme"
+  "homepage": "https://github.com/ddj231/Handel#readme",
+  "devDependencies": {
+    "file-loader": "^6.2.0",
+    "webpack": "^5.12.1",
+    "webpack-cli": "^4.3.1"
+  },
+  "dependencies": {
+    "tone": "^14.7.58"
+  }
 }

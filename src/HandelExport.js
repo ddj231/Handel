@@ -1,11 +1,12 @@
-let production = true 
-let baseUrl = './Sounds/'
+import * as Tone from 'tone';
+import pianoA4 from './Sounds/Piano_A4.wav'
+import pianoC5 from './Sounds/Piano_C5.wav'
+import kickC from './Sounds/Kick_C.wav'
+import guitarD from './Sounds/Guitar_D_extended.wav'
+import hihatG from './Sounds/HiHat_G.wav'
+import snareD from './Sounds/Snare_D2.wav'
 
-if(production){
-    baseUrl = "https://unpkg.com/handel-pl@0.2.0/Sounds/";
-}
-
-const Handel = (function(){
+export const Handel = (function(){
     class FMSynth{
         constructor(){
             this.synth =  new Tone.PolySynth({
@@ -25,9 +26,9 @@ const Handel = (function(){
         constructor(){
             this.synth = new Tone.Sampler({
             urls: {
-                D2: "Snare_D2.wav",
+                D2: snareD,
             },
-            baseUrl: baseUrl,
+            //baseUrl: baseUrl,
             }).toDestination();
             this.synth.volume.value = -3;
         }
@@ -36,10 +37,10 @@ const Handel = (function(){
         constructor(){
             this.synth = new Tone.Sampler({
             urls: {
-                C5: "Piano_C5.wav",
-                A4: "Piano_A4.wav",
+                C5: pianoC5,
+                A4: pianoA4,
             },
-            baseUrl: baseUrl,
+            //baseUrl: baseUrl,
             }).toDestination();
         }
     }
@@ -48,9 +49,9 @@ const Handel = (function(){
         constructor(){
             this.synth = new Tone.Sampler({
             urls: {
-                D3: "Guitar_D_extended.wav",
+                D3: guitarD,
             },
-            baseUrl: baseUrl,
+            //baseUrl: baseUrl,
             }).toDestination();
         }
     }
@@ -59,9 +60,9 @@ const Handel = (function(){
         constructor(){
             this.synth = new Tone.Sampler({
             urls: {
-                C1: "Kick_C.wav",
+                C1: kickC,
             },
-            baseUrl: baseUrl,
+            //baseUrl: baseUrl,
             }).toDestination();
         }
     }
@@ -70,9 +71,9 @@ const Handel = (function(){
         constructor(){
             this.synth = new Tone.Sampler({
             urls: {
-                G3: "HiHat_G.wav",
+                G3: hihatG,
             },
-            baseUrl: baseUrl,
+            //baseUrl: baseUrl,
             }).toDestination();
         }
     }
@@ -1380,7 +1381,7 @@ const Handel = (function(){
     })
 })();
 
-function RunHandel(code){
+export function RunHandel(code){
     Tone.start().then(() => {
         const lexer = new Handel.Lexer(code);
         const parser = new Handel.Parser(lexer);
@@ -1392,6 +1393,6 @@ function RunHandel(code){
     });
 }
 
-function StopHandel(){
+export function StopHandel(){
     Tone.Transport.stop();
 }
