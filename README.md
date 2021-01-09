@@ -11,14 +11,25 @@ Try the Handel Web Editor here: [Handel Web Editor](https://ddj231.github.io/Han
 
 # Installation
 
-Add the below to your html document:
-
+Add the below to your html document: 
 ```
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.74/Tone.js"></script>
-<script src="https://unpkg.com/handel-pl@0.2.0"></script>
+<script src="https://unpkg.com/handel-pl-dev"></script>
 ```
 
 You're all set!
+
+Alternatively do the following: 
+
+```
+npm i handel-pl-dev
+```
+
+and import
+
+```
+import * as Handel from 'handel-pl-dev';
+```
+
 
 # Usage
 
@@ -39,7 +50,7 @@ See the Examples folder [here](./Examples/) for example Handel programs and insp
 
 ```
 function clicked(){
-    RunHandel(`
+    Handel.RunHandel(`
         start
             chunk example using somePlayable 
                 play somePlayable 
@@ -53,9 +64,9 @@ function clicked(){
 document.addEventListener("click", clicked);
 ```
 
-Note that you pass the Handel code into the **RunHandel** function. This function is globally available. 
+Note that you pass the Handel code into the **RunHandel** function ```Handel.RunHandel(someCode)```
 
-Additionally you can use the **StopHandel** function to stop a running Handel program. 
+Additionally you can use the **StopHandel** function to stop a running Handel program. ```Handel.StopHandel```
 
 ```
 StopHandel();

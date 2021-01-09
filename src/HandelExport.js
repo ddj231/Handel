@@ -1,10 +1,12 @@
 import * as Tone from 'tone';
+
 import pianoA4 from './Sounds/Piano_A4.wav'
 import pianoC5 from './Sounds/Piano_C5.wav'
 import kickC from './Sounds/Kick_C.wav'
 import guitarD from './Sounds/Guitar_D_extended.wav'
 import hihatG from './Sounds/HiHat_G.wav'
 import snareD from './Sounds/Snare_D2.wav'
+
 
 export const Handel = (function(){
     class FMSynth{

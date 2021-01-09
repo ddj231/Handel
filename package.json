@@ -1,15 +1,14 @@
 {
-  "name": "handel-pl",
-  "version": "0.2.0",
+  "name": "handel-pl-dev",
+  "version": "0.3.4",
   "description": "",
-  "main": "HandelExport.js",
+  "main": "dist/HandelExport.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack"
   },
   "files": [
-    "HandelExport.js",
-    "/Sounds"
+    "dist"
   ],
   "repository": {
     "type": "git",
@@ -24,6 +23,7 @@
   "homepage": "https://github.com/ddj231/Handel#readme",
   "devDependencies": {
     "file-loader": "^6.2.0",
+    "url-loader": "^4.1.1",
     "webpack": "^5.12.1",
     "webpack-cli": "^4.3.1"
   },

@@ -12,7 +12,10 @@ module.exports = {
       rules: [
         {
             test: /\.wav$/,
-            loader: 'file-loader'
+            loader: 'url-loader',
+            options: {
+              limit: Infinity
+            }
         }
       ]
   }
