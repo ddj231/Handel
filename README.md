@@ -13,7 +13,7 @@ Try the Handel Web Editor here: [Handel Web Editor](https://ddj231.github.io/Han
 
 Add the below to your html document: 
 ```
-<script src="https://unpkg.com/handel-pl-dev"></script>
+<script src="https://unpkg.com/handel-pl"></script>
 ```
 
 You're all set!
@@ -23,13 +23,13 @@ You're all set!
 Install Handel with the following: 
 
 ```
-npm i handel-pl-dev
+npm i handel-pl
 ```
 
 And import Handel with the following:
 
 ```
-import * as Handel from 'handel-pl-dev';
+import * as Handel from 'handel-pl';
 ```
 
 
