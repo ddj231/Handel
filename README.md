@@ -66,7 +66,8 @@ function clicked(){
 document.addEventListener("click", clicked);
 ```
 
-Note that you pass the Handel code into the **RunHandel** function ```Handel.RunHandel(someHandelCode)```
+Note that you pass the Handel code into the **RunHandel** function ```Handel.RunHandel(someHandelCode)```.
+
 To compile to midi, also pass a config object to the RunHandel function with outputMidi set to true. 
 
 ```
@@ -74,7 +75,7 @@ const config = {outputMidi: true};
 Handel.RunHandel(`start play E4 for 1b finish`, config);
 ```
 
-Additionally you can use the **StopHandel** function to stop a running Handel program. ```Handel.StopHandel()```
+Additionally, you can use the **StopHandel** function to stop a running Handel program. ```Handel.StopHandel()```
 
 
 # Getting started
