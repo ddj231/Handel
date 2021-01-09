@@ -18,13 +18,15 @@ Add the below to your html document:
 
 You're all set!
 
-**Alternatively install with the following:**
+**Alternatively** 
+
+Install Handel with the following: 
 
 ```
 npm i handel-pl-dev
 ```
 
-and import Handel with the following:
+And import Handel with the following:
 
 ```
 import * as Handel from 'handel-pl-dev';
