@@ -14,7 +14,7 @@ To add your fix, describe your proposed fix and make a pull request.
 
 To propose a new language feature, open an issue describing the feature to be added. Be as detailed as possible, perhaps including examples of the syntax, etc.
 
-# Adding language features
+## Adding language features
 
 Before beginning work on a new language feature. Propose the issue (as above) -- and state that you would like to implement or partially implement the feature.
 
