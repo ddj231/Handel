@@ -341,7 +341,7 @@ RunHandel(`
 `, config)
 ```
 
-The ```MakeInstrument``` function wraps Tone.js's sampler constructor. It takes a urls object, which is a note name matched to it's location (locally or not).
+The ```MakeInstrument``` function wraps Tone.js's sampler constructor. It takes a urls object as its argument. This urls object, maps note names matched to their location (locally or not). One or more mappings can be used.
 
 After making an instrument above, we add it to our config object and run the Handel program with that config.
 
