@@ -193,11 +193,11 @@ export const Handel = (function(){
     // Token types
     const [NOTE, BPM, SOUND, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
         ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
-        REST, WITH, RUN, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "BLOCK", "ENDBLOCK",
+        REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "BLOCK", "ENDBLOCK",
         "DO", "INSTRUMENT",
         "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
         "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
-        "REST", "WITH", "RUN", "ASSIGN", "USING", "EOF"];
+        "REST", "WITH", "RUN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
     class Token {
@@ -232,6 +232,8 @@ export const Handel = (function(){
         guitar: new Token(INSTRUMENT, 'guitar'),
         block: new Token(BLOCK, 'BLOCK'),
         endblock: new Token(ENDBLOCK, 'ENDBLOCK'),
+        load: new Token(LOAD, 'LOAD'),
+        as: new Token(AS, 'AS'),
     }
 
     class HandelSymbol {
@@ -459,6 +461,14 @@ export const Handel = (function(){
         constructor(token){
         this.token = token;
         this.value = token.value;
+        }
+    }
+
+    class LoadAST {
+        constructor(token, instrumentName, localVarName){
+            this.token = token;
+            this.instrumentName= instrumentName;
+            this.localVarName = localVarName;
         }
     }
 
@@ -698,6 +708,7 @@ export const Handel = (function(){
                 this.currentToken.type === PLAY ||
                 this.currentToken.type === REST ||
                 this.currentToken.type === RUN ||
+                this.currentToken.type === LOAD ||
                 this.currentToken.type === BLOCK ||
                 this.currentToken.type === SAVE)){
                     statementList = this.statementList();
@@ -763,7 +774,12 @@ export const Handel = (function(){
                 let soundToken = this.currentToken;
                 this.eat(SOUND);
                 let instrument = this.currentToken.value;
-                this.eat(INSTRUMENT);
+                if(this.currentToken.type === INSTRUMENT){
+                    this.eat(INSTRUMENT);
+                }
+                else {
+                    this.eat(ID);
+                }
                 return new InstrumentAST(soundToken, instrument);
             }
             else if(this.currentToken.type === LOOP){
@@ -828,6 +844,7 @@ export const Handel = (function(){
                     this.currentToken.type === PLAY || 
                     this.currentToken.type === REST ||
                     this.currentToken.type === RUN ||
+                    this.currentToken.type === LOAD ||
                     this.currentToken.type === BLOCK ||
                     this.currentToken.type === SAVE)
                 ){
@@ -839,6 +856,17 @@ export const Handel = (function(){
                 }
             }
             return statementListNode;
+        }
+
+        importInstrument(){
+            let token = this.currentToken;
+            this.eat(LOAD);
+            let instrumentName = this.currentToken.value;
+            this.eat(ID);
+            this.eat(AS);
+            let localVarName = this.currentToken.value;
+            this.eat(ID);
+            return new LoadAST(token, instrumentName, localVarName);
         }
 
         statement(){
@@ -857,6 +885,10 @@ export const Handel = (function(){
             else if(this.currentToken.type === SAVE){
                 //variable assignment
                 return this.save();
+            }
+            else if(this.currentToken.type === LOAD){
+                //variable assignment
+                return this.importInstrument();
             }
             else{
                 this.error();
@@ -1063,7 +1095,6 @@ export const Handel = (function(){
                 }
                 ar.setItem(formalParams[i].name, actualValue);
             }
-            this.callStack.push(ar);;
 
             for(let customization of node.customizationList){
                 if(customization.token.type === BPM){
@@ -1076,6 +1107,8 @@ export const Handel = (function(){
                     this.visitLoop(customization);
                 }
             }
+
+            this.callStack.push(ar);;
 
             //execute body
             this.visitStatementList(procSymbol.statementList);
@@ -1120,6 +1153,10 @@ export const Handel = (function(){
                 let piano = new Guitar().synth;
                 this.currentComposition.synth = piano;
             }
+            else {
+                let synth = this.callStack.peek().getItem(instrument);
+                this.currentComposition.synth = synth;
+            }
         }
 
         visitLoop(node){
@@ -1150,11 +1187,24 @@ export const Handel = (function(){
                 else if(child.token.type === BLOCK){
                     this.visitBlockLoop(child);
                 }
+                else if(child.token.type === LOAD){
+                    this.visitLoad(child);
+                }
                 else {
                     this.error();
                 }
             }
             this.currentComposition.play();
+        }
+
+        visitLoad(node){
+            if(node.instrumentName in this.config.instruments){
+                this.callStack.peek().setItem(node.localVarName, 
+                    this.config.instruments[node.instrumentName]);
+            }
+            else {
+                throw Error(`invalid instrument at line: ${node.token.lineno}`);
+            }
         }
 
         visitBlockLoop(node){
@@ -1336,7 +1386,17 @@ export const Handel = (function(){
                 else if(child.token.type === BLOCK){
                     this.visitBlockLoop(child);
                 }
+                else if(child.token.type === LOAD){
+                    this.visitLoad(child);
+                }
             }
+        }
+
+        visitLoad(node){
+            let anyType = this.currentScope.lookup('ANY');
+            let localVarName = node.localVarName;
+            let varSymbol = new VarSymbol(localVarName, anyType);
+            this.currentScope.define(varSymbol);
         }
 
         visitBlockLoop(node){
@@ -1457,4 +1517,11 @@ export function RunHandel(code, config){
 
 export function StopHandel(){
     Tone.Transport.stop();
+}
+
+export function MakeInstrument(urls){
+    let sampler = new Tone.Sampler({
+        urls: urls
+    }).toDestination()
+    return sampler
 }

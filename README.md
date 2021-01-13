@@ -320,6 +320,36 @@ finish
 
 Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100!
 
+## Custom Instruments
+Handel (v0.4.0 and up) allows custom instruments to be loaded into Handel Programs. Instruments can be created and added to a Run of a Handel program as follows.
+
+```
+let myinst = Handel.MakeInstrument({
+    A1: 'https://tonejs.github.io/audio/casio/A1.mp3', 
+    A2: 'https://tonejs.github.io/audio/casio/A2.mp3'
+})
+let config = {}
+config.instruments = {funkyinst: myinst} 
+RunHandel(`
+    start
+        load funkyinst as funky 
+        chunk example 
+            play E4 for 4b
+        enchunk
+        run example with sound funky
+    finish
+`, config)
+```
+
+The ```MakeInstrument``` function wraps Tone.js's sampler constructor. It takes a urls object, which is a note name matched to it's location (locally or not).
+
+After making an instrument above, we add it to our config object and run the Handel program with that config.
+
+Within the Handel program we load the instrument as follows: ```
+load configInstrumentName as nameOfInstrumentWithinHandel``` 
+
+**Note**: this feature makes your Handel program less portable but gives you the freedom of using arbitrary instruments in your Handel program.
+
 # Reference 
 
 **Note**: A musical note. 7 octaves are available.
@@ -384,6 +414,13 @@ rest for 2b
 ```
 save myplayable = E2 for 1b
 save myduration = for 1b
+```
+
+<br/>
+
+**load**: A command to load custom instruments into Handel (see above section on custom instruments for more details). 
+```
+load someinst as instname
 ```
 
 <br/>
@@ -455,6 +492,10 @@ run mybassline with bpm 90, loop for 2, sound kick
 ### rest
 
 ### save
+
+### load 
+
+### as 
 
 ### block 
 
