@@ -24,4 +24,4 @@ This is to limit rejected pull requests, so your time is not wasted.
 
 # Tutorials
 
-Creating tutorials, on any platform, is always welcome.
+Creating tutorials on any platform is always welcome.
