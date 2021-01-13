@@ -6,10 +6,9 @@ The Handel Interpreter interprets Handel programs and plays compositions in brow
 
 Try the Handel Web Editor here: [Handel Web Editor](https://ddj231.github.io/Handel-Web-Editor/)
 
-Ask questions or showcase programs here: [forum](https://groups.google.com/g/handel-pl)
+Join the [Handel discord server](https://discord.gg/9rfz9bEPPB), ask questions and showcase compositions. Or see the [Contributing](./Contributing.md) guidelines.
 
 *soli deo gloria*
-
 
 # Installation
 
@@ -491,7 +490,6 @@ run mybassline with bpm 90, loop for 2, sound kick
 
 All note names are reserved keywords, ex. **C4**, **Bb1**. 
 For this reason use only lowercase letters with no numbers in variable names.
-
 
 
 
