@@ -20,7 +20,7 @@ Before beginning work on a new language feature. Propose the issue (as above) --
 
 Wait for feedback on the language feature, and whether it would make sense given the scope of Handel, before implementing. Then implement, and make a pull request.
 
-This is to limit rejected pull requests, so we do not waste your time.
+This is to limit rejected pull requests, so your time is not wasted.
 
 # Tutorials
 
