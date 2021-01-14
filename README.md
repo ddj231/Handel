@@ -330,7 +330,7 @@ let myinst = Handel.MakeInstrument({
 })
 let config = {}
 config.instruments = {funkyinst: myinst} 
-RunHandel(`
+Handel.RunHandel(`
     start
         load funkyinst as funky 
         chunk example 
