@@ -321,7 +321,7 @@ finish
 Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100!
 
 ## Custom Instruments
-Handel (v0.4.0 and up) allows custom instruments to be loaded into Handel Programs. Instruments can be created and added to a Run of a Handel program as follows.
+Handel (v0.4.0 and up) allows custom instruments to be loaded into Handel Programs. Instruments can be created and added to a run of a Handel program as follows.
 
 ```
 let myinst = Handel.MakeInstrument({
