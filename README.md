@@ -473,8 +473,14 @@ run mybassline with bpm 115
 <br/>
 
 **bpm**: beats per minute (bpms are best synced when under 1000). 
+<br/>
+
 **loop**: amount of times to loop
+<br/>
+
 **sound**:  instrument to use. 
+<br/>
+
 **volume**:  percentage volume of a chunk (0 - 100). 
 ```
 run mybassline with bpm 90, loop for 2, sound kick, volume 50
