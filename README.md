@@ -472,7 +472,7 @@ run mybassline with bpm 115
 
 <br/>
 
-**bpm**: beats per minute (bpms are best synced when under 1000). 
+**bpm**: beats per minute (bpms are best synced with values under 1000). 
 <br/>
 
 **loop**: amount of times to loop
