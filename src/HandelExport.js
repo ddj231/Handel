@@ -102,6 +102,7 @@ export const Handel = (function(){
             this.midiTime = 0;
             this.startTime = 0;
             this.loopTimes = 1;
+            this.volume;
             // Create Part
             this.part = new Tone.Part((time, value) => {
                 this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
@@ -176,6 +177,9 @@ export const Handel = (function(){
             this.part.playbackRate = this.bpm / Tone.Transport.bpm.value 
             this.configureLoop(this.loopTimes);
             this.configureMidiLoop(this.loopTimes);
+            if(!isNaN(this.volume)){ 
+                this.synth.volume.value = this.volume;
+            }
             this.part.start(0.1);
         }
     
@@ -191,9 +195,10 @@ export const Handel = (function(){
     }
 
     // Token types
-    const [NOTE, BPM, SOUND, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
+    const [NOTE, BPM, SOUND, VOLUME, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
         ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
-        REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = ["NOTE", "BPM", "SOUND", "LOOP", "BLOCK", "ENDBLOCK",
+        REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = [
+            "NOTE", "BPM", "SOUND", "VOLUME", "LOOP", "BLOCK", "ENDBLOCK",
         "DO", "INSTRUMENT",
         "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
         "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
@@ -232,6 +237,7 @@ export const Handel = (function(){
         guitar: new Token(INSTRUMENT, 'guitar'),
         block: new Token(BLOCK, 'BLOCK'),
         endblock: new Token(ENDBLOCK, 'ENDBLOCK'),
+        volume: new Token(VOLUME, 'VOLUME'),
         load: new Token(LOAD, 'LOAD'),
         as: new Token(AS, 'AS'),
     }
@@ -559,6 +565,14 @@ export const Handel = (function(){
         }
     }
 
+    class VolumeAST{
+        constructor(token, percentage){
+            this.token = token;
+            this.value = percentage;
+            this.percentage = percentage;
+        }
+    }
+
     class RepAST {
         constructor(token, repTimes){
             this.token = token;
@@ -789,6 +803,13 @@ export const Handel = (function(){
                 let digit = this.currentToken.value;
                 this.eat(DIGIT);
                 return new LoopAST(loopToken, digit);
+            }
+            else if(this.currentToken.type === VOLUME){
+                let volumeToken = this.currentToken;
+                this.eat(VOLUME);
+                let digit = this.currentToken.value;
+                this.eat(DIGIT);
+                return new VolumeAST(volumeToken, digit);
             }
             else{
                 this.error();
@@ -1106,6 +1127,9 @@ export const Handel = (function(){
                 else if(customization.token.type === LOOP){
                     this.visitLoop(customization);
                 }
+                else if(customization.token.type === VOLUME){
+                    this.visitVolume(customization);
+                }
             }
 
             this.callStack.push(ar);;
@@ -1115,6 +1139,20 @@ export const Handel = (function(){
 
             this.callStack.pop(ar);
             this.currentComposition = this.currentComposition.enclosingComposition;
+        }
+
+        mapHelper(val, ogStart, ogEnd, newStart, newEnd){
+            let ratio = val / (Math.abs(ogStart) + Math.abs(ogEnd));
+            let output = newStart + ((Math.abs(newStart) + Math.abs(newEnd)) * ratio);
+            return output;
+        }
+
+        visitVolume(node){
+            if(node.percentage > 100 || node.percentage < 0){
+                return
+            }
+            let vol = this.mapHelper(node.percentage, 0, 100, -70, 70);
+            this.currentComposition.volume = vol;
         }
 
         visitBPM(node){
@@ -1339,6 +1377,9 @@ export const Handel = (function(){
         visitSound(node){
         }
 
+        visitVolume(node){
+        }
+
         visitProcedureCall(node){
             let procSymbol = this.currentScope.lookup(node.value)
             if(!procSymbol){
@@ -1360,6 +1401,9 @@ export const Handel = (function(){
                 }
                 else if(customization.token.type === LOOP){
                     this.visitLoop(customization);
+                }
+                else if(customization.token.type === VOLUME){
+                    this.visitVolume(customization);
                 }
             }
         }

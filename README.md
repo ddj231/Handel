@@ -320,6 +320,8 @@ finish
 
 Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100!
 
+(see reference below for addition customizations)
+
 ## Custom Instruments
 Handel (v0.4.0 and up) allows custom instruments to be loaded into Handel Programs. Instruments can be created and added to a run of a Handel program as follows.
 
@@ -472,9 +474,10 @@ run mybassline with bpm 115
 
 **bpm**: beats per minute (bpms are best synced when under 1000). 
 **loop**: amount of times to loop
-**sound**:  instrument to use. Follows the **with** keyword.
+**sound**:  instrument to use. 
+**volume**:  percentage volume of a chunk (0 - 100). 
 ```
-run mybassline with bpm 90, loop for 2, sound kick
+run mybassline with bpm 90, loop for 2, sound kick, volume 50
 ```
 
 <br/>
@@ -514,6 +517,8 @@ run mybassline with bpm 90, loop for 2, sound kick
 ### bpm
 
 ### loop
+
+### volume 
 
 ### sound
 
