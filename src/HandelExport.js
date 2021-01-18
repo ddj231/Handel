@@ -7,6 +7,7 @@ import kickC from './Sounds/Kick_C.wav'
 import guitarD from './Sounds/Guitar_D_extended.wav'
 import hihatG from './Sounds/HiHat_G.wav'
 import snareD from './Sounds/Snare_D2.wav'
+import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
 
 
 export const Handel = (function(){
@@ -95,7 +96,7 @@ export const Handel = (function(){
 
     class Composition {
         constructor(synth, bpm, midiOption){
-            this.synth = new Tone.PolySynth({voice: synth}).toDestination();
+            this.synth = new Tone.PolySynth({voice: synth});
             this.bpm = bpm;
             this.playEvents = [];
             this.currentTime = 0;
@@ -103,6 +104,7 @@ export const Handel = (function(){
             this.startTime = 0;
             this.loopTimes = 1;
             this.volume;
+            this.pan;
             // Create Part
             this.part = new Tone.Part((time, value) => {
                 this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
@@ -180,6 +182,17 @@ export const Handel = (function(){
             if(!isNaN(this.volume)){ 
                 this.synth.volume.value = this.volume;
             }
+
+            if(!isNaN(this.pan)){ 
+                console.log("PAN", this.pan);
+                const panner = new Tone.Panner(this.pan).toDestination();
+                this.synth.chain(panner, Tone.Destination);
+            }
+            else {
+                console.log("NO PAN");
+                const panner = new Tone.Panner(0).toDestination();
+                this.synth.chain(panner, Tone.Destination);
+            }
             this.part.start(0.1);
         }
     
@@ -195,7 +208,7 @@ export const Handel = (function(){
     }
 
     // Token types
-    const [NOTE, BPM, SOUND, VOLUME, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
+    const [NOTE, BPM, SOUND, VOLUME, PAN, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
         ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
         REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "LOOP", "BLOCK", "ENDBLOCK",
@@ -238,6 +251,7 @@ export const Handel = (function(){
         block: new Token(BLOCK, 'BLOCK'),
         endblock: new Token(ENDBLOCK, 'ENDBLOCK'),
         volume: new Token(VOLUME, 'VOLUME'),
+        pan: new Token(PAN, 'PAN'),
         load: new Token(LOAD, 'LOAD'),
         as: new Token(AS, 'AS'),
     }
@@ -573,6 +587,14 @@ export const Handel = (function(){
         }
     }
 
+    class PanAST{
+        constructor(token, panAmt){
+            this.token = token;
+            this.value = panAmt;
+            this.panAmt = panAmt;
+        }
+    }
+
     class RepAST {
         constructor(token, repTimes){
             this.token = token;
@@ -810,6 +832,13 @@ export const Handel = (function(){
                 let digit = this.currentToken.value;
                 this.eat(DIGIT);
                 return new VolumeAST(volumeToken, digit);
+            }
+            else if(this.currentToken.type === PAN){
+                let panToken = this.currentToken;
+                this.eat(PAN);
+                let digit = this.currentToken.value;
+                this.eat(DIGIT);
+                return new PanAST(panToken, digit);
             }
             else{
                 this.error();
@@ -1130,6 +1159,9 @@ export const Handel = (function(){
                 else if(customization.token.type === VOLUME){
                     this.visitVolume(customization);
                 }
+                else if(customization.token.type === PAN){
+                    this.visitPan(customization);
+                }
             }
 
             this.callStack.push(ar);;
@@ -1145,6 +1177,14 @@ export const Handel = (function(){
             let ratio = val / (Math.abs(ogStart) + Math.abs(ogEnd));
             let output = newStart + ((Math.abs(newStart) + Math.abs(newEnd)) * ratio);
             return output;
+        }
+
+        visitPan(node){
+            if(node.panAmt > 100 || node.panAmt < 0){
+                return
+            }
+            let pan = this.mapHelper(node.panAmt, 0, 100, -1, 1);
+            this.currentComposition.pan = pan;
         }
 
         visitVolume(node){
@@ -1380,6 +1420,9 @@ export const Handel = (function(){
         visitVolume(node){
         }
 
+        visitPan(node){
+        }
+
         visitProcedureCall(node){
             let procSymbol = this.currentScope.lookup(node.value)
             if(!procSymbol){
@@ -1404,6 +1447,9 @@ export const Handel = (function(){
                 }
                 else if(customization.token.type === VOLUME){
                     this.visitVolume(customization);
+                }
+                else if(customization.token.type === PAN){
+                    this.visitPan(customization);
                 }
             }
         }
