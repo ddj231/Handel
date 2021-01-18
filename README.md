@@ -482,8 +482,11 @@ run mybassline with bpm 115
 <br/>
 
 **volume**:  percentage volume of a chunk (0 - 100). 
+<br/>
+
+**pan**: amount to pan the sound chunk (0 - 100). Note: 0 = hard-left, 50 = center, 100 = hard-right
 ```
-run mybassline with bpm 90, loop for 2, sound kick, volume 50
+run mybassline with bpm 90, loop for 2, sound kick, volume 50, pan 25
 ```
 
 <br/>
