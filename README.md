@@ -538,6 +538,8 @@ hihat
 
 ### volume 
 
+### pan 
+
 ### sound
 
 ### piano
