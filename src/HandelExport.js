@@ -105,6 +105,7 @@ export const Handel = (function(){
             this.loopTimes = 1;
             this.volume;
             this.pan;
+            this.reverb;
             // Create Part
             this.part = new Tone.Part((time, value) => {
                 this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
@@ -183,15 +184,15 @@ export const Handel = (function(){
                 this.synth.volume.value = this.volume;
             }
 
+            const verbVal = !isNaN(this.reverb) ? this.reverb : 0.001;
+            const reverb = new Tone.Reverb(verbVal);
             if(!isNaN(this.pan)){ 
-                console.log("PAN", this.pan);
                 const panner = new Tone.Panner(this.pan).toDestination();
-                this.synth.chain(panner, Tone.Destination);
+                this.synth.chain(panner, reverb, Tone.Destination);
             }
             else {
-                console.log("NO PAN");
                 const panner = new Tone.Panner(0).toDestination();
-                this.synth.chain(panner, Tone.Destination);
+                this.synth.chain(panner, reverb, Tone.Destination);
             }
             this.part.start(0.1);
         }
@@ -208,10 +209,11 @@ export const Handel = (function(){
     }
 
     // Token types
-    const [NOTE, BPM, SOUND, VOLUME, PAN, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
+    const [NOTE, BPM, SOUND, 
+        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
         ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
         REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = [
-            "NOTE", "BPM", "SOUND", "VOLUME", "LOOP", "BLOCK", "ENDBLOCK",
+            "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB","LOOP", "BLOCK", "ENDBLOCK",
         "DO", "INSTRUMENT",
         "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
         "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
@@ -252,6 +254,7 @@ export const Handel = (function(){
         endblock: new Token(ENDBLOCK, 'ENDBLOCK'),
         volume: new Token(VOLUME, 'VOLUME'),
         pan: new Token(PAN, 'PAN'),
+        reverb: new Token(REVERB, 'REVERB'),
         load: new Token(LOAD, 'LOAD'),
         as: new Token(AS, 'AS'),
     }
@@ -595,6 +598,14 @@ export const Handel = (function(){
         }
     }
 
+    class ReverbAST{
+        constructor(token, reverbAmt){
+            this.token = token;
+            this.value = reverbAmt;
+            this.reverbAmt = reverbAmt;
+        }
+    }
+
     class RepAST {
         constructor(token, repTimes){
             this.token = token;
@@ -839,6 +850,13 @@ export const Handel = (function(){
                 let digit = this.currentToken.value;
                 this.eat(DIGIT);
                 return new PanAST(panToken, digit);
+            }
+            else if(this.currentToken.type === REVERB){
+                let reverbToken = this.currentToken;
+                this.eat(REVERB);
+                let digit = this.currentToken.value;
+                this.eat(DIGIT);
+                return new ReverbAST(reverbToken, digit);
             }
             else{
                 this.error();
@@ -1162,6 +1180,9 @@ export const Handel = (function(){
                 else if(customization.token.type === PAN){
                     this.visitPan(customization);
                 }
+                else if(customization.token.type === REVERB){
+                    this.visitReverb(customization);
+                }
             }
 
             this.callStack.push(ar);;
@@ -1177,6 +1198,14 @@ export const Handel = (function(){
             let ratio = val / (Math.abs(ogStart) + Math.abs(ogEnd));
             let output = newStart + ((Math.abs(newStart) + Math.abs(newEnd)) * ratio);
             return output;
+        }
+
+        visitReverb(node){
+            if(node.value < 1){
+                return
+            }
+            let reverb = node.value / 1000; 
+            this.currentComposition.reverb = reverb;
         }
 
         visitPan(node){
@@ -1415,9 +1444,12 @@ export const Handel = (function(){
         }
 
         visitSound(node){
-        }
+   }
 
         visitVolume(node){
+        }
+
+        visitReverb(node){
         }
 
         visitPan(node){
@@ -1450,6 +1482,9 @@ export const Handel = (function(){
                 }
                 else if(customization.token.type === PAN){
                     this.visitPan(customization);
+                }
+                else if(customization.token.type === REVERB){
+                    this.visitReverb(customization);
                 }
             }
         }
