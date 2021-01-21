@@ -484,7 +484,7 @@ run mybassline with bpm 115
 **volume**:  percentage volume of a chunk (0 - 100). 
 <br/>
 
-**reverb**: reverb reverberation duration in miliseconds (>= 1). 
+**reverb**: reverberation duration in miliseconds (>= 1). 
 <br/>
 
 **pan**: amount to pan the sound of a chunk (0 - 100). Note: 0 = hard-left, 50 = center, 100 = hard-right.
