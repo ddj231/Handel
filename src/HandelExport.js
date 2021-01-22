@@ -295,12 +295,16 @@ export const Handel = (function(){
             this.initbuiltins();
         }
         initbuiltins(){
-            let beat = new BuiltInTypeSymbol('BEAT');
-            let note = new BuiltInTypeSymbol('PLAYABLE');
+            let duration = new BuiltInTypeSymbol('BEAT');
+            let playable = new BuiltInTypeSymbol('PLAYABLE');
+            let digit = new BuiltInTypeSymbol('DIGIT');
+            let notelist = new BuiltInTypeSymbol('NOTELIST');
             let any = new BuiltInTypeSymbol('ANY');
-            this.define(beat);
-            this.define(note);
+            this.define(duration);
+            this.define(playable);
             this.define(any);
+            this.define(digit);
+            this.define(notelist);
         }
         define(symbol){
             symbol.scopeLevel = this.scopeLevel;
@@ -1032,13 +1036,34 @@ export const Handel = (function(){
         expr(){
             if(this.currentToken.type === NOTE){
                 const noteRoot = this.noteList();
-                let op = this.for();
-                const beat = this.beat(); 
-                let forNode = new ForAST(op, noteRoot, beat) 
-                return forNode;
+                if(this.currentToken.type === FOR){
+                    let op = this.for();
+                    const beat = this.beat(); 
+                    let forNode = new ForAST(op, noteRoot, beat) 
+                    return forNode;
+                }
+                else {
+                    return noteRoot;
+                }
             }
             else if(this.currentToken.type === ID){
                 let varToken= this.id();
+                if(this.currentToken.type === FOR){
+                    let op = this.for();
+                    let leftNode = new IdAST(varToken);
+                    let rightNode;
+                    if(this.currentToken.type === BEAT){
+                        rightNode = this.beat(); 
+                    }
+                    else if(this.currentToken.type === ID){
+                        console.log("ID", this.currentToken);
+                        const leftVarToken = this.id();
+                        rightNode = new IdAST(leftVarToken);
+                    }
+                    let forNode = new ForAST(op, leftNode, rightNode);
+                    console.log(forNode);
+                    return forNode;
+                }
                 return new IdAST(varToken);
             }
             else if(this.currentToken.type === FOR){
@@ -1360,6 +1385,10 @@ export const Handel = (function(){
             else if(valueNode.token.type === FOR){
                 value = this.visitFor(valueNode);
             }
+            else if(valueNode.token.type === NOTE){
+                value = this.visitNoteList(valueNode);
+                console.log(value);
+            }
             this.callStack.peek().setItem(varNode.value, value);
         }
 
@@ -1371,7 +1400,19 @@ export const Handel = (function(){
             let value = rep ? rep.value : 1
 
             if(node.right){
-                return new PlayEvent(this.visitNoteList(node.left), this.beatToValue[node.right.value], node.right.value, value);
+                let notelist;
+                let duration = node.right.value;
+                if(node.left.token.type === ID){
+                    notelist = this.visitId(node.left);
+                }
+                else{ 
+                    notelist = this.visitNoteList(node.left); 
+                }
+                if(node.right.token.type === ID){
+                    duration  = this.visitId(node.right);
+                }
+                console.log("note list", notelist);
+                return new PlayEvent(notelist, this.beatToValue[duration], duration, value);
             }
             else{
                 return new PlayEvent(null, this.beatToValue[node.left.value], node.left.value, value);
@@ -1444,7 +1485,7 @@ export const Handel = (function(){
         }
 
         visitSound(node){
-   }
+        }
 
         visitVolume(node){
         }
@@ -1582,6 +1623,10 @@ export const Handel = (function(){
                 this.visitFor(valueNode);
                 varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('PLAYABLE'));
             }
+            else if(valueNode.token.type === NOTE){
+                this.visitNoteList(valueNode);
+                varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
+            }
             this.currentScope.define(varSymbol);
         }
 
@@ -1598,8 +1643,17 @@ export const Handel = (function(){
             if(left.token.type === NOTE){
                 this.visitNoteList(left);
             }
+            else if(left.token.type === ID){
+                this.visitId(left);
+            }
             else if(left.token.type === BEAT){
                 this.visitBeat(left);
+            }
+            if(right.token.type === ID){
+                this.visitId(right);
+            }
+            else if(right.token.type === BEAT){
+                this.visitBeat(right);
             }
         }
 
