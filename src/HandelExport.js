@@ -1186,6 +1186,9 @@ export const Handel = (function(){
                 else if(actualParams[i].token.type === ID){
                     actualValue = this.visitId(actualParams[i]);
                 }
+                else if(actualParams[i].token.type === NOTE){
+                    actualValue = this.visitNoteList(actualParams[i]);
+                }
                 ar.setItem(formalParams[i].name, actualValue);
             }
 
