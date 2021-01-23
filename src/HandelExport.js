@@ -184,9 +184,7 @@ export const Handel = (function(){
                 this.synth.volume.value = this.volume;
             }
             else {
-                console.log("original volume", this.synth.volume.value);
                 this.synth.volume.value = 0;
-                console.log("new volume", this.synth.volume.value);
             }
 
             const verbVal = !isNaN(this.reverb) ? this.reverb : 0.001;
