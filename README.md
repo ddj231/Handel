@@ -125,17 +125,31 @@ finish
 # But are there Variables?
 
 tl;dr
-Here is some example usage of variables in Handel
+Here is a code snippet showing variables in Handel 
 
 ```
-save myplayable = E4, F4, G3 for 3b
+
+...
+
+save mynotelist = Cb3, D3
 save myduration = for 1b
+save myplayable = E4, F4, G3 for 3b
+
+save myotherplayable = mynotelist for myduration
 
 play myplayable
 rest myduration
+play myotherplayable
+...
+
 ```
 
-You can declare Variables in Handel. Variables store two builtin types in Handel: Playables and Durations.
+You can declare Variables in Handel. Variables store three builtin types in Handel: Notelists, Durations, Playables.
+
+A notelist is a single note name, or a list of note names separated by commas.
+
+```
+```
 
 We've already seen **Playables** above. Playables are a note or notelist (chord) followed by a duration.
 Here are some example playables.
@@ -516,6 +530,12 @@ hihat
 ### rest
 
 ### save
+
+### update 
+
+### lshift
+
+### rshift
 
 ### load 
 
