@@ -345,7 +345,7 @@ export const Handel = (function(){
         }
 
         error(){
-            throw new Error("error analyzing input at line", this.lineno);
+            throw new Error("error analyzing input at line: " + this.lineno + "; invalid character: " + this.currentChar);
         }
 
         peek(){
