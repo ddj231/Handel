@@ -148,11 +148,11 @@ A **Notelist** is a single note name, or a list of note names separated by comma
 For example:
 
 ```
-G#2, A2
 Bb3
+G#2, A2
 ```
 
-**Durations** are the keyword **for** followed by a beat.
+Next, a **Duration** is the keyword **for** followed by a beat.
 
 A **beat** is any whole number followed by the letter 'b' 
 
@@ -165,7 +165,7 @@ for 16b
 for 32b
 ```
 
-We've already seen **Playables** above. Playables are a note or notelist (chord) followed by a duration.
+Lastly, we've already seen **Playables** above. Playables are a note or notelist (chord) followed by a duration.
 Here are some example playables.
 
 ```
@@ -179,7 +179,7 @@ Finally variables!
 
 To store a notelist, playable or a duration use the **save** keyword, followed by a variable name, an equal sign and a notelist, playable, duration (or another variable which stores on of these values).
 
-Variable names must contain only lowercase letters, and no numbers. Lowercase letters are used so note names and variables are not mixed. Variable names must also not be any of the reserved keywords in Handel. (See the Reserved Keywords section below). 
+Variable names must contain only lowercase letters, and no numbers. Variable names must also not be any of the reserved keywords in Handel. (See the Reserved Keywords section below). 
 
 Below is an example program using variables.
 
@@ -195,8 +195,6 @@ start
     rest myrest
 finish
 ```
-
-*Note: in Handel all variables are constants*
 
 OK! So far so good!
 
