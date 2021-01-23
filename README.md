@@ -210,7 +210,7 @@ update mynotelist = Bb3
 
 ## Reassignment and Note Shifting
 
-Additionally variables which store Notelists can have their notes shifted left or right by a number of semitones. 
+Variables which store Notelists can have their notes shifted left or right by a number of semitones. 
 
 The following example reassigns (or shifts) ```mynotelist`` down/left by one semitone. Then up/right by two semitones.
 
