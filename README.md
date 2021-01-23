@@ -156,7 +156,7 @@ Bb3
 
 A **beat** is any whole number followed by the letter 'b' 
 
-All together, here some example durations: 
+All together, here are some example durations: 
 
 ```
 for 1b
