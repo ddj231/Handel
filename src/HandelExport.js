@@ -1056,12 +1056,12 @@ export const Handel = (function(){
                         rightNode = this.beat(); 
                     }
                     else if(this.currentToken.type === ID){
-                        console.log("ID", this.currentToken);
+                        //console.log("ID", this.currentToken);
                         const leftVarToken = this.id();
                         rightNode = new IdAST(leftVarToken);
                     }
                     let forNode = new ForAST(op, leftNode, rightNode);
-                    console.log(forNode);
+                    //console.log(forNode);
                     return forNode;
                 }
                 return new IdAST(varToken);
@@ -1390,7 +1390,7 @@ export const Handel = (function(){
             }
             else if(valueNode.token.type === NOTE){
                 value = this.visitNoteList(valueNode);
-                console.log(value);
+                //console.log(value);
             }
             this.callStack.peek().setItem(varNode.value, value);
         }
@@ -1414,7 +1414,7 @@ export const Handel = (function(){
                 if(node.right.token.type === ID){
                     duration  = this.visitId(node.right);
                 }
-                console.log("note list", notelist);
+                //console.log("note list", notelist);
                 return new PlayEvent(notelist, this.beatToValue[duration], duration, value);
             }
             else{
