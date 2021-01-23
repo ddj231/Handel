@@ -183,6 +183,11 @@ export const Handel = (function(){
             if(!isNaN(this.volume)){ 
                 this.synth.volume.value = this.volume;
             }
+            else {
+                console.log("original volume", this.synth.volume.value);
+                this.synth.volume.value = 0;
+                console.log("new volume", this.synth.volume.value);
+            }
 
             const verbVal = !isNaN(this.reverb) ? this.reverb : 0.001;
             const reverb = new Tone.Reverb(verbVal);
@@ -1152,6 +1157,7 @@ export const Handel = (function(){
             this.currentComposition.enclosingComposition = null;
             this.callStack.push(ar);
             this.visitStatementList(node.child);
+            this.currentComposition.play();
             this.callStack.pop();
             Tone.Transport.stop();
             if(this.config && this.config.outputMidi){
@@ -1217,6 +1223,7 @@ export const Handel = (function(){
 
             //execute body
             this.visitStatementList(procSymbol.statementList);
+            this.currentComposition.play();
 
             this.callStack.pop(ar);
             this.currentComposition = this.currentComposition.enclosingComposition;
@@ -1329,7 +1336,7 @@ export const Handel = (function(){
                     this.error();
                 }
             }
-            this.currentComposition.play();
+            //this.currentComposition.play();
         }
 
         visitLoad(node){
