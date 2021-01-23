@@ -11,6 +11,7 @@ import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
 
 
 export const Handel = (function(){
+    console.log("%c Handel v0.5.3", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth{
         constructor(){
             this.synth =  new Tone.PolySynth({
@@ -214,12 +215,12 @@ export const Handel = (function(){
     // Token types
     const [NOTE, BPM, SOUND, 
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
-        ENDCHUNK, ID, START, FINISH, SAVE, DOT, PLAY,
+        ENDCHUNK, ID, START, FINISH, SAVE, UPDATE, SHIFT, DOT, PLAY,
         REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB","LOOP", "BLOCK", "ENDBLOCK",
         "DO", "INSTRUMENT",
         "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
-        "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "DOT", "PLAY", 
+        "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "UPDATE", "SHIFT", "DOT", "PLAY", 
         "REST", "WITH", "RUN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
@@ -236,6 +237,7 @@ export const Handel = (function(){
         chunk: new Token(CHUNK, 'chunk'),
         endchunk: new Token(ENDCHUNK, 'endchunk'),
         save: new Token(SAVE, 'save'),
+        update: new Token(UPDATE, 'update'),
         play: new Token(PLAY, 'play'),
         rest: new Token(REST, 'rest'),
         using: new Token(USING, 'using'),
@@ -260,6 +262,8 @@ export const Handel = (function(){
         reverb: new Token(REVERB, 'REVERB'),
         load: new Token(LOAD, 'LOAD'),
         as: new Token(AS, 'AS'),
+        lshift: new Token(SHIFT, "lshift"),
+        rshift: new Token(SHIFT, "rshift")
     }
 
     class HandelSymbol {
@@ -520,6 +524,26 @@ export const Handel = (function(){
         }
     }
 
+    class UpdateAST {
+        constructor(token, left, right, isShift){
+            this.token = token;
+            this.value = token.value;
+            this.left = left;
+            this.right = right;
+            this.varNode = left;
+            this.exprNode = right;
+            this.isShift = isShift;
+        }
+    }
+
+    class ShiftAST {
+        constructor(token, amount){
+            this.token = token;
+            this.value = token.value;
+            this.shiftAmount = amount;
+        }
+    }
+
     class StatementAST{
         constructor(token, child){
         this.token = token;
@@ -764,6 +788,7 @@ export const Handel = (function(){
                 this.currentToken.type === RUN ||
                 this.currentToken.type === LOAD ||
                 this.currentToken.type === BLOCK ||
+                this.currentToken.type === UPDATE ||
                 this.currentToken.type === SAVE)){
                     statementList = this.statementList();
             }
@@ -921,6 +946,7 @@ export const Handel = (function(){
                     this.currentToken.type === RUN ||
                     this.currentToken.type === LOAD ||
                     this.currentToken.type === BLOCK ||
+                    this.currentToken.type === UPDATE ||
                     this.currentToken.type === SAVE)
                 ){
                 if(this.currentToken.type === CHUNK){
@@ -961,8 +987,11 @@ export const Handel = (function(){
                 //variable assignment
                 return this.save();
             }
+            else if(this.currentToken.type === UPDATE){
+                //variable reassignment
+                return this.update();
+            }
             else if(this.currentToken.type === LOAD){
-                //variable assignment
                 return this.importInstrument();
             }
             else{
@@ -992,6 +1021,33 @@ export const Handel = (function(){
                 this.eat(ID);
                 return new AssignAST(assignToken, varNode, idNode);
             }
+        }
+        
+        update(){
+            let updateToken = this.currentToken;
+            this.eat(UPDATE);
+            let varNode = new IdAST(this.currentToken);
+            this.eat(ID);
+            if(this.currentToken.type === ASSIGN){
+                this.eat(ASSIGN);
+                let exprNode = this.expr();
+                return new UpdateAST(updateToken, varNode, exprNode, false);
+            }
+            else if(this.currentToken.type === SHIFT){
+                let shiftNode = this.shift();
+                return new UpdateAST(updateToken, varNode, shiftNode, true);
+            }
+            else {
+                this.error();
+            }
+        }
+
+        shift(){
+            let shiftToken = this.currentToken;
+            this.eat(SHIFT);
+            let amt = this.currentToken.value;
+            this.eat(DIGIT);
+            return new ShiftAST(shiftToken, amt);
         }
 
         note(){
@@ -1324,14 +1380,14 @@ export const Handel = (function(){
                 else if(child.token.type === ASSIGN){
                     this.visitSave(child);
                 }
+                else if(child.token.type === UPDATE){
+                    this.visitUpdate(child);
+                }
                 else if(child.token.type === BLOCK){
                     this.visitBlockLoop(child);
                 }
                 else if(child.token.type === LOAD){
                     this.visitLoad(child);
-                }
-                else {
-                    this.error();
                 }
             }
             //this.currentComposition.play();
@@ -1400,6 +1456,28 @@ export const Handel = (function(){
             this.callStack.peek().setItem(varNode.value, value);
         }
 
+        visitUpdate(node){
+           if(!node.isShift) {
+               this.visitSave(node);
+           }
+           else {
+               let varNode = node.left;
+               let valueNode = node.right;
+               let shiftAmt = this.visitShift(valueNode);
+               let notes = this.callStack.peek().getItem(varNode.value);
+               for(let i = 0; i < notes.length; i++){
+                   notes[i] = Tone.Frequency(notes[i]).transpose(shiftAmt);
+               }
+               this.callStack.peek().setItem(varNode.value, notes.slice());
+           }
+        }
+        visitShift(node){
+            if(node.token.value === 'lshift'){
+                return -1 * node.shiftAmount;
+            }
+            return node.shiftAmount;
+        }
+
         visitId(node){
             return this.callStack.peek().get(node.value);
         }
@@ -1420,7 +1498,8 @@ export const Handel = (function(){
                     duration  = this.visitId(node.right);
                 }
                 //console.log("note list", notelist);
-                return new PlayEvent(notelist, this.beatToValue[duration], duration, value);
+                let nl = notelist.slice();
+                return new PlayEvent(nl, this.beatToValue[duration], duration, value);
             }
             else{
                 return new PlayEvent(null, this.beatToValue[node.left.value], node.left.value, value);
@@ -1557,6 +1636,9 @@ export const Handel = (function(){
                 else if(child.token.type === ASSIGN){
                     this.visitSave(child);
                 }
+                else if(child.token.type === UPDATE){
+                    this.visitUpdate(child);
+                }
                 else if(child.token.type === BLOCK){
                     this.visitBlockLoop(child);
                 }
@@ -1636,6 +1718,40 @@ export const Handel = (function(){
                 varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
             }
             this.currentScope.define(varSymbol);
+        }
+
+        visitShift(){
+        }
+
+        visitUpdate(node){
+            let varNode = node.left;
+            let varName = varNode.token.value;
+            let valueNode = node.right;
+
+            if(node.isShift){
+                this.visitShift(valueNode);
+                return;
+            }
+
+            if(!this.currentScope.lookup(varName, true)){
+                throw Error(`Name error in line ${varNode.token.lineno}: ${varName} does not exist`);
+            }
+            if(valueNode.token.type === ID){
+                this.visitId(valueNode);
+                let symbol = this.currentScope.lookup(valueNode.value, true);
+                if(!symbol){
+                    throw Error(`Name error in line ${valueNode.token.lineno}: ${valueNode.value} does not exist`);
+                }
+            }
+            else if(valueNode.token.type === BEAT){
+                this.visitBeat(valueNode);
+            }
+            else if(valueNode.token.type === FOR){
+                this.visitFor(valueNode);
+            }
+            else if(valueNode.token.type === NOTE){
+                this.visitNoteList(valueNode);
+            }
         }
 
         visitId(node){
