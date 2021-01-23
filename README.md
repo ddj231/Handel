@@ -128,9 +128,7 @@ tl;dr
 Here is a code snippet showing variables in Handel 
 
 ```
-
-...
-
+start
 save mynotelist = Cb3, D3
 save myduration = for 1b
 save myplayable = E4, F4, G3 for 3b
@@ -140,26 +138,19 @@ save myotherplayable = mynotelist for myduration
 play myplayable
 rest myduration
 play myotherplayable
-...
-
+finish
 ```
 
 You can declare Variables in Handel. Variables store three builtin types in Handel: Notelists, Durations, Playables.
 
-A notelist is a single note name, or a list of note names separated by commas.
+A **Notelist** is a single note name, or a list of note names separated by commas.
+
+For example:
 
 ```
+G#2, A2
+Bb3
 ```
-
-We've already seen **Playables** above. Playables are a note or notelist (chord) followed by a duration.
-Here are some example playables.
-
-```
-Bb3 for 1b
-D#6, E#6, G3 for 1b
-```
-
-*no promises that the above chord sounds pleasing to the ear :p*
 
 **Durations** are the keyword **for** followed by a beat.
 
@@ -174,17 +165,28 @@ for 16b
 for 32b
 ```
 
+We've already seen **Playables** above. Playables are a note or notelist (chord) followed by a duration.
+Here are some example playables.
+
+```
+Bb3 for 1b
+D#6, E#6, G3 for 1b
+```
+
+*no promises that the above chord sounds pleasing to the ear :p*
+
 Finally variables!
 
-To store a playable or a duration use the **save** keyword, followed by a variable name, an equal sign and a playable or a duration.
+To store a notelist, playable or a duration use the **save** keyword, followed by a variable name, an equal sign and a notelist, playable, duration (or another variable which stores on of these values).
 
-Variable name must contain only lowercase letters, and no numbers. Variable names must also not be any of the reserved keywords in Handel. (See the Reserved Keywords section below).
+Variable names must contain only lowercase letters, and no numbers. Lowercase letters are used so note names and variables are not mixed. Variable names must also not be any of the reserved keywords in Handel. (See the Reserved Keywords section below). 
 
 Below is an example program using variables.
 
 ```
 start
-    save myplayablenote = E2 for 2b
+    save mynote = E2
+    save myplayablenote = mynote for 2b
     save myrest = for 2b
 
     play myplayablenote
@@ -198,16 +200,46 @@ finish
 
 OK! So far so good!
 
+# Variable Reassignment
+Handel (v0.5.3) and greater now supports variable reassignment. Variables can be reassigned using the ```update``` keyword.
+
+For example:
+
+```
+save mynotelist = B3
+update mynotelist = Bb3
+```
+
+## Reassignment and Note Shifting
+
+Additionally variables which store Notelists can have their notes shifted left or right by a number of semitones. 
+
+The following example reassigns (or shifts) ```mynotelist`` down/left by one semitone. Then up/right by two semitones.
+
+```
+start
+save mynotelist = B3 
+
+update mynotelist lshift 1
+play mynotelist for 1b
+
+update mynotelist rshift 2
+play mynotelist for 1b
+finish
+```
+
 # Blocks loops
 
 Handel (v0.2.0 and greater) supports block loops.  Block loops begin with the **block** keyword and end with the **endblock** keyword and the amount of times a block should loop (a loop customization).
 
 Here is an example of a block loop in Handel.
 ```
-block 
-    play C3, E3, G3 for 1b 
-    play D3, F3, A3 for 1b 
-endblock loop for 10 
+start
+    block 
+        play C3, E3, G3 for 1b 
+        play D3, F3, A3 for 1b 
+    endblock loop for 10 
+finish
 ```
 
 Block loops use the global scope, if used globally, or use the scope of the chunk they are in.
