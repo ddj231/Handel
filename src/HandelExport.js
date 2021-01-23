@@ -1007,7 +1007,7 @@ export const Handel = (function(){
             this.eat(ID);
             let assignToken = this.currentToken;
             this.eat(ASSIGN);
-            if(this.currentToken.type === NOTE){
+            if(this.currentToken.type === NOTE || this.currentToken.type === ID){
                 let node = this.expr();
                 return new AssignAST(assignToken, varNode, node);
             }
@@ -1015,11 +1015,6 @@ export const Handel = (function(){
                 this.for();
                 let beat = this.beat();
                 return new AssignAST(assignToken, varNode, beat);
-            }
-            else if(this.currentToken.type === ID){
-                let idNode = new IdAST(this.currentToken);
-                this.eat(ID);
-                return new AssignAST(assignToken, varNode, idNode);
             }
         }
         

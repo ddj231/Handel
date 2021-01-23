@@ -464,6 +464,26 @@ save myduration = for 1b
 
 <br/>
 
+**update**: A command for reassigning variables (see above section on variable reassignment for more details). Only playabes and durations can be saved in variables.
+```
+save myplayable = E2 for 1b
+update myplayble = Eb2 for 2b
+
+save mynotelist = G#4, Cb4
+update mynotelist lshift 2
+```
+
+<br/>
+
+**lshift**: Shift a notelist down a number of semitones.
+**rshift**: Shift a notelist up a number of semitones.
+
+```
+save mynotelist = D#4, C4
+update mynotelist lshift 2
+update mynotelist rshift 4
+```
+
 **load**: A command to load custom instruments into Handel (see above section on custom instruments for more details). 
 ```
 load someinst as instname
