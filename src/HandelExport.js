@@ -1651,16 +1651,16 @@ export const Handel = (function(){
             if(left.token.type === NOTE){
                 this.visitNoteList(left);
             }
-            else if(left.token.type === ID){
+            else if(left && left.token.type === ID){
                 this.visitId(left);
             }
-            else if(left.token.type === BEAT){
+            else if(left && left.token.type === BEAT){
                 this.visitBeat(left);
             }
-            if(right.token.type === ID){
+            if(right && right.token.type === ID){
                 this.visitId(right);
             }
-            else if(right.token.type === BEAT){
+            else if(right && right.token.type === BEAT){
                 this.visitBeat(right);
             }
         }
