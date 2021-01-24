@@ -475,14 +475,19 @@ update mynotelist lshift 2
 
 <br/>
 
-**lshift**: Shift a notelist down a number of semitones.
-**rshift**: Shift a notelist up a number of semitones.
+**lshift**: Shift a notelist left a number of semitones.
+
+<br/>
+
+**rshift**: Shift a notelist right a number of semitones.
 
 ```
 save mynotelist = D#4, C4
 update mynotelist lshift 2
 update mynotelist rshift 4
 ```
+
+<br/>
 
 **load**: A command to load custom instruments into Handel (see above section on custom instruments for more details). 
 ```
