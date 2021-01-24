@@ -477,8 +477,6 @@ update mynotelist lshift 2
 
 **lshift**: Shift a notelist left a number of semitones.
 
-<br/>
-
 **rshift**: Shift a notelist right a number of semitones.
 
 ```
