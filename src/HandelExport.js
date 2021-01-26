@@ -409,79 +409,84 @@ export const Handel = (function () {
 
         getNextToken() {
             // Lexical analyzer
-            this.skipWhitespace();
+            try {
+                this.skipWhitespace();
 
-            if (this.pos >= this.text.length) {
-                return new Token(EOF, null, this.lineno);
-            }
-
-            if (this.possibleChars.includes(this.currentChar)) {
-                let note = this.currentChar;
-                this.advance();
-                if (this.possibleNums.includes(this.currentChar)) {
-                    note += this.currentChar;
-                    this.advance();
-                    return new Token(NOTE, note, this.lineno);
+                if (this.pos >= this.text.length) {
+                    return new Token(EOF, null, this.lineno);
                 }
-                else if (this.currentChar === 'b' || this.currentChar === "#") {
-                    note += this.currentChar;
+
+                if (this.possibleChars.includes(this.currentChar)) {
+                    let note = this.currentChar;
                     this.advance();
                     if (this.possibleNums.includes(this.currentChar)) {
                         note += this.currentChar;
                         this.advance();
                         return new Token(NOTE, note, this.lineno);
                     }
-                }
-                else {
-                    this.error();
-                }
-            }
-
-            if (this.currentChar === ',') {
-                this.advance();
-                return new Token(SEP, 'sep', this.lineno);
-            }
-
-            if (this.currentChar === '.') {
-                this.advance();
-                return new Token(DOT, 'dot', this.lineno);
-            }
-
-            if (this.currentChar === '=') {
-                this.advance();
-                return new Token(ASSIGN, 'assign', this.lineno);
-            }
-
-            let idResult = this.id();
-            if (idResult) {
-                return idResult;
-            }
-
-            const beatValue = this.currentChar;
-            const parsed = Number.parseInt(beatValue);
-            if (!Number.isNaN(parsed)) {
-                this.advance();
-                if (this.currentChar === 'b') {
-                    this.advance();
-                    return new Token(BEAT, beatValue, this.lineno);
-                }
-                else {
-                    let digit = beatValue;
-                    let current = Number.parseInt(this.currentChar);
-                    while (!Number.isNaN(current)) {
-                        digit += this.currentChar;
+                    else if (this.currentChar === 'b' || this.currentChar === "#") {
+                        note += this.currentChar;
                         this.advance();
-                        current = Number.parseInt(this.currentChar);
+                        if (this.possibleNums.includes(this.currentChar)) {
+                            note += this.currentChar;
+                            this.advance();
+                            return new Token(NOTE, note, this.lineno);
+                        }
                     }
+                    else {
+                        this.error();
+                    }
+                }
+
+                if (this.currentChar === ',') {
+                    this.advance();
+                    return new Token(SEP, 'sep', this.lineno);
+                }
+
+                if (this.currentChar === '.') {
+                    this.advance();
+                    return new Token(DOT, 'dot', this.lineno);
+                }
+
+                if (this.currentChar === '=') {
+                    this.advance();
+                    return new Token(ASSIGN, 'assign', this.lineno);
+                }
+
+                let idResult = this.id();
+                if (idResult) {
+                    return idResult;
+                }
+
+                const beatValue = this.currentChar;
+                const parsed = Number.parseInt(beatValue);
+                if (!Number.isNaN(parsed)) {
+                    this.advance();
                     if (this.currentChar === 'b') {
                         this.advance();
-                        return new Token(BEAT, digit, this.lineno);
+                        return new Token(BEAT, beatValue, this.lineno);
                     }
-                    return new Token(DIGIT, Number.parseInt(digit), this.lineno);
+                    else {
+                        let digit = beatValue;
+                        let current = Number.parseInt(this.currentChar);
+                        while (!Number.isNaN(current)) {
+                            digit += this.currentChar;
+                            this.advance();
+                            current = Number.parseInt(this.currentChar);
+                        }
+                        if (this.currentChar === 'b') {
+                            this.advance();
+                            return new Token(BEAT, digit, this.lineno);
+                        }
+                        return new Token(DIGIT, Number.parseInt(digit), this.lineno);
+                    }
                 }
-            }
 
-            this.error();
+                this.error();
+            }
+            catch(ex){
+                throw ex;
+            }
         }
     }
 
