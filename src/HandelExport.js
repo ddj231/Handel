@@ -10,94 +10,94 @@ import snareD from './Sounds/Snare_D2.wav'
 import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
 
 
-export const Handel = (function(){
+export const Handel = (function () {
     console.log("%c Handel v0.5.6", "background: crimson; color: #fff; padding: 2px;");
-    class FMSynth{
-        constructor(){
-            this.synth =  new Tone.PolySynth({
-            voice: Tone.FMSynth, 
-            envelope: {
-                attack: 0.001,
-                decay: 0.2,
-                sustain: 0.002,
-                release: 1,
-            }
+    class FMSynth {
+        constructor() {
+            this.synth = new Tone.PolySynth({
+                voice: Tone.FMSynth,
+                envelope: {
+                    attack: 0.001,
+                    decay: 0.2,
+                    sustain: 0.002,
+                    release: 1,
+                }
             }).toDestination();
             this.synth.volume.value = -12;
         }
     }
 
     class Snare {
-        constructor(){
+        constructor() {
             this.synth = new Tone.Sampler({
-            urls: {
-                D2: snareD,
-            },
-            //baseUrl: baseUrl,
+                urls: {
+                    D2: snareD,
+                },
+                //baseUrl: baseUrl,
             }).toDestination();
             this.synth.volume.value = -3;
         }
     }
     class Piano {
-        constructor(){
+        constructor() {
             this.synth = new Tone.Sampler({
-            urls: {
-                C5: pianoC5,
-                A4: pianoA4,
-            },
-            //baseUrl: baseUrl,
+                urls: {
+                    C5: pianoC5,
+                    A4: pianoA4,
+                },
+                //baseUrl: baseUrl,
             }).toDestination();
         }
     }
 
     class Guitar {
-        constructor(){
+        constructor() {
             this.synth = new Tone.Sampler({
-            urls: {
-                D3: guitarD,
-            },
-            //baseUrl: baseUrl,
+                urls: {
+                    D3: guitarD,
+                },
+                //baseUrl: baseUrl,
             }).toDestination();
         }
     }
 
     class Kick {
-        constructor(){
+        constructor() {
             this.synth = new Tone.Sampler({
-            urls: {
-                C1: kickC,
-            },
-            //baseUrl: baseUrl,
+                urls: {
+                    C1: kickC,
+                },
+                //baseUrl: baseUrl,
             }).toDestination();
         }
     }
 
-    class HiHat{
-        constructor(){
+    class HiHat {
+        constructor() {
             this.synth = new Tone.Sampler({
-            urls: {
-                G3: hihatG,
-            },
-            //baseUrl: baseUrl,
+                urls: {
+                    G3: hihatG,
+                },
+                //baseUrl: baseUrl,
             }).toDestination();
         }
     }
 
     class Casio {
-        constructor(){
+        constructor() {
             this.synth = new Tone.Sampler({
-            urls: {
-                A1: "A1.mp3",
-                A2: "A2.mp3",
-            },
-            baseUrl: "https://tonejs.github.io/audio/casio/",
+                urls: {
+                    A1: "A1.mp3",
+                    A2: "A2.mp3",
+                },
+                baseUrl: "https://tonejs.github.io/audio/casio/",
             }).toDestination();
         }
     }
 
     class Composition {
-        constructor(synth, bpm, midiOption){
-            this.synth = new Tone.PolySynth({voice: synth});
+        constructor(synth, bpm, midiOption) {
+            this.synth = new Tone.PolySynth({ voice: synth });
             this.bpm = bpm;
             this.playEvents = [];
             this.currentTime = 0;
@@ -112,31 +112,31 @@ export const Handel = (function(){
                 this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
             });
             //each composition also represents a midi track
-            if(midiOption.midi){
+            if (midiOption.midi) {
                 this.midi = midiOption.midi;
                 this.track = midiOption.midi.addTrack();
                 this.track.name = midiOption.trackName;
                 this.notes = [];
             }
         }
-    
-        secondsFromBPM(beats){
-            return beats/(Tone.Transport.bpm.value / 60);
+
+        secondsFromBPM(beats) {
+            return beats / (Tone.Transport.bpm.value / 60);
         }
 
-        holdFor(beats){
+        holdFor(beats) {
             let convertedBeats = beats * (Tone.Transport.bpm.value / this.bpm)
-            return convertedBeats/(Tone.Transport.bpm.value / 60);
+            return convertedBeats / (Tone.Transport.bpm.value / 60);
         }
-        
-        configurePart(playEvents){
-            for(let playEvent of playEvents){
+
+        configurePart(playEvents) {
+            for (let playEvent of playEvents) {
                 this.playEvents.push(playEvent);
                 let length = this.secondsFromBPM(playEvent.numBeats);
                 let holdFor = this.holdFor(playEvent.numBeats);
-                for(let i = 0; i < playEvent.rep; i++){
-                    if(playEvent.notes){
-                        this.part.add({notes: playEvent.notes, time: this.currentTime, length: holdFor});
+                for (let i = 0; i < playEvent.rep; i++) {
+                    if (playEvent.notes) {
+                        this.part.add({ notes: playEvent.notes, time: this.currentTime, length: holdFor });
                         this.addNotesToTrack(playEvent.notes, this.midiTime, holdFor, length)
                     }
                     this.currentTime += length;
@@ -145,24 +145,24 @@ export const Handel = (function(){
             }
         }
 
-        addNotesToTrack(notes, time, holdFor, length){
-            if(!this.midi){ return}
-            for(let note of notes){
+        addNotesToTrack(notes, time, holdFor, length) {
+            if (!this.midi) { return }
+            for (let note of notes) {
                 this.track.addNote({
-                    name: note, 
+                    name: note,
                     time: time,
-                    duration: holdFor 
+                    duration: holdFor
                 });
             }
         }
 
-        configureMidiLoop(times){
-            if(!this.midi){ return}
-            for(let i = 1; i < times; i++){
-                for(let playEvent of this.playEvents){
+        configureMidiLoop(times) {
+            if (!this.midi) { return }
+            for (let i = 1; i < times; i++) {
+                for (let playEvent of this.playEvents) {
                     let holdFor = this.holdFor(playEvent.numBeats);
-                    for(let i = 0; i < playEvent.rep; i++){
-                        if(playEvent.notes){
+                    for (let i = 0; i < playEvent.rep; i++) {
+                        if (playEvent.notes) {
                             this.addNotesToTrack(playEvent.notes, this.midiTime, holdFor, length)
                         }
                         this.midiTime += holdFor;
@@ -170,18 +170,18 @@ export const Handel = (function(){
                 }
             }
         }
-    
-        configureLoop(times){
+
+        configureLoop(times) {
             this.part.loopStart = Tone.Time(this.startTime);
-            this.part.loopEnd = Tone.Time(this.currentTime); 
+            this.part.loopEnd = Tone.Time(this.currentTime);
             this.part.loop = times;
         }
-    
-        play(){
-            this.part.playbackRate = this.bpm / Tone.Transport.bpm.value 
+
+        play() {
+            this.part.playbackRate = this.bpm / Tone.Transport.bpm.value
             this.configureLoop(this.loopTimes);
             this.configureMidiLoop(this.loopTimes);
-            if(!isNaN(this.volume)){ 
+            if (!isNaN(this.volume)) {
                 this.synth.volume.value = this.volume;
             }
             else {
@@ -190,7 +190,7 @@ export const Handel = (function(){
 
             const verbVal = !isNaN(this.reverb) ? this.reverb : 0.001;
             const reverb = new Tone.Reverb(verbVal);
-            if(!isNaN(this.pan)){ 
+            if (!isNaN(this.pan)) {
                 const panner = new Tone.Panner(this.pan).toDestination();
                 this.synth.chain(panner, reverb, Tone.Destination);
             }
@@ -200,11 +200,11 @@ export const Handel = (function(){
             }
             this.part.start(0.1);
         }
-    
+
     }
-    
+
     class PlayEvent {
-        constructor(notes, length, numBeats, rep = 1){
+        constructor(notes, length, numBeats, rep = 1) {
             this.length = length;
             this.notes = notes;
             this.numBeats = numBeats;
@@ -213,19 +213,19 @@ export const Handel = (function(){
     }
 
     // Token types
-    const [NOTE, BPM, SOUND, 
-        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO,  INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK, 
+    const [NOTE, BPM, SOUND,
+        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, UPDATE, SHIFT, DOT, PLAY,
         REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = [
-            "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB","LOOP", "BLOCK", "ENDBLOCK",
-        "DO", "INSTRUMENT",
-        "BEAT", "DIGIT", "FOR", "SEP", "CHUNK", 
-        "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "UPDATE", "SHIFT", "DOT", "PLAY", 
-        "REST", "WITH", "RUN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
+            "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
+            "DO", "INSTRUMENT",
+            "BEAT", "DIGIT", "FOR", "SEP", "CHUNK",
+            "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "UPDATE", "SHIFT", "DOT", "PLAY",
+            "REST", "WITH", "RUN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
     class Token {
-        constructor(type, value, lineno){
+        constructor(type, value, lineno) {
             this.type = type;
             this.value = value;
             this.lineno = lineno
@@ -267,41 +267,41 @@ export const Handel = (function(){
     }
 
     class HandelSymbol {
-        constructor(name, type=null){
+        constructor(name, type = null) {
             this.name = name;
             this.type = type;
         }
     }
 
     class BuiltInTypeSymbol extends HandelSymbol {
-        constructor(name){
+        constructor(name) {
             super(name);
         }
     }
 
-    class VarSymbol extends HandelSymbol{
-        constructor(name, type){
+    class VarSymbol extends HandelSymbol {
+        constructor(name, type) {
             super(name, type)
         }
     }
 
-    class ProcedureSymbol extends HandelSymbol{
-        constructor(name, type, params = null){
+    class ProcedureSymbol extends HandelSymbol {
+        constructor(name, type, params = null) {
             super(name);
-            this.params = []; 
+            this.params = [];
             this.statementList = null;
         }
     }
 
     class HandelSymbolTable {
-        constructor(scopeName, scopeLevel, enclosingScope = null){
+        constructor(scopeName, scopeLevel, enclosingScope = null) {
             this.symbols = {};
             this.scopeName = scopeName;
             this.scopeLevel = scopeLevel;
             this.enclosingScope = enclosingScope;
             this.initbuiltins();
         }
-        initbuiltins(){
+        initbuiltins() {
             let duration = new BuiltInTypeSymbol('BEAT');
             let playable = new BuiltInTypeSymbol('PLAYABLE');
             let digit = new BuiltInTypeSymbol('DIGIT');
@@ -313,91 +313,91 @@ export const Handel = (function(){
             this.define(digit);
             this.define(notelist);
         }
-        define(symbol){
+        define(symbol) {
             symbol.scopeLevel = this.scopeLevel;
             this.symbols[symbol.name] = symbol;
         }
-        lookup(name, currentScopeOnly = false){
+        lookup(name, currentScopeOnly = false) {
             let symbol = this.symbols[name];
-            if(symbol){
+            if (symbol) {
                 return symbol;
             }
 
-            if(currentScopeOnly){
+            if (currentScopeOnly) {
                 return null;
             }
 
-            if(this.enclosingScope){
+            if (this.enclosingScope) {
                 return this.enclosingScope.lookup(name);
             }
         }
 
-        error(varName){
+        error(varName) {
             throw Error(`Symbol ${varName} not found`)
         }
     }
 
 
     class HandelLexer {
-        constructor(text){
+        constructor(text) {
             this.text = text;
             this.pos = 0;
             this.currentChar = this.text[this.pos];
             this.lineno = 1;
             this.possibleChars = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-            this.possibleNums= ['0', '1', '2', '3', '4', '5', '6', '7'];
+            this.possibleNums = ['0', '1', '2', '3', '4', '5', '6', '7'];
         }
 
-        error(){
+        error() {
             throw new Error("error analyzing input at line: " + this.lineno + "; invalid character: " + this.currentChar);
         }
 
-        peek(){
-            if(this.pos >= this.text.length - 1){
+        peek() {
+            if (this.pos >= this.text.length - 1) {
                 return null;
             }
             else {
                 return this.text[this.pos + 1];
-            } 
+            }
         }
 
-        advance(){
+        advance() {
             this.pos += 1;
-            if(this.pos >= this.text.length){
+            if (this.pos >= this.text.length) {
                 this.currentChar = null;
             }
-            else{
+            else {
                 this.currentChar = this.text[this.pos];
             }
         }
 
-        isSpace(ch){
-            if(ch === '\n'){
+        isSpace(ch) {
+            if (ch === '\n') {
                 this.lineno += 1;
             }
-            return ch === ' '  || ch === '\t' || ch === '\n' || ch === '\r';
+            return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
         }
 
-        isAlpha(ch){
+        isAlpha(ch) {
             let regex = /^[a-zA-Z]{1}$/
             return regex.test(ch);
         }
-        
-        skipWhitespace(){
-            while(this.currentChar !== null && this.isSpace(this.currentChar)){
+
+        skipWhitespace() {
+            while (this.currentChar !== null && this.isSpace(this.currentChar)) {
                 this.advance();
             }
         }
 
-        id(){
+        id() {
             let result = "";
-            while(this.currentChar && this.isAlpha(this.currentChar)){
+            while (this.currentChar && this.isAlpha(this.currentChar)) {
                 result += this.currentChar;
                 this.advance();
             }
 
-            if(result !== ""){
-                if(result in RESERVED_KEYWORDS){
+            if (result !== "") {
+                if (result in RESERVED_KEYWORDS) {
                     let token = RESERVED_KEYWORDS[result];
                     token.lineno = this.lineno
                     return token;
@@ -407,125 +407,125 @@ export const Handel = (function(){
             }
         }
 
-        getNextToken(){
+        getNextToken() {
             // Lexical analyzer
             this.skipWhitespace();
 
-            if(this.pos >= this.text.length){
+            if (this.pos >= this.text.length) {
                 return new Token(EOF, null, this.lineno);
             }
-            
-            if(this.possibleChars.includes(this.currentChar)){
+
+            if (this.possibleChars.includes(this.currentChar)) {
                 let note = this.currentChar;
                 this.advance();
-                if(this.possibleNums.includes(this.currentChar)){
+                if (this.possibleNums.includes(this.currentChar)) {
                     note += this.currentChar;
                     this.advance();
                     return new Token(NOTE, note, this.lineno);
                 }
-                else if(this.currentChar === 'b' || this.currentChar === "#"){
+                else if (this.currentChar === 'b' || this.currentChar === "#") {
                     note += this.currentChar;
                     this.advance();
-                    if(this.possibleNums.includes(this.currentChar)){
+                    if (this.possibleNums.includes(this.currentChar)) {
                         note += this.currentChar;
                         this.advance();
                         return new Token(NOTE, note, this.lineno);
                     }
                 }
-                else{
+                else {
                     this.error();
                 }
             }
 
-            if(this.currentChar === ','){
+            if (this.currentChar === ',') {
                 this.advance();
                 return new Token(SEP, 'sep', this.lineno);
             }
 
-            if(this.currentChar === '.'){
+            if (this.currentChar === '.') {
                 this.advance();
                 return new Token(DOT, 'dot', this.lineno);
             }
 
-            if(this.currentChar === '='){
+            if (this.currentChar === '=') {
                 this.advance();
                 return new Token(ASSIGN, 'assign', this.lineno);
             }
 
             let idResult = this.id();
-            if(idResult){
+            if (idResult) {
                 return idResult;
             }
 
             const beatValue = this.currentChar;
             const parsed = Number.parseInt(beatValue);
-            if(!Number.isNaN(parsed)){
+            if (!Number.isNaN(parsed)) {
                 this.advance();
-                if(this.currentChar === 'b'){
+                if (this.currentChar === 'b') {
                     this.advance();
                     return new Token(BEAT, beatValue, this.lineno);
                 }
                 else {
                     let digit = beatValue;
                     let current = Number.parseInt(this.currentChar);
-                    while(!Number.isNaN(current)){
+                    while (!Number.isNaN(current)) {
                         digit += this.currentChar;
                         this.advance();
                         current = Number.parseInt(this.currentChar);
                     }
-                    if(this.currentChar === 'b'){
+                    if (this.currentChar === 'b') {
                         this.advance();
                         return new Token(BEAT, digit, this.lineno);
                     }
                     return new Token(DIGIT, Number.parseInt(digit), this.lineno);
                 }
             }
-            
+
             this.error();
         }
     }
 
     class AST {
-        constructor(){
+        constructor() {
             this.token = token;
             this.child = child;
         }
     }
     class BeatAST {
-        constructor(token){
-        this.token = token;
-        this.value = token.value;
+        constructor(token) {
+            this.token = token;
+            this.value = token.value;
         }
     }
 
     class LoadAST {
-        constructor(token, instrumentName, localVarName){
+        constructor(token, instrumentName, localVarName) {
             this.token = token;
-            this.instrumentName= instrumentName;
+            this.instrumentName = instrumentName;
             this.localVarName = localVarName;
         }
     }
 
-    class PlayAST{
-        constructor(token, child = null, rep = null){
-        this.token = token;
-        this.value = token.value;
-        this.child = child;
-        this.rep = rep;
+    class PlayAST {
+        constructor(token, child = null, rep = null) {
+            this.token = token;
+            this.value = token.value;
+            this.child = child;
+            this.rep = rep;
         }
     }
 
-    class AssignAST{
-        constructor(token, left, right){
-        this.token = token;
-        this.value = token.value;
-        this.left = left;
-        this.right = right;
+    class AssignAST {
+        constructor(token, left, right) {
+            this.token = token;
+            this.value = token.value;
+            this.left = left;
+            this.right = right;
         }
     }
 
     class UpdateAST {
-        constructor(token, left, right, isShift){
+        constructor(token, left, right, isShift) {
             this.token = token;
             this.value = token.value;
             this.left = left;
@@ -537,32 +537,32 @@ export const Handel = (function(){
     }
 
     class ShiftAST {
-        constructor(token, amount){
+        constructor(token, amount) {
             this.token = token;
             this.value = token.value;
             this.shiftAmount = amount;
         }
     }
 
-    class StatementAST{
-        constructor(token, child){
-        this.token = token;
-        this.value = token.value;
-        this.child = child;
+    class StatementAST {
+        constructor(token, child) {
+            this.token = token;
+            this.value = token.value;
+            this.child = child;
         }
     }
 
-    class StatementListAST{
-        constructor(){
-        this.children = [];
+    class StatementListAST {
+        constructor() {
+            this.children = [];
         }
     }
 
-    class ProgramAST{
-        constructor(token, child){
-        this.token = token;
-        this.value = token.value;
-        this.child = child;
+    class ProgramAST {
+        constructor(token, child) {
+            this.token = token;
+            this.value = token.value;
+            this.child = child;
         }
     }
 
@@ -574,22 +574,22 @@ export const Handel = (function(){
         }
     }
 
-    class ParameterListAST{
-        constructor(){
-        this.children = [];
+    class ParameterListAST {
+        constructor() {
+            this.children = [];
         }
     }
 
-    class ParameterAST{
-        constructor(token, child){
-        this.token = token;
-        this.value = token.value;
-        this.child = child;
+    class ParameterAST {
+        constructor(token, child) {
+            this.token = token;
+            this.value = token.value;
+            this.child = child;
         }
     }
 
-    class SectionDeclarationAST{
-        constructor(token, parameterList, statementList){
+    class SectionDeclarationAST {
+        constructor(token, parameterList, statementList) {
             this.token = token;
             this.value = this.token.value;
             this.parameterList = parameterList;
@@ -597,40 +597,40 @@ export const Handel = (function(){
         }
     }
 
-    class BPMAST{
-        constructor(token, bpm){
+    class BPMAST {
+        constructor(token, bpm) {
             this.token = token;
             this.value = bpm;
             this.bpm = bpm;
         }
     }
 
-    class LoopAST{
-        constructor(token, loopTimes){
+    class LoopAST {
+        constructor(token, loopTimes) {
             this.token = token;
             this.value = loopTimes;
             this.loopTimes = loopTimes;
         }
     }
 
-    class VolumeAST{
-        constructor(token, percentage){
+    class VolumeAST {
+        constructor(token, percentage) {
             this.token = token;
             this.value = percentage;
             this.percentage = percentage;
         }
     }
 
-    class PanAST{
-        constructor(token, panAmt){
+    class PanAST {
+        constructor(token, panAmt) {
             this.token = token;
             this.value = panAmt;
             this.panAmt = panAmt;
         }
     }
 
-    class ReverbAST{
-        constructor(token, reverbAmt){
+    class ReverbAST {
+        constructor(token, reverbAmt) {
             this.token = token;
             this.value = reverbAmt;
             this.reverbAmt = reverbAmt;
@@ -638,23 +638,23 @@ export const Handel = (function(){
     }
 
     class RepAST {
-        constructor(token, repTimes){
+        constructor(token, repTimes) {
             this.token = token;
             this.value = repTimes;
             this.repTimes = repTimes;
         }
     }
 
-    class InstrumentAST{
-        constructor(token, instrument){
+    class InstrumentAST {
+        constructor(token, instrument) {
             this.token = token;
             this.value = instrument;
             this.instrument = instrument;
         }
     }
 
-    class ProcedureCallAST{
-        constructor(token, actualParams, customizationList){
+    class ProcedureCallAST {
+        constructor(token, actualParams, customizationList) {
             this.token = token;
             this.value = this.token.value;
             this.actualParams = actualParams;
@@ -664,31 +664,31 @@ export const Handel = (function(){
     }
 
 
-    class RestAST{
-        constructor(token, child = null){
-        this.token = token;
-        this.value = token.value;
-        this.child = child;
+    class RestAST {
+        constructor(token, child = null) {
+            this.token = token;
+            this.value = token.value;
+            this.child = child;
         }
     }
 
     class NoteAST {
-        constructor(token, child = null){
-        this.token = token;
-        this.value = token.value;
-        this.child = child;
+        constructor(token, child = null) {
+            this.token = token;
+            this.value = token.value;
+            this.child = child;
         }
     }
 
     class IdAST {
-        constructor(token){
-        this.token = token;
-        this.value = token.value;
+        constructor(token) {
+            this.token = token;
+            this.value = token.value;
         }
     }
 
     class SepAST {
-        constructor(token, left, right){
+        constructor(token, left, right) {
             this.token = token;
             this.left = left;
             this.right = right;
@@ -696,7 +696,7 @@ export const Handel = (function(){
     }
 
     class ForAST {
-        constructor(token, left, right){
+        constructor(token, left, right) {
             this.token = token;
             this.left = left;
             this.right = right;
@@ -704,36 +704,36 @@ export const Handel = (function(){
     }
 
     class HandelParser {
-        constructor(lexer){
+        constructor(lexer) {
             this.lexer = lexer;
             this.currentToken = this.lexer.getNextToken();
         }
 
-        error(){
+        error() {
             throw new Error(`error parsing input at line ${this.currentToken.lineno}`);
         }
 
-        eat(type){
-            if(this.currentToken.type === type){
+        eat(type) {
+            if (this.currentToken.type === type) {
                 this.currentToken = this.lexer.getNextToken();
             }
-            else{
+            else {
                 this.error();
             }
         }
 
-        play(){
+        play() {
             let token = this.currentToken;
             this.eat(PLAY);
             let child = this.expr();
             let rep;
-            if(this.currentToken.type === LOOP){
+            if (this.currentToken.type === LOOP) {
                 rep = this.rep();
             }
             return new PlayAST(token, child, rep);
         }
 
-        rep(){
+        rep() {
             let token = this.currentToken;
             this.eat(LOOP);
             this.eat(FOR);
@@ -742,54 +742,54 @@ export const Handel = (function(){
             return new RepAST(token, digit.value);
         }
 
-        rest(){
+        rest() {
             let restToken = this.currentToken;
             this.eat(REST);
             let beat;
-            if(this.currentToken.type === FOR){
+            if (this.currentToken.type === FOR) {
                 let forToken = this.currentToken;
                 this.for();
                 beat = this.beat();
                 let forNode = new ForAST(forToken, beat, null);
                 return new RestAST(restToken, forNode);
             }
-            else if(this.currentToken.type === ID){
+            else if (this.currentToken.type === ID) {
                 let varToken = this.id();
                 //beat = this.globalVariables[varName];
                 let idNode = new IdAST(varToken);
                 //if(!this.currentScope.lookup(varName)){ this.currentScope.error(varName) }
                 return new RestAST(restToken, idNode);
             }
-            else{
+            else {
                 this.error();
             }
         }
 
-        chunk(){
+        chunk() {
             this.eat(CHUNK);
         }
 
-        endchunk(){
+        endchunk() {
             this.eat(ENDCHUNK);
         }
 
-        using(){
+        using() {
             this.eat(USING);
         }
 
-        program(){
+        program() {
             let startToken = this.currentToken;
             this.eat(START);
             let statementList;
-            if(this.currentToken && 
-                (this.currentToken.type === CHUNK || 
-                this.currentToken.type === PLAY ||
-                this.currentToken.type === REST ||
-                this.currentToken.type === RUN ||
-                this.currentToken.type === LOAD ||
-                this.currentToken.type === BLOCK ||
-                this.currentToken.type === UPDATE ||
-                this.currentToken.type === SAVE)){
+            if (this.currentToken &&
+                (this.currentToken.type === CHUNK ||
+                    this.currentToken.type === PLAY ||
+                    this.currentToken.type === REST ||
+                    this.currentToken.type === RUN ||
+                    this.currentToken.type === LOAD ||
+                    this.currentToken.type === BLOCK ||
+                    this.currentToken.type === UPDATE ||
+                    this.currentToken.type === SAVE)) {
                 try {
                     statementList = this.statementList();
                 }
@@ -797,7 +797,7 @@ export const Handel = (function(){
                     throw e;
                 }
             }
-            else{
+            else {
                 this.error();
             }
             let programNode = new ProgramAST(startToken, statementList);
@@ -806,29 +806,29 @@ export const Handel = (function(){
         }
 
 
-        sectionDeclaration(){
+        sectionDeclaration() {
             this.chunk();
             let proc;
             try {
                 proc = this.id();
             }
-            catch (ex){
+            catch (ex) {
                 throw ex;
             }
             let parameterList;
             let statementListNode;
-            if(this.currentToken.type === USING){
+            if (this.currentToken.type === USING) {
                 try {
-                    this.using(); 
+                    this.using();
                     parameterList = this.parameterList();
                 }
-                catch(ex){
+                catch (ex) {
                     throw ex;
                 }
             }
             try {
                 statementListNode = this.statementList();
-            } catch (ex){
+            } catch (ex) {
                 throw ex;
 
             }
@@ -838,8 +838,8 @@ export const Handel = (function(){
             return sectionNode;
         }
 
-        parameterList(){
-            try{
+        parameterList() {
+            try {
                 let parameterListNode = new ParameterListAST();
                 let paramToken = this.id();
                 let parameter = new ParameterAST(paramToken);
@@ -852,12 +852,12 @@ export const Handel = (function(){
                 }
                 return parameterListNode;
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        argumentList(){
+        argumentList() {
             try {
                 let actualParams = [];
                 actualParams.push(this.expr());
@@ -867,25 +867,25 @@ export const Handel = (function(){
                 }
                 return actualParams;
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        customization(){
-            try{
-                if(this.currentToken.type === BPM){
+        customization() {
+            try {
+                if (this.currentToken.type === BPM) {
                     let bpmToken = this.currentToken;
                     this.eat(BPM);
                     let digit = this.currentToken.value;
                     this.eat(DIGIT);
                     return new BPMAST(bpmToken, digit);
                 }
-                else if(this.currentToken.type === SOUND){
+                else if (this.currentToken.type === SOUND) {
                     let soundToken = this.currentToken;
                     this.eat(SOUND);
                     let instrument = this.currentToken.value;
-                    if(this.currentToken.type === INSTRUMENT){
+                    if (this.currentToken.type === INSTRUMENT) {
                         this.eat(INSTRUMENT);
                     }
                     else {
@@ -893,7 +893,7 @@ export const Handel = (function(){
                     }
                     return new InstrumentAST(soundToken, instrument);
                 }
-                else if(this.currentToken.type === LOOP){
+                else if (this.currentToken.type === LOOP) {
                     let loopToken = this.currentToken;
                     this.eat(LOOP);
                     this.eat(FOR);
@@ -901,38 +901,38 @@ export const Handel = (function(){
                     this.eat(DIGIT);
                     return new LoopAST(loopToken, digit);
                 }
-                else if(this.currentToken.type === VOLUME){
+                else if (this.currentToken.type === VOLUME) {
                     let volumeToken = this.currentToken;
                     this.eat(VOLUME);
                     let digit = this.currentToken.value;
                     this.eat(DIGIT);
                     return new VolumeAST(volumeToken, digit);
                 }
-                else if(this.currentToken.type === PAN){
+                else if (this.currentToken.type === PAN) {
                     let panToken = this.currentToken;
                     this.eat(PAN);
                     let digit = this.currentToken.value;
                     this.eat(DIGIT);
                     return new PanAST(panToken, digit);
                 }
-                else if(this.currentToken.type === REVERB){
+                else if (this.currentToken.type === REVERB) {
                     let reverbToken = this.currentToken;
                     this.eat(REVERB);
                     let digit = this.currentToken.value;
                     this.eat(DIGIT);
                     return new ReverbAST(reverbToken, digit);
                 }
-                else{
+                else {
                     this.error();
                 }
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        customizationList(){
-            try{
+        customizationList() {
+            try {
                 let customizations = [];
                 customizations.push(this.customization());
                 while (this.currentToken && this.currentToken.type === SEP) {
@@ -941,12 +941,12 @@ export const Handel = (function(){
                 }
                 return customizations;
             }
-            catch (ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        blockLoop(){
+        blockLoop() {
             try {
                 let blockToken = this.currentToken;
                 this.eat(BLOCK);
@@ -958,295 +958,295 @@ export const Handel = (function(){
                 this.eat(DIGIT);
                 return new BlockLoopAST(blockToken, statementList, digitToken.value);
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
-        
-        procedureCall(){
-            try{
+
+        procedureCall() {
+            try {
                 this.eat(RUN);
                 let procedureToken = this.currentToken;
                 procedureToken.category = "PROCEDURECALL";
                 this.eat(ID);
                 let actualParams = [];
-                if(this.currentToken.type === USING){
+                if (this.currentToken.type === USING) {
                     this.eat(USING);
-                    if(this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID){
+                    if (this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID) {
                         actualParams = this.argumentList();
                     }
                 }
                 let customizationList = [];
-                if(this.currentToken.type === WITH){
+                if (this.currentToken.type === WITH) {
                     this.eat(WITH);
-                customizationList = this.customizationList(); 
+                    customizationList = this.customizationList();
                 }
                 return new ProcedureCallAST(procedureToken, actualParams, customizationList);
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        statementList(){
-            try{
-            let statementListNode = new StatementListAST();
-            while(this.currentToken && 
-                    (this.currentToken.type === CHUNK || 
-                    this.currentToken.type === PLAY || 
-                    this.currentToken.type === REST ||
-                    this.currentToken.type === RUN ||
-                    this.currentToken.type === LOAD ||
-                    this.currentToken.type === BLOCK ||
-                    this.currentToken.type === UPDATE ||
-                    this.currentToken.type === SAVE)
-                ){
-                if(this.currentToken.type === CHUNK){
-                    statementListNode.children.push(this.sectionDeclaration());
+        statementList() {
+            try {
+                let statementListNode = new StatementListAST();
+                while (this.currentToken &&
+                    (this.currentToken.type === CHUNK ||
+                        this.currentToken.type === PLAY ||
+                        this.currentToken.type === REST ||
+                        this.currentToken.type === RUN ||
+                        this.currentToken.type === LOAD ||
+                        this.currentToken.type === BLOCK ||
+                        this.currentToken.type === UPDATE ||
+                        this.currentToken.type === SAVE)
+                ) {
+                    if (this.currentToken.type === CHUNK) {
+                        statementListNode.children.push(this.sectionDeclaration());
+                    }
+                    else {
+                        statementListNode.children.push(this.statement());
+                    }
                 }
-                else{
-                    statementListNode.children.push(this.statement());
+                return statementListNode;
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        importInstrument() {
+            try {
+                let token = this.currentToken;
+                this.eat(LOAD);
+                let instrumentName = this.currentToken.value;
+                this.eat(ID);
+                this.eat(AS);
+                let localVarName = this.currentToken.value;
+                this.eat(ID);
+                return new LoadAST(token, instrumentName, localVarName);
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        statement() {
+            try {
+                if (this.currentToken.type === PLAY) {
+                    return this.play();
+                }
+                else if (this.currentToken.type === REST) {
+                    return this.rest();
+                }
+                else if (this.currentToken.type === RUN) {
+                    return this.procedureCall();
+                }
+                else if (this.currentToken.type === BLOCK) {
+                    return this.blockLoop();
+                }
+                else if (this.currentToken.type === SAVE) {
+                    //variable assignment
+                    return this.save();
+                }
+                else if (this.currentToken.type === UPDATE) {
+                    //variable reassignment
+                    return this.update();
+                }
+                else if (this.currentToken.type === LOAD) {
+                    return this.importInstrument();
+                }
+                else {
+                    this.error();
                 }
             }
-            return statementListNode;
-            }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        importInstrument(){
+        save() {
             try {
-            let token = this.currentToken;
-            this.eat(LOAD);
-            let instrumentName = this.currentToken.value;
-            this.eat(ID);
-            this.eat(AS);
-            let localVarName = this.currentToken.value;
-            this.eat(ID);
-            return new LoadAST(token, instrumentName, localVarName);
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        statement(){
-            try {
-            if(this.currentToken.type === PLAY){
-                return this.play();
-            }
-            else if(this.currentToken.type === REST){
-                return this.rest();
-            }
-            else if(this.currentToken.type === RUN){
-                return this.procedureCall();
-            }
-            else if(this.currentToken.type === BLOCK){
-                return this.blockLoop();
-            }
-            else if(this.currentToken.type === SAVE){
-                //variable assignment
-                return this.save();
-            }
-            else if(this.currentToken.type === UPDATE){
-                //variable reassignment
-                return this.update();
-            }
-            else if(this.currentToken.type === LOAD){
-                return this.importInstrument();
-            }
-            else{
-                this.error();
-            }
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        save(){
-            try {
-            this.eat(SAVE);
-            let varToken = this.currentToken;
-            let varNode = new IdAST(varToken);
-            this.eat(ID);
-            let assignToken = this.currentToken;
-            this.eat(ASSIGN);
-            if(this.currentToken.type === NOTE || this.currentToken.type === ID){
-                let node = this.expr();
-                return new AssignAST(assignToken, varNode, node);
-            }
-            else if(this.currentToken.type === FOR){
-                this.for();
-                let beat = this.beat();
-                return new AssignAST(assignToken, varNode, beat);
-            }
-            }
-            catch (ex){
-                throw ex;
-            }
-        }
-        
-        update(){
-            try {
-            let updateToken = this.currentToken;
-            this.eat(UPDATE);
-            let varNode = new IdAST(this.currentToken);
-            this.eat(ID);
-            if(this.currentToken.type === ASSIGN){
+                this.eat(SAVE);
+                let varToken = this.currentToken;
+                let varNode = new IdAST(varToken);
+                this.eat(ID);
+                let assignToken = this.currentToken;
                 this.eat(ASSIGN);
-                let exprNode = this.expr();
-                return new UpdateAST(updateToken, varNode, exprNode, false);
+                if (this.currentToken.type === NOTE || this.currentToken.type === ID) {
+                    let node = this.expr();
+                    return new AssignAST(assignToken, varNode, node);
+                }
+                else if (this.currentToken.type === FOR) {
+                    this.for();
+                    let beat = this.beat();
+                    return new AssignAST(assignToken, varNode, beat);
+                }
             }
-            else if(this.currentToken.type === SHIFT){
-                let shiftNode = this.shift();
-                return new UpdateAST(updateToken, varNode, shiftNode, true);
-            }
-            else {
-                this.error();
-            }
-            }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        shift(){
-            try{
-            let shiftToken = this.currentToken;
-            this.eat(SHIFT);
-            let amt = this.currentToken.value;
-            this.eat(DIGIT);
-            return new ShiftAST(shiftToken, amt);
+        update() {
+            try {
+                let updateToken = this.currentToken;
+                this.eat(UPDATE);
+                let varNode = new IdAST(this.currentToken);
+                this.eat(ID);
+                if (this.currentToken.type === ASSIGN) {
+                    this.eat(ASSIGN);
+                    let exprNode = this.expr();
+                    return new UpdateAST(updateToken, varNode, exprNode, false);
+                }
+                else if (this.currentToken.type === SHIFT) {
+                    let shiftNode = this.shift();
+                    return new UpdateAST(updateToken, varNode, shiftNode, true);
+                }
+                else {
+                    this.error();
+                }
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        note(){
+        shift() {
+            try {
+                let shiftToken = this.currentToken;
+                this.eat(SHIFT);
+                let amt = this.currentToken.value;
+                this.eat(DIGIT);
+                return new ShiftAST(shiftToken, amt);
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        note() {
             try {
                 const note = this.currentToken;
                 this.eat(NOTE);
                 return new NoteAST(note, null);
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        noteList(){
+        noteList() {
             try {
-            const notes = [];
-            let node = this.note();
-            let root = node;
-            while(this.currentToken && this.currentToken.type === SEP){
-                let sepToken = this.sep();
-                let temp = this.note();
-                node.child = temp;
-                node = temp;
-            }
-            return root;
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        sep(){
-            try {
-            const sep = this.currentToken;
-            this.eat(SEP);
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        for(){
-            try {
-            const op = this.currentToken;
-            this.eat(FOR);
-            return op;
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        id(){
-            try {
-            let idToken = this.currentToken;
-            this.eat(ID);
-            return idToken;
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        beat(){
-            try {
-            const beat = this.currentToken;
-            this.eat(BEAT);
-            return new BeatAST(beat);
-            }
-            catch (ex){
-                throw ex;
-            }
-        }
-
-        expr(){
-            try { 
-            if(this.currentToken.type === NOTE){
-                const noteRoot = this.noteList();
-                if(this.currentToken.type === FOR){
-                    let op = this.for();
-                    const beat = this.beat(); 
-                    let forNode = new ForAST(op, noteRoot, beat) 
-                    return forNode;
+                const notes = [];
+                let node = this.note();
+                let root = node;
+                while (this.currentToken && this.currentToken.type === SEP) {
+                    let sepToken = this.sep();
+                    let temp = this.note();
+                    node.child = temp;
+                    node = temp;
                 }
-                else {
-                    return noteRoot;
-                }
+                return root;
             }
-            else if(this.currentToken.type === ID){
-                let varToken= this.id();
-                if(this.currentToken.type === FOR){
-                    let op = this.for();
-                    let leftNode = new IdAST(varToken);
-                    let rightNode;
-                    if(this.currentToken.type === BEAT){
-                        rightNode = this.beat(); 
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        sep() {
+            try {
+                const sep = this.currentToken;
+                this.eat(SEP);
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        for() {
+            try {
+                const op = this.currentToken;
+                this.eat(FOR);
+                return op;
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        id() {
+            try {
+                let idToken = this.currentToken;
+                this.eat(ID);
+                return idToken;
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        beat() {
+            try {
+                const beat = this.currentToken;
+                this.eat(BEAT);
+                return new BeatAST(beat);
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        expr() {
+            try {
+                if (this.currentToken.type === NOTE) {
+                    const noteRoot = this.noteList();
+                    if (this.currentToken.type === FOR) {
+                        let op = this.for();
+                        const beat = this.beat();
+                        let forNode = new ForAST(op, noteRoot, beat)
+                        return forNode;
                     }
-                    else if(this.currentToken.type === ID){
-                        //console.log("ID", this.currentToken);
-                        const leftVarToken = this.id();
-                        rightNode = new IdAST(leftVarToken);
+                    else {
+                        return noteRoot;
                     }
-                    let forNode = new ForAST(op, leftNode, rightNode);
-                    //console.log(forNode);
-                    return forNode;
                 }
-                return new IdAST(varToken);
+                else if (this.currentToken.type === ID) {
+                    let varToken = this.id();
+                    if (this.currentToken.type === FOR) {
+                        let op = this.for();
+                        let leftNode = new IdAST(varToken);
+                        let rightNode;
+                        if (this.currentToken.type === BEAT) {
+                            rightNode = this.beat();
+                        }
+                        else if (this.currentToken.type === ID) {
+                            //console.log("ID", this.currentToken);
+                            const leftVarToken = this.id();
+                            rightNode = new IdAST(leftVarToken);
+                        }
+                        let forNode = new ForAST(op, leftNode, rightNode);
+                        //console.log(forNode);
+                        return forNode;
+                    }
+                    return new IdAST(varToken);
+                }
+                else if (this.currentToken.type === FOR) {
+                    let forToken = this.currentToken;
+                    this.for();
+                    let beat = this.beat();
+                    //let forNode = new ForAST(forToken, beat, null);
+                    return beat;
+                }
+            } catch (ex) {
+                throw ex;
             }
-            else if(this.currentToken.type === FOR){
-                let forToken = this.currentToken;
-                this.for();
-                let beat = this.beat();
-                //let forNode = new ForAST(forToken, beat, null);
-                return beat; 
-            }
-        }catch(ex){
-            throw ex;
-        }
         }
     }
 
-    const ARTYPES = {PROGRAM: "PROGRAM", PROCEDURE: "PROCEDURE"}
+    const ARTYPES = { PROGRAM: "PROGRAM", PROCEDURE: "PROCEDURE" }
     class HandelActivationRecord {
-        constructor(name, type, nestingLevel){
+        constructor(name, type, nestingLevel) {
             this.name = name;
             this.type = type;
             this.nestingLevel = nestingLevel;
@@ -1254,44 +1254,44 @@ export const Handel = (function(){
             this.enclosingRecord;
         }
 
-        setItem(key, value){
+        setItem(key, value) {
             this.members[key] = value;
         }
 
-        getItem(key, currentRecordOnly = false){
-            if(this.members[key] !== null && this.members[key] !== undefined){
-                return this.members[key]; 
+        getItem(key, currentRecordOnly = false) {
+            if (this.members[key] !== null && this.members[key] !== undefined) {
+                return this.members[key];
             }
 
-            if(currentRecordOnly){
-                return this.members[key]; 
+            if (currentRecordOnly) {
+                return this.members[key];
             }
-            
-            if(this.enclosingRecord){
+
+            if (this.enclosingRecord) {
                 return this.enclosingRecord.getItem(key, currentRecordOnly);
             }
         }
 
-        get(key, currentRecordOnly = false){
+        get(key, currentRecordOnly = false) {
             return this.getItem(key, currentRecordOnly);
         }
     }
 
 
     class HandelCallStack {
-        constructor(){
+        constructor() {
             this.records = [];
         }
 
-        push(val){
+        push(val) {
             this.records.push(val);
         }
-        pop(){
+        pop() {
             this.records.pop();
         }
 
-        peek(){
-            if(this.records.length <= 0){
+        peek() {
+            if (this.records.length <= 0) {
                 return null;
             }
             return this.records[this.records.length - 1];
@@ -1299,7 +1299,7 @@ export const Handel = (function(){
     }
 
     class HandelInterpreterAST {
-        constructor(parser, config, midi){
+        constructor(parser, config, midi) {
             this.parser = parser;
             this.beatToValue = {
                 1: '4n',
@@ -1313,84 +1313,84 @@ export const Handel = (function(){
             this.callStack = new HandelCallStack();
         }
 
-        exportMidi(){
+        exportMidi() {
             let a = document.createElement("a");
-            let file = new Blob([this.midi.toArray()], {type: 'audio/midi'});
+            let file = new Blob([this.midi.toArray()], { type: 'audio/midi' });
             a.href = URL.createObjectURL(file);
             a.download = "my-midi.mid"
             a.click();
             URL.revokeObjectURL(a.href);
         }
 
-        visitProgram(node){
+        visitProgram(node) {
             Tone.Transport.cancel(0);
-            Tone.Transport.bpm.value = 1000 
+            Tone.Transport.bpm.value = 1000
             let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
             ar.enclosingRecord = null;
-            this.currentComposition = new Composition(Tone.AMSynth, 140, 
-                {trackName: 'global', midi: this.midi});
+            this.currentComposition = new Composition(Tone.AMSynth, 140,
+                { trackName: 'global', midi: this.midi });
             this.currentComposition.enclosingComposition = null;
             this.callStack.push(ar);
             this.visitStatementList(node.child);
             this.currentComposition.play();
             this.callStack.pop();
             Tone.Transport.stop();
-            if(this.config && this.config.outputMidi){
+            if (this.config && this.config.outputMidi) {
                 this.exportMidi();
             }
-            else{
+            else {
                 Tone.Transport.start(Tone.now() + 0.1);
             }
         }
 
-        visitSectionDeclaration(node){
+        visitSectionDeclaration(node) {
         }
 
-        visitProcedureCall(node){
+        visitProcedureCall(node) {
             let procSymbol = node.procSymbol;
             let ar = new HandelActivationRecord(node.value, ARTYPES.PROCEDURE, procSymbol.scopeLevel + 1);
             ar.enclosingRecord = this.callStack.peek();
 
             let prevCompositon = this.currentComposition;
-            this.currentComposition = new Composition(Tone.AMSynth, 140, {trackName: node.value, midi: this.midi});
-            this.currentComposition.enclosingComposition =  prevCompositon;
+            this.currentComposition = new Composition(Tone.AMSynth, 140, { trackName: node.value, midi: this.midi });
+            this.currentComposition.enclosingComposition = prevCompositon;
 
             let formalParams = procSymbol.params;
             let actualParams = node.actualParams;
-            for(let i = 0; i < formalParams.length; i++){
+            for (let i = 0; i < formalParams.length; i++) {
                 let actualValue;
-                if(actualParams[i].token.type === FOR){
+                if (actualParams[i].token.type === FOR) {
                     actualValue = this.visitFor(actualParams[i]);
                 }
-                else if(actualParams[i].token.type === BEAT){
+                else if (actualParams[i].token.type === BEAT) {
                     actualValue = this.visitBeat(actualParams[i]);
                 }
-                else if(actualParams[i].token.type === ID){
+                else if (actualParams[i].token.type === ID) {
                     actualValue = this.visitId(actualParams[i]);
                 }
-                else if(actualParams[i].token.type === NOTE){
+                else if (actualParams[i].token.type === NOTE) {
                     actualValue = this.visitNoteList(actualParams[i]);
                 }
                 ar.setItem(formalParams[i].name, actualValue);
             }
 
-            for(let customization of node.customizationList){
-                if(customization.token.type === BPM){
+            for (let customization of node.customizationList) {
+                if (customization.token.type === BPM) {
                     this.visitBPM(customization);
                 }
-                else if(customization.token.type === SOUND){
+                else if (customization.token.type === SOUND) {
                     this.visitSound(customization);
                 }
-                else if(customization.token.type === LOOP){
+                else if (customization.token.type === LOOP) {
                     this.visitLoop(customization);
                 }
-                else if(customization.token.type === VOLUME){
+                else if (customization.token.type === VOLUME) {
                     this.visitVolume(customization);
                 }
-                else if(customization.token.type === PAN){
+                else if (customization.token.type === PAN) {
                     this.visitPan(customization);
                 }
-                else if(customization.token.type === REVERB){
+                else if (customization.token.type === REVERB) {
                     this.visitReverb(customization);
                 }
             }
@@ -1405,69 +1405,69 @@ export const Handel = (function(){
             this.currentComposition = this.currentComposition.enclosingComposition;
         }
 
-        mapHelper(val, ogStart, ogEnd, newStart, newEnd){
+        mapHelper(val, ogStart, ogEnd, newStart, newEnd) {
             let ratio = val / (Math.abs(ogStart) + Math.abs(ogEnd));
             let output = newStart + ((Math.abs(newStart) + Math.abs(newEnd)) * ratio);
             return output;
         }
 
-        visitReverb(node){
-            if(node.value < 1){
+        visitReverb(node) {
+            if (node.value < 1) {
                 return
             }
-            let reverb = node.value / 1000; 
+            let reverb = node.value / 1000;
             this.currentComposition.reverb = reverb;
         }
 
-        visitPan(node){
-            if(node.panAmt > 100 || node.panAmt < 0){
+        visitPan(node) {
+            if (node.panAmt > 100 || node.panAmt < 0) {
                 return
             }
             let pan = this.mapHelper(node.panAmt, 0, 100, -1, 1);
             this.currentComposition.pan = pan;
         }
 
-        visitVolume(node){
-            if(node.percentage > 100 || node.percentage < 0){
+        visitVolume(node) {
+            if (node.percentage > 100 || node.percentage < 0) {
                 return
             }
             let vol = this.mapHelper(node.percentage, 0, 100, -70, 70);
             this.currentComposition.volume = vol;
         }
 
-        visitBPM(node){
+        visitBPM(node) {
             let bpm = node.bpm;
             this.currentComposition.bpm = bpm;
             return
         }
 
-        visitSound(node){
+        visitSound(node) {
             let instrument = node.instrument;
-            if(instrument === 'kick'){
+            if (instrument === 'kick') {
                 let kick = new Kick().synth;
                 this.currentComposition.synth = kick;
             }
-            else if(instrument === 'snare'){
+            else if (instrument === 'snare') {
                 let snare = new Snare().synth;
                 this.currentComposition.synth = snare;
             }
-            else if(instrument === 'hihat'){
+            else if (instrument === 'hihat') {
                 let hihat = new HiHat().synth;
                 this.currentComposition.synth = hihat;
             }
-            else if(instrument === 'casio'){
+            else if (instrument === 'casio') {
                 let casio = new Casio().synth;
                 this.currentComposition.synth = casio;
             }
-            else if(instrument === 'synth'){
+            else if (instrument === 'synth') {
                 let synth = new FMSynth().synth;
                 this.currentComposition.synth = synth;
             }
-            else if(instrument === 'piano'){
+            else if (instrument === 'piano') {
                 let piano = new Piano().synth;
                 this.currentComposition.synth = piano;
             }
-            else if(instrument === 'guitar'){
+            else if (instrument === 'guitar') {
                 let piano = new Guitar().synth;
                 this.currentComposition.synth = piano;
             }
@@ -1477,42 +1477,42 @@ export const Handel = (function(){
             }
         }
 
-        visitLoop(node){
+        visitLoop(node) {
             let loopTimes = node.loopTimes;
             this.currentComposition.loopTimes = loopTimes;
             return;
         }
 
-        visitStatementList(node){
-            for(let child of node.children){
-                if(child.token.type === PLAY){
+        visitStatementList(node) {
+            for (let child of node.children) {
+                if (child.token.type === PLAY) {
                     this.visitPlay(child);
                 }
-                else if(child.token.type === REST){
+                else if (child.token.type === REST) {
                     this.visitRest(child);
                 }
-                else if(child.token.type === ID){
-                    if(child.token.category){
+                else if (child.token.type === ID) {
+                    if (child.token.category) {
                         this.visitProcedureCall(child);
                     }
-                    else{
+                    else {
                         this.visitSectionDeclaration(child);
                     }
                 }
-                else if(child.token.type === ASSIGN){
+                else if (child.token.type === ASSIGN) {
                     this.visitSave(child);
                 }
-                else if(child.token.type === UPDATE){
+                else if (child.token.type === UPDATE) {
                     this.visitUpdate(child);
                 }
-                else if(child.token.type === BLOCK){
+                else if (child.token.type === BLOCK) {
                     this.visitBlockLoop(child);
                 }
-                else if(child.token.type === LOAD){
+                else if (child.token.type === LOAD) {
                     try {
                         this.visitLoad(child);
                     }
-                    catch(ex){
+                    catch (ex) {
                         throw ex;
                     }
                 }
@@ -1520,7 +1520,7 @@ export const Handel = (function(){
             //this.currentComposition.play();
         }
 
-        visitLoad(node){
+        visitLoad(node) {
             try {
                 if (node.instrumentName in this.config.instruments) {
                     this.callStack.peek().setItem(node.localVarName,
@@ -1530,447 +1530,447 @@ export const Handel = (function(){
                     throw Error(`invalid instrument at line: ${node.token.lineno}`);
                 }
             }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        visitBlockLoop(node){
-            for(let i = 0; i < node.loopTimes; i++){
+        visitBlockLoop(node) {
+            for (let i = 0; i < node.loopTimes; i++) {
                 this.visitStatementList(node.statementList);
             }
         }
 
-        visitPlay(node){
-            if(node.child.token.type === FOR){
+        visitPlay(node) {
+            if (node.child.token.type === FOR) {
                 let forNode = node.child;
                 this.currentComposition.configurePart([this.visitFor(forNode, node.rep)]);
             }
-            else if(node.child.token.type === ID){
+            else if (node.child.token.type === ID) {
                 this.currentComposition.configurePart([this.visitId(node.child, node.rep)]);
             }
         }
 
-        visitRest(node){
+        visitRest(node) {
             let child = node.child;
             let events;
-            if(child.token.type === FOR){
+            if (child.token.type === FOR) {
                 this.visitFor(child);
                 events = [this.visitFor(child)];
             }
-            else if(child.token.type === ID){
+            else if (child.token.type === ID) {
                 events = [new PlayEvent(null, "", this.visitId(child))];
             }
-            else{
+            else {
                 this.error();
             }
 
             this.currentComposition.configurePart(events);
         }
 
-        error(){
+        error() {
         }
 
-        visitSave(node){
+        visitSave(node) {
             let varNode = node.left;
             let valueNode = node.right;
             let value;
-            if(valueNode.token.type === ID){
+            if (valueNode.token.type === ID) {
                 value = this.visitId(valueNode);
             }
-            else if(valueNode.token.type === BEAT){
+            else if (valueNode.token.type === BEAT) {
                 value = this.visitBeat(valueNode);
             }
-            else if(valueNode.token.type === FOR){
+            else if (valueNode.token.type === FOR) {
                 value = this.visitFor(valueNode);
             }
-            else if(valueNode.token.type === NOTE){
+            else if (valueNode.token.type === NOTE) {
                 value = this.visitNoteList(valueNode);
                 //console.log(value);
             }
             this.callStack.peek().setItem(varNode.value, value);
         }
 
-        visitUpdate(node){
-           if(!node.isShift) {
-               this.visitSave(node);
-           }
-           else {
-               let varNode = node.left;
-               let valueNode = node.right;
-               let shiftAmt = this.visitShift(valueNode);
-               let notes = this.callStack.peek().getItem(varNode.value);
-               for(let i = 0; i < notes.length; i++){
-                   notes[i] = Tone.Frequency(notes[i]).transpose(shiftAmt);
-               }
-               this.callStack.peek().setItem(varNode.value, notes.slice());
-           }
+        visitUpdate(node) {
+            if (!node.isShift) {
+                this.visitSave(node);
+            }
+            else {
+                let varNode = node.left;
+                let valueNode = node.right;
+                let shiftAmt = this.visitShift(valueNode);
+                let notes = this.callStack.peek().getItem(varNode.value);
+                for (let i = 0; i < notes.length; i++) {
+                    notes[i] = Tone.Frequency(notes[i]).transpose(shiftAmt);
+                }
+                this.callStack.peek().setItem(varNode.value, notes.slice());
+            }
         }
-        visitShift(node){
-            if(node.token.value === 'lshift'){
+        visitShift(node) {
+            if (node.token.value === 'lshift') {
                 return -1 * node.shiftAmount;
             }
             return node.shiftAmount;
         }
 
-        visitId(node){
+        visitId(node) {
             return this.callStack.peek().get(node.value);
         }
 
-        visitFor(node, rep){
+        visitFor(node, rep) {
             let value = rep ? rep.value : 1
 
-            if(node.right){
+            if (node.right) {
                 let notelist;
                 let duration = node.right.value;
-                if(node.left.token.type === ID){
+                if (node.left.token.type === ID) {
                     notelist = this.visitId(node.left);
                 }
-                else{ 
-                    notelist = this.visitNoteList(node.left); 
+                else {
+                    notelist = this.visitNoteList(node.left);
                 }
-                if(node.right.token.type === ID){
-                    duration  = this.visitId(node.right);
+                if (node.right.token.type === ID) {
+                    duration = this.visitId(node.right);
                 }
                 //console.log("note list", notelist);
                 let nl = notelist.slice();
                 return new PlayEvent(nl, this.beatToValue[duration], duration, value);
             }
-            else{
+            else {
                 return new PlayEvent(null, this.beatToValue[node.left.value], node.left.value, value);
             }
         }
 
-        visitNoteList(node){
+        visitNoteList(node) {
             let notes = [];
-            while(node != null){
+            while (node != null) {
                 notes.push(node.value)
                 node = node.child;
             }
             return notes;
         }
 
-        visitNote(node){
+        visitNote(node) {
             return node.value;
         }
 
-        visitBeat(node){
+        visitBeat(node) {
             return node.value;
         }
     }
 
 
     class SymbolTableBuilder {
-        constructor(){
+        constructor() {
             this.currentScope;
         }
 
-        visitProgram(node){
+        visitProgram(node) {
             try {
-            this.currentScope = new HandelSymbolTable('global', 1, null);
+                this.currentScope = new HandelSymbolTable('global', 1, null);
 
-            //subtree
-            this.visitStatementList(node.child);
+                //subtree
+                this.visitStatementList(node.child);
 
-            this.currentScope = this.currentScope.enclosingScope;
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        visitSectionDeclaration(node){
-            try {
-            let procName = node.value;
-            let procSymbol = new ProcedureSymbol(procName);
-            this.currentScope.define(procSymbol);
-
-            this.currentScope = new HandelSymbolTable(procName, 
-                this.currentScope.scopeLevel + 1, this.currentScope);
-            
-            if(node.parameterList){
-                for(let param of node.parameterList.children){
-                    let paramType = this.currentScope.lookup('ANY');
-                    let paramName = param.value;
-                    let varSymbol = new VarSymbol(paramName, paramType);
-                    this.currentScope.define(varSymbol);
-                    procSymbol.params.push(varSymbol);
-                }
-            }
-
-            //save pointer to statement list contained in the procedure
-            procSymbol.statementList = node.statementList;
-
-            this.visitStatementList(node.statementList);
-
-            this.currentScope = this.currentScope.enclosingScope;
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        visitBPM(node){
-        }
-
-        visitLoop(node){
-        }
-
-        visitSound(node){
-        }
-
-        visitVolume(node){
-        }
-
-        visitReverb(node){
-        }
-
-        visitPan(node){
-        }
-
-        visitProcedureCall(node){
-            try {
-            let procSymbol = this.currentScope.lookup(node.value)
-            if(!procSymbol){
-                throw Error(`invalid chunk name at line: ${node.token.lineno}`);
-            }
-            let formalParams = procSymbol.params
-            if(node.actualParams.length != formalParams.length){
-                throw Error(`invalid arguments at line: ${node.token.lineno}`);
-            }
-
-            node.procSymbol = procSymbol;
-
-            for(let customization of node.customizationList){
-                if(customization.token.type === BPM){
-                    this.visitBPM(customization);
-                }
-                else if(customization.token.type === SOUND){
-                    this.visitSound(customization);
-                }
-                else if(customization.token.type === LOOP){
-                    this.visitLoop(customization);
-                }
-                else if(customization.token.type === VOLUME){
-                    this.visitVolume(customization);
-                }
-                else if(customization.token.type === PAN){
-                    this.visitPan(customization);
-                }
-                else if(customization.token.type === REVERB){
-                    this.visitReverb(customization);
-                }
-            }
+                this.currentScope = this.currentScope.enclosingScope;
             }
             catch (ex) {
                 throw ex;
             }
         }
 
-        visitStatementList(node){
-            try{
-            for(let child of node.children){
-                if(child.token.type === PLAY){
-                    this.visitPlay(child);
-                }
-                else if(child.token.type === REST){
-                    this.visitRest(child);
-                }
-                else if(child.token.type === ID){
-                    if(child.token.category){
-                        this.visitProcedureCall(child);
+        visitSectionDeclaration(node) {
+            try {
+                let procName = node.value;
+                let procSymbol = new ProcedureSymbol(procName);
+                this.currentScope.define(procSymbol);
+
+                this.currentScope = new HandelSymbolTable(procName,
+                    this.currentScope.scopeLevel + 1, this.currentScope);
+
+                if (node.parameterList) {
+                    for (let param of node.parameterList.children) {
+                        let paramType = this.currentScope.lookup('ANY');
+                        let paramName = param.value;
+                        let varSymbol = new VarSymbol(paramName, paramType);
+                        this.currentScope.define(varSymbol);
+                        procSymbol.params.push(varSymbol);
                     }
-                    else{
-                        this.visitSectionDeclaration(child);
-                    }
                 }
-                else if(child.token.type === ASSIGN){
-                    this.visitSave(child);
-                }
-                else if(child.token.type === UPDATE){
-                    this.visitUpdate(child);
-                }
-                else if(child.token.type === BLOCK){
-                    this.visitBlockLoop(child);
-                }
-                else if(child.token.type === LOAD){
-                    this.visitLoad(child);
-                }
+
+                //save pointer to statement list contained in the procedure
+                procSymbol.statementList = node.statementList;
+
+                this.visitStatementList(node.statementList);
+
+                this.currentScope = this.currentScope.enclosingScope;
             }
-            }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        visitLoad(node){
+        visitBPM(node) {
+        }
+
+        visitLoop(node) {
+        }
+
+        visitSound(node) {
+        }
+
+        visitVolume(node) {
+        }
+
+        visitReverb(node) {
+        }
+
+        visitPan(node) {
+        }
+
+        visitProcedureCall(node) {
+            try {
+                let procSymbol = this.currentScope.lookup(node.value)
+                if (!procSymbol) {
+                    throw Error(`invalid chunk name at line: ${node.token.lineno}`);
+                }
+                let formalParams = procSymbol.params
+                if (node.actualParams.length != formalParams.length) {
+                    throw Error(`invalid arguments at line: ${node.token.lineno}`);
+                }
+
+                node.procSymbol = procSymbol;
+
+                for (let customization of node.customizationList) {
+                    if (customization.token.type === BPM) {
+                        this.visitBPM(customization);
+                    }
+                    else if (customization.token.type === SOUND) {
+                        this.visitSound(customization);
+                    }
+                    else if (customization.token.type === LOOP) {
+                        this.visitLoop(customization);
+                    }
+                    else if (customization.token.type === VOLUME) {
+                        this.visitVolume(customization);
+                    }
+                    else if (customization.token.type === PAN) {
+                        this.visitPan(customization);
+                    }
+                    else if (customization.token.type === REVERB) {
+                        this.visitReverb(customization);
+                    }
+                }
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        visitStatementList(node) {
+            try {
+                for (let child of node.children) {
+                    if (child.token.type === PLAY) {
+                        this.visitPlay(child);
+                    }
+                    else if (child.token.type === REST) {
+                        this.visitRest(child);
+                    }
+                    else if (child.token.type === ID) {
+                        if (child.token.category) {
+                            this.visitProcedureCall(child);
+                        }
+                        else {
+                            this.visitSectionDeclaration(child);
+                        }
+                    }
+                    else if (child.token.type === ASSIGN) {
+                        this.visitSave(child);
+                    }
+                    else if (child.token.type === UPDATE) {
+                        this.visitUpdate(child);
+                    }
+                    else if (child.token.type === BLOCK) {
+                        this.visitBlockLoop(child);
+                    }
+                    else if (child.token.type === LOAD) {
+                        this.visitLoad(child);
+                    }
+                }
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        visitLoad(node) {
             let anyType = this.currentScope.lookup('ANY');
             let localVarName = node.localVarName;
             let varSymbol = new VarSymbol(localVarName, anyType);
             this.currentScope.define(varSymbol);
         }
 
-        visitBlockLoop(node){
+        visitBlockLoop(node) {
         }
 
-        visitPlay(node){
+        visitPlay(node) {
             try {
-            if(node.child.token.type === FOR){
-                let forNode = node.child;
-                this.visitFor(forNode)
-            }
-            else if(node.child.token.type === ID){
-                this.visitId(node.child)
-            }
-            
-            if(node.rep){
-                this.visitRep(node.rep);
-            }
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        visitRep(node){
-        }
-
-        visitRest(node){
-            try {
-            let child = node.child;
-            if(child.token.type === FOR){
-                this.visitFor(child);
-            }
-            else if(child.token.type === ID){
-                this.visitId(child);
-            }
-            else{
-                this.error();
-            }
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
-
-        visitSave(node){
-            try {
-            let varNode = node.left;
-            let varName = varNode.token.value;
-            let valueNode = node.right;
-            if(this.currentScope.lookup(varName, true)){
-                throw Error(`Name error in line ${varNode.token.lineno}: ${varName} already exists`);
-            }
-            let varSymbol;
-            if(valueNode.token.type === ID){
-                this.visitId(valueNode);
-                let symbol = this.currentScope.lookup(valueNode.value, true);
-                if(!symbol){
-                    throw Error(`Name error in line ${valueNode.token.lineno}: ${valueNode.value} does not exist`);
+                if (node.child.token.type === FOR) {
+                    let forNode = node.child;
+                    this.visitFor(forNode)
                 }
-                let type = symbol.type;
-                varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup(type.name));
-            }
-            else if(valueNode.token.type === BEAT){
-                this.visitBeat(valueNode);
-                varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('BEAT'));
-            }
-            else if(valueNode.token.type === FOR){
-                this.visitFor(valueNode);
-                varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('PLAYABLE'));
-            }
-            else if(valueNode.token.type === NOTE){
-                this.visitNoteList(valueNode);
-                varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
-            }
-            this.currentScope.define(varSymbol);
-            }
-            catch(ex){
-                throw ex;
-            }
-        }
+                else if (node.child.token.type === ID) {
+                    this.visitId(node.child)
+                }
 
-        visitShift(){
-        }
-
-        visitUpdate(node){
-            try {
-            let varNode = node.left;
-            let varName = varNode.token.value;
-            let valueNode = node.right;
-
-            if(node.isShift){
-                this.visitShift(valueNode);
-                return;
-            }
-
-            if(!this.currentScope.lookup(varName, true)){
-                throw Error(`Name error in line ${varNode.token.lineno}: ${varName} does not exist`);
-            }
-            if(valueNode.token.type === ID){
-                this.visitId(valueNode);
-                let symbol = this.currentScope.lookup(valueNode.value, true);
-                if(!symbol){
-                    throw Error(`Name error in line ${valueNode.token.lineno}: ${valueNode.value} does not exist`);
+                if (node.rep) {
+                    this.visitRep(node.rep);
                 }
             }
-            else if(valueNode.token.type === BEAT){
-                this.visitBeat(valueNode);
-            }
-            else if(valueNode.token.type === FOR){
-                this.visitFor(valueNode);
-            }
-            else if(valueNode.token.type === NOTE){
-                this.visitNoteList(valueNode);
-            }
-            }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        visitId(node){
+        visitRep(node) {
+        }
+
+        visitRest(node) {
+            try {
+                let child = node.child;
+                if (child.token.type === FOR) {
+                    this.visitFor(child);
+                }
+                else if (child.token.type === ID) {
+                    this.visitId(child);
+                }
+                else {
+                    this.error();
+                }
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        visitSave(node) {
+            try {
+                let varNode = node.left;
+                let varName = varNode.token.value;
+                let valueNode = node.right;
+                if (this.currentScope.lookup(varName, true)) {
+                    throw Error(`Name error in line ${varNode.token.lineno}: ${varName} already exists`);
+                }
+                let varSymbol;
+                if (valueNode.token.type === ID) {
+                    this.visitId(valueNode);
+                    let symbol = this.currentScope.lookup(valueNode.value, true);
+                    if (!symbol) {
+                        throw Error(`Name error in line ${valueNode.token.lineno}: ${valueNode.value} does not exist`);
+                    }
+                    let type = symbol.type;
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup(type.name));
+                }
+                else if (valueNode.token.type === BEAT) {
+                    this.visitBeat(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('BEAT'));
+                }
+                else if (valueNode.token.type === FOR) {
+                    this.visitFor(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('PLAYABLE'));
+                }
+                else if (valueNode.token.type === NOTE) {
+                    this.visitNoteList(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
+                }
+                this.currentScope.define(varSymbol);
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        visitShift() {
+        }
+
+        visitUpdate(node) {
+            try {
+                let varNode = node.left;
+                let varName = varNode.token.value;
+                let valueNode = node.right;
+
+                if (node.isShift) {
+                    this.visitShift(valueNode);
+                    return;
+                }
+
+                if (!this.currentScope.lookup(varName, true)) {
+                    throw Error(`Name error in line ${varNode.token.lineno}: ${varName} does not exist`);
+                }
+                if (valueNode.token.type === ID) {
+                    this.visitId(valueNode);
+                    let symbol = this.currentScope.lookup(valueNode.value, true);
+                    if (!symbol) {
+                        throw Error(`Name error in line ${valueNode.token.lineno}: ${valueNode.value} does not exist`);
+                    }
+                }
+                else if (valueNode.token.type === BEAT) {
+                    this.visitBeat(valueNode);
+                }
+                else if (valueNode.token.type === FOR) {
+                    this.visitFor(valueNode);
+                }
+                else if (valueNode.token.type === NOTE) {
+                    this.visitNoteList(valueNode);
+                }
+            }
+            catch (ex) {
+                throw ex;
+            }
+        }
+
+        visitId(node) {
             let varName = node.value;
-            if(!this.currentScope.lookup(varName, false)){
+            if (!this.currentScope.lookup(varName, false)) {
                 throw Error(`Name error in line ${node.token.lineno}: ${varName} does not exist`);
             }
         }
 
-        visitFor(node){
+        visitFor(node) {
             try {
-            let right = node.right;
-            let left = node.left;
-            if(left.token.type === NOTE){
-                this.visitNoteList(left);
+                let right = node.right;
+                let left = node.left;
+                if (left.token.type === NOTE) {
+                    this.visitNoteList(left);
+                }
+                else if (left && left.token.type === ID) {
+                    this.visitId(left);
+                }
+                else if (left && left.token.type === BEAT) {
+                    this.visitBeat(left);
+                }
+                if (right && right.token.type === ID) {
+                    this.visitId(right);
+                }
+                else if (right && right.token.type === BEAT) {
+                    this.visitBeat(right);
+                }
             }
-            else if(left && left.token.type === ID){
-                this.visitId(left);
-            }
-            else if(left && left.token.type === BEAT){
-                this.visitBeat(left);
-            }
-            if(right && right.token.type === ID){
-                this.visitId(right);
-            }
-            else if(right && right.token.type === BEAT){
-                this.visitBeat(right);
-            }
-            }
-            catch(ex){
+            catch (ex) {
                 throw ex;
             }
         }
 
-        visitNoteList(node){
-            while(node != null){
+        visitNoteList(node) {
+            while (node != null) {
                 node = node.child;
             }
         }
 
-        visitNote(node){
+        visitNote(node) {
         }
 
-        visitBeat(node){
+        visitBeat(node) {
         }
     }
     return ({
@@ -1981,7 +1981,7 @@ export const Handel = (function(){
     })
 })();
 
-export async function RunHandel(code, config){
+export async function RunHandel(code, config) {
     await Tone.start();
     try {
         const lexer = new Handel.Lexer(code);
@@ -1997,16 +1997,16 @@ export async function RunHandel(code, config){
         symTableBuilder.visitProgram(programNode);
         interpreter.visitProgram(programNode);
     }
-    catch (ex){
+    catch (ex) {
         throw ex;
     }
 }
 
-export function StopHandel(){
+export function StopHandel() {
     Tone.Transport.stop();
 }
 
-export function MakeInstrument(urls){
+export function MakeInstrument(urls) {
     let sampler = new Tone.Sampler({
         urls: urls
     }).toDestination()
