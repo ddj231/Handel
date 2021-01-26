@@ -1981,7 +1981,8 @@ export const Handel = (function(){
     })
 })();
 
-export function RunHandel(code, config){
+export async function RunHandel(code, config){
+    await Tone.start();
     try {
         const lexer = new Handel.Lexer(code);
         const parser = new Handel.Parser(lexer);
@@ -1994,9 +1995,7 @@ export function RunHandel(code, config){
         const symTableBuilder = new Handel.SymbolTableBuilder();
         const programNode = parser.program();
         symTableBuilder.visitProgram(programNode);
-        Tone.start().then(() => {
-            interpreter.visitProgram(programNode);
-        });
+        interpreter.visitProgram(programNode);
     }
     catch (ex){
         throw ex;
