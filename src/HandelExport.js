@@ -11,7 +11,7 @@ import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.5.6", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.5.7", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
