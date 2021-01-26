@@ -381,7 +381,7 @@ Handel.RunHandel(`
         load funkyinst as funky 
         chunk example 
             play E4 for 4b
-        enchunk
+        endchunk
         run example with sound funky
     finish
 `, config)
