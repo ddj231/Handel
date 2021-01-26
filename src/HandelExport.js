@@ -790,7 +790,12 @@ export const Handel = (function(){
                 this.currentToken.type === BLOCK ||
                 this.currentToken.type === UPDATE ||
                 this.currentToken.type === SAVE)){
+                try {
                     statementList = this.statementList();
+                }
+                catch (e) {
+                    throw e;
+                }
             }
             else{
                 this.error();
@@ -803,14 +808,30 @@ export const Handel = (function(){
 
         sectionDeclaration(){
             this.chunk();
-            let proc = this.id();
-
-            let parameterList;
-            if(this.currentToken.type === USING){
-            this.using(); 
-            parameterList = this.parameterList();
+            let proc;
+            try {
+                proc = this.id();
             }
-            let statementListNode = this.statementList();
+            catch (ex){
+                throw ex;
+            }
+            let parameterList;
+            let statementListNode;
+            if(this.currentToken.type === USING){
+                try {
+                    this.using(); 
+                    parameterList = this.parameterList();
+                }
+                catch(ex){
+                    throw ex;
+                }
+            }
+            try {
+                statementListNode = this.statementList();
+            } catch (ex){
+                throw ex;
+
+            }
             let sectionNode = new SectionDeclarationAST(proc, parameterList, statementListNode);
             //sectionNode.statementList = statementListNode;
             this.endchunk();
@@ -818,126 +839,157 @@ export const Handel = (function(){
         }
 
         parameterList(){
-            let parameterListNode = new ParameterListAST();
-            let paramToken = this.id();
-            let parameter = new ParameterAST(paramToken);
-            parameterListNode.children.push(parameter);
-            while(this.currentToken.type && this.currentToken.type === SEP){
-                this.sep();
+            try{
+                let parameterListNode = new ParameterListAST();
                 let paramToken = this.id();
                 let parameter = new ParameterAST(paramToken);
                 parameterListNode.children.push(parameter);
+                while (this.currentToken.type && this.currentToken.type === SEP) {
+                    this.sep();
+                    let paramToken = this.id();
+                    let parameter = new ParameterAST(paramToken);
+                    parameterListNode.children.push(parameter);
+                }
+                return parameterListNode;
             }
-            return parameterListNode;
+            catch(ex){
+                throw ex;
+            }
         }
 
         argumentList(){
-            let actualParams = []; 
-            actualParams.push(this.expr());
-            while(this.currentToken && this.currentToken.type === SEP){
-                this.sep();
+            try {
+                let actualParams = [];
                 actualParams.push(this.expr());
+                while (this.currentToken && this.currentToken.type === SEP) {
+                    this.sep();
+                    actualParams.push(this.expr());
+                }
+                return actualParams;
             }
-            return actualParams;
+            catch(ex){
+                throw ex;
+            }
         }
 
         customization(){
-            if(this.currentToken.type === BPM){
-                let bpmToken = this.currentToken;
-                this.eat(BPM);
-                let digit = this.currentToken.value;
-                this.eat(DIGIT);
-                return new BPMAST(bpmToken, digit);
-            }
-            else if(this.currentToken.type === SOUND){
-                let soundToken = this.currentToken;
-                this.eat(SOUND);
-                let instrument = this.currentToken.value;
-                if(this.currentToken.type === INSTRUMENT){
-                    this.eat(INSTRUMENT);
+            try{
+                if(this.currentToken.type === BPM){
+                    let bpmToken = this.currentToken;
+                    this.eat(BPM);
+                    let digit = this.currentToken.value;
+                    this.eat(DIGIT);
+                    return new BPMAST(bpmToken, digit);
                 }
-                else {
-                    this.eat(ID);
+                else if(this.currentToken.type === SOUND){
+                    let soundToken = this.currentToken;
+                    this.eat(SOUND);
+                    let instrument = this.currentToken.value;
+                    if(this.currentToken.type === INSTRUMENT){
+                        this.eat(INSTRUMENT);
+                    }
+                    else {
+                        this.eat(ID);
+                    }
+                    return new InstrumentAST(soundToken, instrument);
                 }
-                return new InstrumentAST(soundToken, instrument);
+                else if(this.currentToken.type === LOOP){
+                    let loopToken = this.currentToken;
+                    this.eat(LOOP);
+                    this.eat(FOR);
+                    let digit = this.currentToken.value;
+                    this.eat(DIGIT);
+                    return new LoopAST(loopToken, digit);
+                }
+                else if(this.currentToken.type === VOLUME){
+                    let volumeToken = this.currentToken;
+                    this.eat(VOLUME);
+                    let digit = this.currentToken.value;
+                    this.eat(DIGIT);
+                    return new VolumeAST(volumeToken, digit);
+                }
+                else if(this.currentToken.type === PAN){
+                    let panToken = this.currentToken;
+                    this.eat(PAN);
+                    let digit = this.currentToken.value;
+                    this.eat(DIGIT);
+                    return new PanAST(panToken, digit);
+                }
+                else if(this.currentToken.type === REVERB){
+                    let reverbToken = this.currentToken;
+                    this.eat(REVERB);
+                    let digit = this.currentToken.value;
+                    this.eat(DIGIT);
+                    return new ReverbAST(reverbToken, digit);
+                }
+                else{
+                    this.error();
+                }
             }
-            else if(this.currentToken.type === LOOP){
-                let loopToken = this.currentToken;
-                this.eat(LOOP);
-                this.eat(FOR);
-                let digit = this.currentToken.value;
-                this.eat(DIGIT);
-                return new LoopAST(loopToken, digit);
-            }
-            else if(this.currentToken.type === VOLUME){
-                let volumeToken = this.currentToken;
-                this.eat(VOLUME);
-                let digit = this.currentToken.value;
-                this.eat(DIGIT);
-                return new VolumeAST(volumeToken, digit);
-            }
-            else if(this.currentToken.type === PAN){
-                let panToken = this.currentToken;
-                this.eat(PAN);
-                let digit = this.currentToken.value;
-                this.eat(DIGIT);
-                return new PanAST(panToken, digit);
-            }
-            else if(this.currentToken.type === REVERB){
-                let reverbToken = this.currentToken;
-                this.eat(REVERB);
-                let digit = this.currentToken.value;
-                this.eat(DIGIT);
-                return new ReverbAST(reverbToken, digit);
-            }
-            else{
-                this.error();
+            catch(ex){
+                throw ex;
             }
         }
 
         customizationList(){
-            let customizations = [];
-            customizations.push(this.customization());
-            while(this.currentToken && this.currentToken.type === SEP){
-                this.eat(SEP);
+            try{
+                let customizations = [];
                 customizations.push(this.customization());
+                while (this.currentToken && this.currentToken.type === SEP) {
+                    this.eat(SEP);
+                    customizations.push(this.customization());
+                }
+                return customizations;
             }
-            return customizations;
+            catch (ex){
+                throw ex;
+            }
         }
 
         blockLoop(){
-            let blockToken = this.currentToken;
-            this.eat(BLOCK);
-            let statementList = this.statementList();
-            this.eat(ENDBLOCK);
-            this.eat(LOOP);
-            this.eat(FOR);
-            let digitToken = this.currentToken;
-            this.eat(DIGIT);
-            return new BlockLoopAST(blockToken, statementList, digitToken.value);
+            try {
+                let blockToken = this.currentToken;
+                this.eat(BLOCK);
+                let statementList = this.statementList();
+                this.eat(ENDBLOCK);
+                this.eat(LOOP);
+                this.eat(FOR);
+                let digitToken = this.currentToken;
+                this.eat(DIGIT);
+                return new BlockLoopAST(blockToken, statementList, digitToken.value);
+            }
+            catch(ex){
+                throw ex;
+            }
         }
         
         procedureCall(){
-            this.eat(RUN);
-            let procedureToken = this.currentToken;
-            procedureToken.category = "PROCEDURECALL";
-            this.eat(ID);
-            let actualParams = [];
-            if(this.currentToken.type === USING){
-                this.eat(USING);
-                if(this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID){
-                    actualParams = this.argumentList();
+            try{
+                this.eat(RUN);
+                let procedureToken = this.currentToken;
+                procedureToken.category = "PROCEDURECALL";
+                this.eat(ID);
+                let actualParams = [];
+                if(this.currentToken.type === USING){
+                    this.eat(USING);
+                    if(this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID){
+                        actualParams = this.argumentList();
+                    }
                 }
+                let customizationList = [];
+                if(this.currentToken.type === WITH){
+                    this.eat(WITH);
+                customizationList = this.customizationList(); 
+                }
+                return new ProcedureCallAST(procedureToken, actualParams, customizationList);
             }
-            let customizationList = [];
-            if(this.currentToken.type === WITH){
-                this.eat(WITH);
-            customizationList = this.customizationList(); 
+            catch(ex){
+                throw ex;
             }
-            return new ProcedureCallAST(procedureToken, actualParams, customizationList);
         }
 
         statementList(){
+            try{
             let statementListNode = new StatementListAST();
             while(this.currentToken && 
                     (this.currentToken.type === CHUNK || 
@@ -957,9 +1009,14 @@ export const Handel = (function(){
                 }
             }
             return statementListNode;
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         importInstrument(){
+            try {
             let token = this.currentToken;
             this.eat(LOAD);
             let instrumentName = this.currentToken.value;
@@ -968,9 +1025,14 @@ export const Handel = (function(){
             let localVarName = this.currentToken.value;
             this.eat(ID);
             return new LoadAST(token, instrumentName, localVarName);
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         statement(){
+            try {
             if(this.currentToken.type === PLAY){
                 return this.play();
             }
@@ -997,10 +1059,14 @@ export const Handel = (function(){
             else{
                 this.error();
             }
-            
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         save(){
+            try {
             this.eat(SAVE);
             let varToken = this.currentToken;
             let varNode = new IdAST(varToken);
@@ -1016,9 +1082,14 @@ export const Handel = (function(){
                 let beat = this.beat();
                 return new AssignAST(assignToken, varNode, beat);
             }
+            }
+            catch (ex){
+                throw ex;
+            }
         }
         
         update(){
+            try {
             let updateToken = this.currentToken;
             this.eat(UPDATE);
             let varNode = new IdAST(this.currentToken);
@@ -1035,23 +1106,38 @@ export const Handel = (function(){
             else {
                 this.error();
             }
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         shift(){
+            try{
             let shiftToken = this.currentToken;
             this.eat(SHIFT);
             let amt = this.currentToken.value;
             this.eat(DIGIT);
             return new ShiftAST(shiftToken, amt);
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         note(){
-            const note = this.currentToken;
-            this.eat(NOTE);
-            return new NoteAST(note, null);
+            try {
+                const note = this.currentToken;
+                this.eat(NOTE);
+                return new NoteAST(note, null);
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         noteList(){
+            try {
             const notes = [];
             let node = this.note();
             let root = node;
@@ -1062,32 +1148,57 @@ export const Handel = (function(){
                 node = temp;
             }
             return root;
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         sep(){
+            try {
             const sep = this.currentToken;
             this.eat(SEP);
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         for(){
+            try {
             const op = this.currentToken;
             this.eat(FOR);
             return op;
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         id(){
+            try {
             let idToken = this.currentToken;
             this.eat(ID);
             return idToken;
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         beat(){
+            try {
             const beat = this.currentToken;
             this.eat(BEAT);
             return new BeatAST(beat);
+            }
+            catch (ex){
+                throw ex;
+            }
         }
 
         expr(){
+            try { 
             if(this.currentToken.type === NOTE){
                 const noteRoot = this.noteList();
                 if(this.currentToken.type === FOR){
@@ -1127,6 +1238,9 @@ export const Handel = (function(){
                 //let forNode = new ForAST(forToken, beat, null);
                 return beat; 
             }
+        }catch(ex){
+            throw ex;
+        }
         }
     }
 
@@ -1395,19 +1509,29 @@ export const Handel = (function(){
                     this.visitBlockLoop(child);
                 }
                 else if(child.token.type === LOAD){
-                    this.visitLoad(child);
+                    try {
+                        this.visitLoad(child);
+                    }
+                    catch(ex){
+                        throw ex;
+                    }
                 }
             }
             //this.currentComposition.play();
         }
 
         visitLoad(node){
-            if(node.instrumentName in this.config.instruments){
-                this.callStack.peek().setItem(node.localVarName, 
-                    this.config.instruments[node.instrumentName]);
+            try {
+                if (node.instrumentName in this.config.instruments) {
+                    this.callStack.peek().setItem(node.localVarName,
+                        this.config.instruments[node.instrumentName]);
+                }
+                else {
+                    throw Error(`invalid instrument at line: ${node.token.lineno}`);
+                }
             }
-            else {
-                throw Error(`invalid instrument at line: ${node.token.lineno}`);
+            catch(ex){
+                throw ex;
             }
         }
 
@@ -1442,6 +1566,9 @@ export const Handel = (function(){
             }
 
             this.currentComposition.configurePart(events);
+        }
+
+        error(){
         }
 
         visitSave(node){
@@ -1539,15 +1666,21 @@ export const Handel = (function(){
         }
 
         visitProgram(node){
+            try {
             this.currentScope = new HandelSymbolTable('global', 1, null);
 
             //subtree
             this.visitStatementList(node.child);
 
             this.currentScope = this.currentScope.enclosingScope;
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitSectionDeclaration(node){
+            try {
             let procName = node.value;
             let procSymbol = new ProcedureSymbol(procName);
             this.currentScope.define(procSymbol);
@@ -1571,6 +1704,10 @@ export const Handel = (function(){
             this.visitStatementList(node.statementList);
 
             this.currentScope = this.currentScope.enclosingScope;
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitBPM(node){
@@ -1592,6 +1729,7 @@ export const Handel = (function(){
         }
 
         visitProcedureCall(node){
+            try {
             let procSymbol = this.currentScope.lookup(node.value)
             if(!procSymbol){
                 throw Error(`invalid chunk name at line: ${node.token.lineno}`);
@@ -1623,9 +1761,14 @@ export const Handel = (function(){
                     this.visitReverb(customization);
                 }
             }
+            }
+            catch (ex) {
+                throw ex;
+            }
         }
 
         visitStatementList(node){
+            try{
             for(let child of node.children){
                 if(child.token.type === PLAY){
                     this.visitPlay(child);
@@ -1654,6 +1797,10 @@ export const Handel = (function(){
                     this.visitLoad(child);
                 }
             }
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitLoad(node){
@@ -1667,6 +1814,7 @@ export const Handel = (function(){
         }
 
         visitPlay(node){
+            try {
             if(node.child.token.type === FOR){
                 let forNode = node.child;
                 this.visitFor(forNode)
@@ -1678,12 +1826,17 @@ export const Handel = (function(){
             if(node.rep){
                 this.visitRep(node.rep);
             }
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitRep(node){
         }
 
         visitRest(node){
+            try {
             let child = node.child;
             if(child.token.type === FOR){
                 this.visitFor(child);
@@ -1694,9 +1847,14 @@ export const Handel = (function(){
             else{
                 this.error();
             }
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitSave(node){
+            try {
             let varNode = node.left;
             let varName = varNode.token.value;
             let valueNode = node.right;
@@ -1726,12 +1884,17 @@ export const Handel = (function(){
                 varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
             }
             this.currentScope.define(varSymbol);
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitShift(){
         }
 
         visitUpdate(node){
+            try {
             let varNode = node.left;
             let varName = varNode.token.value;
             let valueNode = node.right;
@@ -1760,6 +1923,10 @@ export const Handel = (function(){
             else if(valueNode.token.type === NOTE){
                 this.visitNoteList(valueNode);
             }
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitId(node){
@@ -1770,6 +1937,7 @@ export const Handel = (function(){
         }
 
         visitFor(node){
+            try {
             let right = node.right;
             let left = node.left;
             if(left.token.type === NOTE){
@@ -1786,6 +1954,10 @@ export const Handel = (function(){
             }
             else if(right && right.token.type === BEAT){
                 this.visitBeat(right);
+            }
+            }
+            catch(ex){
+                throw ex;
             }
         }
 
@@ -1810,20 +1982,25 @@ export const Handel = (function(){
 })();
 
 export function RunHandel(code, config){
-    Tone.start().then(() => {
+    try {
         const lexer = new Handel.Lexer(code);
         const parser = new Handel.Parser(lexer);
 
         //(handle midi config in interpreter)
         let midi;
-        if(config && config.outputMidi){ midi = new Midi()}
+        if (config && config.outputMidi) { midi = new Midi() }
         const interpreter = new Handel.Interpreter(parser, config, midi);
 
         const symTableBuilder = new Handel.SymbolTableBuilder();
         const programNode = parser.program();
         symTableBuilder.visitProgram(programNode);
-        interpreter.visitProgram(programNode);
-    });
+        Tone.start().then(() => {
+            interpreter.visitProgram(programNode);
+        });
+    }
+    catch (ex){
+        throw ex;
+    }
 }
 
 export function StopHandel(){
