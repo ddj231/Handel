@@ -11,7 +11,7 @@ import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
 
 
 export const Handel = (function(){
-    console.log("%c Handel v0.5.5", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.5.6", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth{
         constructor(){
             this.synth =  new Tone.PolySynth({
@@ -1137,18 +1137,29 @@ export const Handel = (function(){
             this.type = type;
             this.nestingLevel = nestingLevel;
             this.members = {};
+            this.enclosingRecord;
         }
 
         setItem(key, value){
             this.members[key] = value;
         }
 
-        getItem(key){
-            return this.members[key]; 
+        getItem(key, currentRecordOnly = false){
+            if(this.members[key] !== null && this.members[key] !== undefined){
+                return this.members[key]; 
+            }
+
+            if(currentRecordOnly){
+                return this.members[key]; 
+            }
+            
+            if(this.enclosingRecord){
+                return this.enclosingRecord.getItem(key, currentRecordOnly);
+            }
         }
 
-        get(key){
-            return this.members[key]; 
+        get(key, currentRecordOnly = false){
+            return this.getItem(key, currentRecordOnly);
         }
     }
 
@@ -1201,6 +1212,7 @@ export const Handel = (function(){
             Tone.Transport.cancel(0);
             Tone.Transport.bpm.value = 1000 
             let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
+            ar.enclosingRecord = null;
             this.currentComposition = new Composition(Tone.AMSynth, 140, 
                 {trackName: 'global', midi: this.midi});
             this.currentComposition.enclosingComposition = null;
@@ -1223,6 +1235,7 @@ export const Handel = (function(){
         visitProcedureCall(node){
             let procSymbol = node.procSymbol;
             let ar = new HandelActivationRecord(node.value, ARTYPES.PROCEDURE, procSymbol.scopeLevel + 1);
+            ar.enclosingRecord = this.callStack.peek();
 
             let prevCompositon = this.currentComposition;
             this.currentComposition = new Composition(Tone.AMSynth, 140, {trackName: node.value, midi: this.midi});
