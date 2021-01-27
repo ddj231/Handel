@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.5.7", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.5.9", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -550,10 +550,10 @@ export const Handel = (function () {
     }
 
     class ShiftAST {
-        constructor(token, amount) {
+        constructor(token, shiftToken) {
             this.token = token;
             this.value = token.value;
-            this.shiftAmount = amount;
+            this.shiftToken = shiftToken;
         }
     }
 
@@ -1176,9 +1176,17 @@ export const Handel = (function () {
             try {
                 let shiftToken = this.currentToken;
                 this.eat(SHIFT);
-                let amt = this.currentToken.value;
-                this.eat(DIGIT);
-                return new ShiftAST(shiftToken, amt);
+                let token = this.currentToken;
+                if(token.type === DIGIT){
+                    this.eat(DIGIT);
+                }
+                else if(token.type === ID){
+                    this.eat(ID);
+                }
+                else {
+                    this.error();
+                }
+                return new ShiftAST(shiftToken, token);
             }
             catch (ex) {
                 throw ex;
@@ -1748,10 +1756,19 @@ export const Handel = (function () {
             }
         }
         visitShift(node) {
-            if (node.token.value === 'lshift') {
-                return -1 * node.shiftAmount;
+            let shiftAmount;
+            if(node.shiftToken.type === ID){
+                shiftAmount = this.callStack.peek().getItem(node.shiftToken.value);
+                shiftAmount = parseInt(shiftAmount);
+                //console.log(shiftAmount);
             }
-            return node.shiftAmount;
+            else {
+                shiftAmount = node.shiftToken.value;
+            }
+            if (node.token.value === 'lshift') {
+                return -1 * shiftAmount;
+            }
+            return shiftAmount;
         }
 
         visitId(node) {
@@ -2015,7 +2032,7 @@ export const Handel = (function () {
                     let type = symbol.type;
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup(type.name));
                 }
-                else if (valueNode.token.type === BEAT) {
+                else if (valueNode.token.typey === BEAT) {
                     this.visitBeat(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('BEAT'));
                 }
@@ -2038,7 +2055,18 @@ export const Handel = (function () {
             }
         }
 
-        visitShift() {
+        visitShift(node) {
+            try {
+                if(node.shiftToken.type === ID){
+                    let found = this.currentScope.lookup(node.shiftToken.value);
+                    if(!found){
+                        throw Error(`Name error in line ${node.shiftToken.lineno}: ${node.shiftToken.value} does not exist`);
+                    }
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitUpdate(node) {
