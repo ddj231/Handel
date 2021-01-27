@@ -8,6 +8,7 @@ import guitarD from './Sounds/Guitar_D_extended.wav'
 import hihatG from './Sounds/HiHat_G.wav'
 import snareD from './Sounds/Snare_D2.wav'
 import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
+import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
@@ -541,6 +542,13 @@ export const Handel = (function () {
         }
     }
 
+    class DigitAST {
+        constructor(token){
+            this.token = token;
+            this.value = token.value;
+        }
+    }
+
     class ShiftAST {
         constructor(token, amount) {
             this.token = token;
@@ -882,8 +890,14 @@ export const Handel = (function () {
                 if (this.currentToken.type === BPM) {
                     let bpmToken = this.currentToken;
                     this.eat(BPM);
-                    let digit = this.currentToken.value;
-                    this.eat(DIGIT);
+                    let digit;
+                    if(this.currentToken.type === DIGIT){
+                        digit = this.currentToken;    
+                        this.eat(DIGIT);
+                    }
+                    else if(this.currentToken.type === ID){
+                        digit = this.id();
+                    }
                     return new BPMAST(bpmToken, digit);
                 }
                 else if (this.currentToken.type === SOUND) {
@@ -902,29 +916,53 @@ export const Handel = (function () {
                     let loopToken = this.currentToken;
                     this.eat(LOOP);
                     this.eat(FOR);
-                    let digit = this.currentToken.value;
-                    this.eat(DIGIT);
+                    let digit;
+                    if(this.currentToken.type === DIGIT){
+                        digit = this.currentToken;    
+                        this.eat(DIGIT);
+                    }
+                    else if(this.currentToken.type === ID){
+                        digit = this.id();
+                    }
                     return new LoopAST(loopToken, digit);
                 }
                 else if (this.currentToken.type === VOLUME) {
                     let volumeToken = this.currentToken;
                     this.eat(VOLUME);
-                    let digit = this.currentToken.value;
-                    this.eat(DIGIT);
+                    let digit;
+                    if(this.currentToken.type === DIGIT){
+                        digit = this.currentToken;    
+                        this.eat(DIGIT);
+                    }
+                    else if(this.currentToken.type === ID){
+                        digit = this.id();
+                    }
                     return new VolumeAST(volumeToken, digit);
                 }
                 else if (this.currentToken.type === PAN) {
                     let panToken = this.currentToken;
                     this.eat(PAN);
-                    let digit = this.currentToken.value;
-                    this.eat(DIGIT);
+                    let digit;
+                    if(this.currentToken.type === DIGIT){
+                        digit = this.currentToken;    
+                        this.eat(DIGIT);
+                    }
+                    else if(this.currentToken.type === ID){
+                        digit = this.id();
+                    }
                     return new PanAST(panToken, digit);
                 }
                 else if (this.currentToken.type === REVERB) {
                     let reverbToken = this.currentToken;
                     this.eat(REVERB);
-                    let digit = this.currentToken.value;
-                    this.eat(DIGIT);
+                    let digit;
+                    if(this.currentToken.type === DIGIT){
+                        digit = this.currentToken;    
+                        this.eat(DIGIT);
+                    }
+                    else if(this.currentToken.type === ID){
+                        digit = this.id();
+                    }
                     return new ReverbAST(reverbToken, digit);
                 }
                 else {
@@ -959,9 +997,15 @@ export const Handel = (function () {
                 this.eat(ENDBLOCK);
                 this.eat(LOOP);
                 this.eat(FOR);
-                let digitToken = this.currentToken;
-                this.eat(DIGIT);
-                return new BlockLoopAST(blockToken, statementList, digitToken.value);
+
+                let token = this.currentToken;
+                if(this.currentToken.type === DIGIT){
+                    this.eat(DIGIT);
+                }
+                else if(this.currentToken.type === ID){
+                    this.eat(ID);
+                }
+                return new BlockLoopAST(blockToken, statementList, token);
             }
             catch (ex) {
                 throw ex;
@@ -1087,10 +1131,21 @@ export const Handel = (function () {
                     let beat = this.beat();
                     return new AssignAST(assignToken, varNode, beat);
                 }
+                else if(this.currentToken.type === DIGIT){
+                    let digitToken = this.currentToken;
+                    let node = this.digit();
+                    return new AssignAST(assignToken, varNode, node);
+                }
             }
             catch (ex) {
                 throw ex;
             }
+        }
+
+        digit(){
+            let token = this.currentToken;
+            this.eat(DIGIT);
+            return new DigitAST(token);
         }
 
         update() {
@@ -1208,7 +1263,14 @@ export const Handel = (function () {
                     const noteRoot = this.noteList();
                     if (this.currentToken.type === FOR) {
                         let op = this.for();
-                        const beat = this.beat();
+                        let beat;
+                        if(this.currentToken.type === BEAT){
+                            beat = this.beat();
+                        }
+                        else if(this.currentToken.type == ID){
+                            beat = new IdAST(this.currentToken);
+                            this.eat(ID);
+                        }
                         let forNode = new ForAST(op, noteRoot, beat)
                         return forNode;
                     }
@@ -1417,32 +1479,62 @@ export const Handel = (function () {
         }
 
         visitReverb(node) {
-            if (node.value < 1) {
+            let token = node.value;
+            let value;
+            if(token.type === DIGIT){
+                value = token.value;
+            }
+            else {
+                value = this.callStack.peek().getItem(token.value);
+            }
+            if (value < 1) {
                 return
             }
-            let reverb = node.value / 1000;
+            let reverb = value / 1000;
             this.currentComposition.reverb = reverb;
         }
 
         visitPan(node) {
-            if (node.panAmt > 100 || node.panAmt < 0) {
+            let token = node.value;
+            let panAmt;
+            if(token.type === DIGIT){
+                panAmt = token.value;
+            }
+            else {
+                panAmt = this.callStack.peek().getItem(token.value);
+            }
+            if (panAmt > 100 || panAmt < 0) {
                 return
             }
-            let pan = this.mapHelper(node.panAmt, 0, 100, -1, 1);
+            let pan = this.mapHelper(panAmt, 0, 100, -1, 1);
             this.currentComposition.pan = pan;
         }
 
         visitVolume(node) {
-            if (node.percentage > 100 || node.percentage < 0) {
+            let token = node.value;
+            let percentage;
+            if(token.type === DIGIT){
+                percentage = token.value;
+            }
+            else {
+                percentage = this.callStack.peek().getItem(token.value);
+            }
+
+            if (percentage > 100 || percentage < 0) {
                 return
             }
-            let vol = this.mapHelper(node.percentage, 0, 100, -70, 70);
+            let vol = this.mapHelper(percentage, 0, 100, -70, 70);
             this.currentComposition.volume = vol;
         }
 
         visitBPM(node) {
-            let bpm = node.bpm;
-            this.currentComposition.bpm = bpm;
+            let bpmToken = node.bpm;
+            if(bpmToken.type === DIGIT){
+                this.currentComposition.bpm = bpmToken.value;
+            }
+            else {
+                this.currentComposition.bpm = this.callStack.peek().getItem(bpmToken.value);
+            }
             return
         }
 
@@ -1483,7 +1575,14 @@ export const Handel = (function () {
         }
 
         visitLoop(node) {
-            let loopTimes = node.loopTimes;
+            let token = node.value;
+            let loopTimes;
+            if(token.type === DIGIT){
+                loopTimes = token.value;
+            }
+            else {
+                loopTimes = this.callStack.peek().getItem(token.value);
+            }
             this.currentComposition.loopTimes = loopTimes;
             return;
         }
@@ -1541,7 +1640,15 @@ export const Handel = (function () {
         }
 
         visitBlockLoop(node) {
-            for (let i = 0; i < node.loopTimes; i++) {
+            let token = node.loopTimes;
+            let value;
+            if(token.type === DIGIT){
+                value = token.value;
+            }
+            else {
+                value = this.callStack.peek().getItem(token.value);
+            }
+            for (let i = 0; i < value; i++) {
                 this.visitStatementList(node.statementList);
             }
         }
@@ -1593,7 +1700,14 @@ export const Handel = (function () {
                 value = this.visitNoteList(valueNode);
                 //console.log(value);
             }
+            else if (valueNode.token.type === DIGIT) {
+                value = this.visitDigit(valueNode);
+            }
             this.callStack.peek().setItem(varNode.value, value);
+        }
+
+        visitDigit(node){
+            return node.value;
         }
 
         visitUpdate(node) {
@@ -1603,12 +1717,34 @@ export const Handel = (function () {
             else {
                 let varNode = node.left;
                 let valueNode = node.right;
+                let shiftSymbol = valueNode.symbol;
                 let shiftAmt = this.visitShift(valueNode);
-                let notes = this.callStack.peek().getItem(varNode.value);
-                for (let i = 0; i < notes.length; i++) {
-                    notes[i] = Tone.Frequency(notes[i]).transpose(shiftAmt);
+                let shiftTarget = this.callStack.peek().getItem(varNode.value);
+                if(Array.isArray(shiftTarget)){
+                    for (let i = 0; i < shiftTarget.length; i++) {
+                        shiftTarget[i] = Tone.Frequency(shiftTarget[i]).transpose(shiftAmt);
+                    }
+                    this.callStack.peek().setItem(varNode.value, shiftTarget.slice());
                 }
-                this.callStack.peek().setItem(varNode.value, notes.slice());
+                else if(typeof shiftTarget == "number"){
+                    this.callStack.peek().setItem(varNode.value, shiftTarget + shiftAmt);
+                }
+                else if(typeof shiftTarget == "string"){
+                    this.callStack.peek().setItem(varNode.value, parseInt(shiftTarget) + shiftAmt);
+                }
+                else if(shiftTarget instanceof PlayEvent){
+                    if(shiftTarget.notes){
+                        let notes = shiftTarget.notes.slice();
+                        for (let i = 0; i < notes.length; i++) {
+                            notes[i] = Tone.Frequency(notes[i]).transpose(shiftAmt);
+                        }
+                        shiftTarget.notes = notes;
+                    }
+                    else {
+                        console.log("update num beats");
+                        shiftTarget.numBeats += shiftAmt;
+                    }
+                }
             }
         }
         visitShift(node) {
@@ -1731,6 +1867,9 @@ export const Handel = (function () {
         }
 
         visitPan(node) {
+        }
+
+        visitDigit(node){
         }
 
         visitProcedureCall(node) {
@@ -1888,6 +2027,10 @@ export const Handel = (function () {
                     this.visitNoteList(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
                 }
+                else if (valueNode.token.type === DIGIT) {
+                    this.visitDigit(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
+                }
                 this.currentScope.define(varSymbol);
             }
             catch (ex) {
@@ -1909,12 +2052,12 @@ export const Handel = (function () {
                     return;
                 }
 
-                if (!this.currentScope.lookup(varName, true)) {
+                if (!this.currentScope.lookup(varName)) {
                     throw Error(`Name error in line ${varNode.token.lineno}: ${varName} does not exist`);
                 }
                 if (valueNode.token.type === ID) {
                     this.visitId(valueNode);
-                    let symbol = this.currentScope.lookup(valueNode.value, true);
+                    let symbol = this.currentScope.lookup(valueNode.value);
                     if (!symbol) {
                         throw Error(`Name error in line ${valueNode.token.lineno}: ${valueNode.value} does not exist`);
                     }
