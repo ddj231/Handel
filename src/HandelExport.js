@@ -2062,6 +2062,9 @@ export const Handel = (function () {
                     if(!found){
                         throw Error(`Name error in line ${node.shiftToken.lineno}: ${node.shiftToken.value} does not exist`);
                     }
+                    if(found.type.name !== "DIGIT"){
+                        throw Error(`Type error in line ${node.shiftToken.lineno}: ${node.shiftToken.value} is not of type DIGIT`);
+                    }
                 }
             }
             catch(ex){
