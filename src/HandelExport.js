@@ -217,12 +217,13 @@ export const Handel = (function () {
     const [NOTE, BPM, SOUND,
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, UPDATE, SHIFT, DOT, PLAY,
-        REST, WITH, RUN, LOAD, AS, ASSIGN, USING, EOF] = [
+        REST, WITH, RUN, IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
             "DO", "INSTRUMENT",
             "BEAT", "DIGIT", "FOR", "SEP", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "UPDATE", "SHIFT", "DOT", "PLAY",
-            "REST", "WITH", "RUN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
+            "REST", "WITH", "RUN", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
+            "BOOLEAN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
     class Token {
@@ -264,7 +265,16 @@ export const Handel = (function () {
         load: new Token(LOAD, 'LOAD'),
         as: new Token(AS, 'AS'),
         lshift: new Token(SHIFT, "lshift"),
-        rshift: new Token(SHIFT, "rshift")
+        rshift: new Token(SHIFT, "rshift"),
+        true: new Token(BOOLEAN, true),
+        false: new Token(BOOLEAN, false),
+        if: new Token(IF, "if"),
+        then: new Token(THEN, "then"),
+        else: new Token(ELSE, "else"),
+        endif: new Token(ENDIF, "endif"),
+        lessthan: new Token(LESS, "lessthan"),
+        greaterthan: new Token(GREAT, "greaterthan"),
+        equalto: new Token(EQUAL, "equalto")
     }
 
     class HandelSymbol {
@@ -693,18 +703,43 @@ export const Handel = (function () {
         }
     }
 
-    class IdAST {
-        constructor(token) {
+    class BooleanAST {
+        constructor(token){
             this.token = token;
             this.value = token.value;
         }
     }
 
-    class SepAST {
-        constructor(token, left, right) {
+    class ComparisonAST {
+        constructor(token){
             this.token = token;
+            this.value = token.value;
+        }
+    }
+
+    class ConditionalStatementAST {
+        constructor(token, condition, ifStatementList, elseStatementList){
+            this.token = token;
+            this.value = token.value;
+            this.condition = condition;
+            this.ifStatementList = ifStatementList;
+            this.elseStatementList = elseStatementList;
+        }
+    }
+    
+    class ConditionAST {
+        constructor(token, operator, left, right){
+            this.token = token;
+            this.operator = operator;
             this.left = left;
             this.right = right;
+        }
+    }
+
+    class IdAST {
+        constructor(token) {
+            this.token = token;
+            this.value = token.value;
         }
     }
 
@@ -802,6 +837,7 @@ export const Handel = (function () {
                     this.currentToken.type === LOAD ||
                     this.currentToken.type === BLOCK ||
                     this.currentToken.type === UPDATE ||
+                    this.currentToken.type === IF ||
                     this.currentToken.type === SAVE)) {
                 try {
                     statementList = this.statementList();
@@ -989,6 +1025,87 @@ export const Handel = (function () {
             }
         }
 
+        boolean(){
+            try{
+                if(this.currentToken.type === TRUE || this.currentToken.type === FALSE){
+                    return new BooleanAST(this.currentToken);
+                }
+                else {
+                    this.error();
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        comparison_operator(){
+            try{
+                let token = this.currentToken;
+                if(this.currentToken.type === LESS){
+                    this.eat(LESS);
+                }
+                else if(this.currentToken.type === GREAT){
+                    this.eat(GREAT);
+                }
+                else if(this.currentToken.type === EQUAL){
+                    this.eat(EQUAL);
+                }
+                return new ComparisonAST(token);
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        condition(){
+            try{
+                let left;
+                let right;
+
+                if(this.currentToken.type === DIGIT){
+                    left = this.digit();
+                }
+                else if(this.currentToken.type === ID){
+                    left = this.id();
+                }
+
+                let token = this.currentToken;
+                let op = this.comparison_operator();
+
+                if(this.currentToken.type === DIGIT){
+                    right = this.digit();
+                }
+                else if(this.currentToken.type === ID){
+                    right = this.id();
+                }
+                return new ConditionAST(token, op, left, right);
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        conditional_statement(){
+            try {
+                let token = this.currentToken;
+                this.eat(IF);
+                let condition = this.condition();
+                this.eat(THEN);
+                let ifStatementList = this.statementList();
+                let elseStatementList; 
+                if(this.currentToken.type === ELSE){
+                    this.eat(ELSE);
+                    elseStatementList = this.statementList();
+                }
+                this.eat(ENDIF);
+                return new ConditionalStatementAST(token, condition, ifStatementList, elseStatementList);
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
         blockLoop() {
             try {
                 let blockToken = this.currentToken;
@@ -1048,6 +1165,7 @@ export const Handel = (function () {
                         this.currentToken.type === LOAD ||
                         this.currentToken.type === BLOCK ||
                         this.currentToken.type === UPDATE ||
+                        this.currentToken.type === IF ||
                         this.currentToken.type === SAVE)
                 ) {
                     if (this.currentToken.type === CHUNK) {
@@ -1105,6 +1223,9 @@ export const Handel = (function () {
                 else if (this.currentToken.type === LOAD) {
                     return this.importInstrument();
                 }
+                else if (this.currentToken.type === IF) {
+                    return this.conditional_statement();
+                }
                 else {
                     this.error();
                 }
@@ -1143,9 +1264,14 @@ export const Handel = (function () {
         }
 
         digit(){
-            let token = this.currentToken;
-            this.eat(DIGIT);
-            return new DigitAST(token);
+            try {
+                let token = this.currentToken;
+                this.eat(DIGIT);
+                return new DigitAST(token);
+            }
+            catch (ex){
+                throw ex;
+            }
         }
 
         update() {
@@ -1582,6 +1708,62 @@ export const Handel = (function () {
             }
         }
 
+        visitBoolean(node){
+            return node.value;
+        }
+
+        visitComparisonOperator(node){
+            return node.value;
+        }
+
+        visitCondition(node){
+            try{
+                let leftValue;
+                let rightValue;
+                if(node.left.token === ID){
+                    leftValue = this.visitId(node.left);
+                }
+                else{
+                    leftValue = this.visitDigit(node.left);
+                }
+
+                if(node.right.token === ID){
+                    rightValue = this.visitId(node.right);
+                }
+                else{
+                    rightValue = this.visitDigit(node.right);
+                }
+                let operation = this.visitComparisonOperator(node.operator); 
+                if(operation === "equalto"){
+                    return leftValue === rightValue;
+                }
+                else if(operation === "greaterthan"){
+                    return leftValue > rightValue;
+                }
+                else if(operation < "lessthan"){
+                    return leftValue < rightValue;
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        visitConditionalStatement(node){
+            try {
+                let decision = this.visitCondition(node.condition);
+                if(decision){
+                    this.visitStatementList(node.ifStatementList);
+                }
+                else {
+                    this.visitStatementList(node.elseStatementList);
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
         visitLoop(node) {
             let token = node.value;
             let loopTimes;
@@ -1837,6 +2019,40 @@ export const Handel = (function () {
             }
         }
 
+        visitBoolean(node){
+        }
+
+        visitComparisonOperator(node){
+        }
+
+        visitCondition(node){
+            try{
+                if(node.left.token === ID){
+                    this.visitId(node.left);
+                }
+                
+                if(node.right.token === ID){
+                    this.visitId(node.right);
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        visitConditionalStatement(node){
+            try {
+            this.visitCondition(node.condition);
+            this.visitStatementList(node.ifStatementList);
+            if(node.elseStatementList){
+                this.visitStatementList(node.elseStatementList);
+            }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
         visitSectionDeclaration(node) {
             try {
                 let procName = node.value;
@@ -1956,6 +2172,9 @@ export const Handel = (function () {
                     }
                     else if (child.token.type === LOAD) {
                         this.visitLoad(child);
+                    }
+                    else if (child.token.type === IF) {
+                        this.visitConditionalStatement(child);
                     }
                 }
             }
