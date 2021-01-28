@@ -1067,7 +1067,7 @@ export const Handel = (function () {
                     left = this.digit();
                 }
                 else if(this.currentToken.type === ID){
-                    left = this.id();
+                    left = new IdAST(this.id());
                 }
 
                 let token = this.currentToken;
@@ -1077,7 +1077,7 @@ export const Handel = (function () {
                     right = this.digit();
                 }
                 else if(this.currentToken.type === ID){
-                    right = this.id();
+                    right = new IdAST(this.id());
                 }
                 return new ConditionAST(token, op, left, right);
             }
@@ -1740,7 +1740,7 @@ export const Handel = (function () {
                 else if(operation === "greaterthan"){
                     return leftValue > rightValue;
                 }
-                else if(operation < "lessthan"){
+                else if(operation === "lessthan"){
                     return leftValue < rightValue;
                 }
             }
@@ -1755,7 +1755,7 @@ export const Handel = (function () {
                 if(decision){
                     this.visitStatementList(node.ifStatementList);
                 }
-                else {
+                else if(node.elseStatementList){
                     this.visitStatementList(node.elseStatementList);
                 }
             }
@@ -1801,6 +1801,9 @@ export const Handel = (function () {
                 }
                 else if (child.token.type === BLOCK) {
                     this.visitBlockLoop(child);
+                }
+                else if (child.token.type === IF) {
+                    this.visitConditionalStatement(child);
                 }
                 else if (child.token.type === LOAD) {
                     try {
@@ -2026,12 +2029,13 @@ export const Handel = (function () {
         }
 
         visitCondition(node){
+            console.log(node);
             try{
-                if(node.left.token === ID){
+                if(node.left && node.left.token.type === ID){
                     this.visitId(node.left);
                 }
                 
-                if(node.right.token === ID){
+                if(node.right && node.right.token.type === ID){
                     this.visitId(node.right);
                 }
             }
@@ -2042,11 +2046,11 @@ export const Handel = (function () {
 
         visitConditionalStatement(node){
             try {
-            this.visitCondition(node.condition);
-            this.visitStatementList(node.ifStatementList);
-            if(node.elseStatementList){
-                this.visitStatementList(node.elseStatementList);
-            }
+                this.visitCondition(node.condition);
+                this.visitStatementList(node.ifStatementList);
+                if(node.elseStatementList){
+                    this.visitStatementList(node.elseStatementList);
+                }
             }
             catch(ex){
                 throw ex;
