@@ -208,21 +208,47 @@ save mynotelist = B3
 update mynotelist = Bb3
 ```
 
-## Reassignment and Note Shifting
+## Reassignment and Shifting values
 
-Variables which store Notelists can have their notes shifted left or right by a number of semitones. 
+All variables in Handel can be shifted using the ```rshift``` and ```lshift``` keywords. You can think of this as the equivalent of ```+=``` and ```-=``` respectively. 
+
+For variables of type digit, this shifting is exactly the equivalent of addition and subtraction.
+
+For notelists shifting changes the note, left or right by a number of semitones.
 
 The following example reassigns (or shifts) ```mynotelist`` down/left by one semitone. Then up/right by two semitones.
 
 ```
 start
-save mynotelist = B3 
+    save mynotelist = B3 
 
-update mynotelist lshift 1
-play mynotelist for 1b
+    update mynotelist lshift 1
+    play mynotelist for 1b
 
-update mynotelist rshift 2
-play mynotelist for 1b
+    update mynotelist rshift 2
+    play mynotelist for 1b
+finish
+```
+
+Durations and Playables can also be shifted. 
+
+Shifting a duration increases or decreases its beat value.
+
+Shifting a playable increases of decreass its notelist.
+
+For example:
+
+```
+start
+    save duration = for 1b
+    save playable = E3, G3 for 2b
+    
+    update duration rshift 1 
+    update playable lshift 2 
+
+    play playable
+    rest duration
+    play playable
 finish
 ```
 
