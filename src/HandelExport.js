@@ -472,9 +472,9 @@ export const Handel = (function () {
 
                 const beatValue = this.currentChar;
                 const parsed = Number.parseInt(beatValue);
-                if (!Number.isNaN(parsed)) {
+                if (!Number.isNaN(parsed) || this.currentChar == '-') {
                     this.advance();
-                    if (this.currentChar === 'b') {
+                    if (this.currentChar !== '-' && this.currentChar === 'b') {
                         this.advance();
                         return new Token(BEAT, beatValue, this.lineno);
                     }
