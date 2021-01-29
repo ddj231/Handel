@@ -217,12 +217,12 @@ export const Handel = (function () {
     const [NOTE, BPM, SOUND,
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, UPDATE, SHIFT, DOT, PLAY,
-        REST, WITH, RUN, IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
+        REST, WITH, RUN, WHILE, IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
             "DO", "INSTRUMENT",
             "BEAT", "DIGIT", "FOR", "SEP", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "UPDATE", "SHIFT", "DOT", "PLAY",
-            "REST", "WITH", "RUN", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
+            "REST", "WITH", "RUN", "WHILE", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
             "BOOLEAN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
@@ -274,7 +274,8 @@ export const Handel = (function () {
         endif: new Token(ENDIF, "endif"),
         lessthan: new Token(LESS, "lessthan"),
         greaterthan: new Token(GREAT, "greaterthan"),
-        equalto: new Token(EQUAL, "equalto")
+        equalto: new Token(EQUAL, "equalto"),
+        while: new Token(WHILE, "while")
     }
 
     class HandelSymbol {
@@ -590,10 +591,11 @@ export const Handel = (function () {
     }
 
     class BlockLoopAST {
-        constructor(token, statementList, loopTimes) {
+        constructor(token, statementList, loopTimes, whileCondition) {
             this.token = token;
             this.statementList = statementList;
             this.loopTimes = loopTimes;
+            this.whileCondition = whileCondition;
         }
     }
 
@@ -1113,16 +1115,23 @@ export const Handel = (function () {
                 let statementList = this.statementList();
                 this.eat(ENDBLOCK);
                 this.eat(LOOP);
-                this.eat(FOR);
-
-                let token = this.currentToken;
-                if(this.currentToken.type === DIGIT){
-                    this.eat(DIGIT);
+                let token;
+                let condition;
+                if(this.currentToken.type === FOR){
+                    this.eat(FOR);
+                    let token = this.currentToken;
+                    if(this.currentToken.type === DIGIT){
+                        this.eat(DIGIT);
+                    }
+                    else if(this.currentToken.type === ID){
+                        this.eat(ID);
+                    }
                 }
-                else if(this.currentToken.type === ID){
-                    this.eat(ID);
+                else if(this.currentToken.type === WHILE){
+                    this.eat(WHILE);
+                    condition = this.condition();
                 }
-                return new BlockLoopAST(blockToken, statementList, token);
+                return new BlockLoopAST(blockToken, statementList, token, condition);
             }
             catch (ex) {
                 throw ex;
@@ -1913,15 +1922,23 @@ export const Handel = (function () {
 
         visitBlockLoop(node) {
             let token = node.loopTimes;
+            let whileCondition = node.whileCondition;
             let value;
-            if(token.type === DIGIT){
-                value = token.value;
+            if(token){
+                if(token.type === DIGIT){
+                    value = token.value;
+                }
+                else {
+                    value = this.callStack.peek().getItem(token.value);
+                }
+                for (let i = 0; i < value; i++) {
+                    this.visitStatementList(node.statementList);
+                }
             }
-            else {
-                value = this.callStack.peek().getItem(token.value);
-            }
-            for (let i = 0; i < value; i++) {
-                this.visitStatementList(node.statementList);
+            else if(whileCondition){
+                while(this.visitCondition(whileCondition)){
+                    this.visitStatementList(node.statementList);
+                }
             }
         }
 
@@ -2272,6 +2289,9 @@ export const Handel = (function () {
         }
 
         visitBlockLoop(node) {
+            if(node.whileCondition){
+                this.visitCondition(node.whileCondition);
+            }
         }
 
         visitPlay(node) {
