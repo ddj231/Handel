@@ -215,14 +215,14 @@ export const Handel = (function () {
 
     // Token types
     const [NOTE, BPM, SOUND,
-        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO, INSTRUMENT, BEAT, DIGIT, FOR, SEP, CHUNK,
+        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO, INSTRUMENT, BEAT, RANDINT, DIGIT, FOR, SEP, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, UPDATE, SHIFT, DOT, PLAY,
-        REST, WITH, RUN, WHILE, IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
+        REST, WITH, RUN, TO, WHILE, IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
             "DO", "INSTRUMENT",
-            "BEAT", "DIGIT", "FOR", "SEP", "CHUNK",
+            "BEAT", "RANDINT", "DIGIT", "FOR", "SEP", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "UPDATE", "SHIFT", "DOT", "PLAY",
-            "REST", "WITH", "RUN", "WHILE", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
+            "REST", "WITH", "RUN", "TO","WHILE", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
             "BOOLEAN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
@@ -266,8 +266,6 @@ export const Handel = (function () {
         as: new Token(AS, 'AS'),
         lshift: new Token(SHIFT, "lshift"),
         rshift: new Token(SHIFT, "rshift"),
-        //true: new Token(BOOLEAN, true),
-        //false: new Token(BOOLEAN, false),
         if: new Token(IF, "if"),
         then: new Token(THEN, "then"),
         else: new Token(ELSE, "else"),
@@ -275,6 +273,8 @@ export const Handel = (function () {
         lessthan: new Token(LESS, "lessthan"),
         greaterthan: new Token(GREAT, "greaterthan"),
         equalto: new Token(EQUAL, "equalto"),
+        randint: new Token(RANDINT, "randint"),
+        to: new Token(TO, "to"),
         while: new Token(WHILE, "while")
     }
 
@@ -742,6 +742,14 @@ export const Handel = (function () {
         constructor(token) {
             this.token = token;
             this.value = token.value;
+        }
+    }
+
+    class RandAST {
+        constructor(token, start, end){
+            this.token = token;
+            this.start = start;
+            this.end = end;
         }
     }
 
@@ -1244,6 +1252,28 @@ export const Handel = (function () {
             }
         }
 
+        randint(){
+            let token = this.currentToken;
+            this.eat(RANDINT);
+            let start;
+            let end;
+            if(this.currentToken.type === DIGIT){
+                start = this.digit();
+            }
+            else {
+                start = new IdAST(this.id());
+            }
+
+            this.eat(TO);
+            if(this.currentToken.type === DIGIT){
+                end = this.digit();
+            }
+            else {
+                end = new IdAST(this.id());
+            }
+            return new RandAST(token, start, end);
+        }
+
         save() {
             try {
                 this.eat(SAVE);
@@ -1262,8 +1292,11 @@ export const Handel = (function () {
                     return new AssignAST(assignToken, varNode, beat);
                 }
                 else if(this.currentToken.type === DIGIT){
-                    let digitToken = this.currentToken;
                     let node = this.digit();
+                    return new AssignAST(assignToken, varNode, node);
+                }
+                else if(this.currentToken.type === RANDINT){
+                    let node = this.randint();
                     return new AssignAST(assignToken, varNode, node);
                 }
             }
@@ -1454,7 +1487,7 @@ export const Handel = (function () {
         }
     }
 
-    const ARTYPES = { PROGRAM: "PROGRAM", PROCEDURE: "PROCEDURE" }
+    const ARTYPES = { PROGRAM: "PROGRAM", PROCEDURE: "PROCEDURE", BLOCK: "BLOCK" }
     class HandelActivationRecord {
         constructor(name, type, nestingLevel) {
             this.name = name;
@@ -1839,13 +1872,17 @@ export const Handel = (function () {
 
         visitConditionalStatement(node){
             try {
+                let ar = new HandelActivationRecord(node.value, ARTYPES.BLOCK);
+                ar.enclosingRecord = this.callStack.peek();
                 let decision = this.visitCondition(node.condition);
+                this.callStack.push(ar);
                 if(decision){
                     this.visitStatementList(node.ifStatementList);
                 }
                 else if(node.elseStatementList){
                     this.visitStatementList(node.elseStatementList);
                 }
+                this.callStack.pop();
             }
             catch(ex){
                 throw ex;
@@ -1919,6 +1956,8 @@ export const Handel = (function () {
 
         visitBlockLoop(node) {
             try {
+                let ar = new HandelActivationRecord(undefined, ARTYPES.BLOCK);
+                ar.enclosingRecord = this.callStack.peek();
                 let token = node.loopTimes;
                 let whileCondition = node.whileCondition;
                 let value;
@@ -1929,14 +1968,18 @@ export const Handel = (function () {
                     else {
                         value = this.callStack.peek().getItem(token.value);
                     }
+                    this.callStack.push(ar);
                     for (let i = 0; i < value; i++) {
                         this.visitStatementList(node.statementList);
                     }
+                    this.callStack.pop();
                 }
                 else if(whileCondition){
+                    this.callStack.push(ar);
                     while(this.visitCondition(whileCondition)){
                         this.visitStatementList(node.statementList);
                     }
+                    this.callStack.pop();
                 }
             }
             catch(ex){
@@ -1994,11 +2037,45 @@ export const Handel = (function () {
             else if (valueNode.token.type === DIGIT) {
                 value = this.visitDigit(valueNode);
             }
+            else if (valueNode.token.type === RANDINT) {
+                value = this.visitRandint(valueNode);
+            }
             this.callStack.peek().setItem(varNode.value, value);
         }
 
         visitDigit(node){
             return node.value;
+        }
+
+        visitRandint(node){
+            try {
+            let start = node.start;
+            let end = node.end;
+            let startval;
+            let endval;
+            if(start.token.type === ID){
+                startval = this.visitId(start);
+            }
+            else {
+                startval = this.visitDigit(start);
+            }
+            
+            if(end.token.type === ID){
+                endval = this.visitId(end);
+            }
+            else {
+                endval = this.visitDigit(end);
+            }
+            if(typeof startval !== "number" || typeof endval !== "number"){
+                throw Error(`Type error in randint expression in line: ${node.token.lineno}`);
+            }
+            let num = Math.floor(Math.random() * Math.floor(100));
+            let output = Math.floor(this.mapHelper(num, 0, 100, startval, endval));
+            return output;
+            }
+            catch(ex){
+                throw ex;
+            }
         }
 
         visitUpdate(node) {
@@ -2142,11 +2219,14 @@ export const Handel = (function () {
 
         visitConditionalStatement(node){
             try {
+                this.currentScope = new HandelSymbolTable("IF",
+                    this.currentScope.scopeLevel + 1, this.currentScope);
                 this.visitCondition(node.condition);
                 this.visitStatementList(node.ifStatementList);
                 if(node.elseStatementList){
                     this.visitStatementList(node.elseStatementList);
                 }
+                this.currentScope = this.currentScope.enclosingScope;
             }
             catch(ex){
                 throw ex;
@@ -2291,9 +2371,13 @@ export const Handel = (function () {
         }
 
         visitBlockLoop(node) {
+            this.currentScope = new HandelSymbolTable("LOOP",
+                this.currentScope.scopeLevel + 1, this.currentScope);
+            this.visitStatementList(node.statementList);
             if(node.whileCondition){
                 this.visitCondition(node.whileCondition);
             }
+            this.currentScope = this.currentScope.enclosingScope;
         }
 
         visitPlay(node) {
@@ -2370,10 +2454,26 @@ export const Handel = (function () {
                     this.visitDigit(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
                 }
+                else if (valueNode.token.type === RANDINT) {
+                    this.visitRandint(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
+                }
                 this.currentScope.define(varSymbol);
             }
             catch (ex) {
                 throw ex;
+            }
+        }
+
+        visitRandint(node){
+            let start = node.start;
+            let end = node.end;
+            if(start.token.type === ID){
+                this.visitId(start);
+            }
+
+            if(end.token.type === ID){
+                this.visitId(end);
             }
         }
 
