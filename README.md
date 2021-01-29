@@ -549,9 +549,9 @@ load someinst as instname
 **comparison operators**:
 
 ```
-lessthan
-greaterthan
-equalto
+1 lessthan 2
+C5 greaterthan C3 
+for 3b equalto for 3b
 ```
 
 <br/>
