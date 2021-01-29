@@ -283,7 +283,7 @@ The syntax for an if - else block is as follows.
 
 ```
 start
-    if E4 > Cb3 then
+    if E4 greaterthan Cb3 then
         play E4 for 1b 
     else
         play Cb3 for 1b
