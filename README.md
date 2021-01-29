@@ -199,7 +199,7 @@ finish
 OK! So far so good!
 
 # Variable Reassignment
-Handel (v0.5.3) and greater now supports variable reassignment. Variables can be reassigned using the ```update``` keyword.
+Handel now supports variable reassignment. Variables can be reassigned using the ```update``` keyword.
 
 For example:
 
@@ -254,7 +254,7 @@ finish
 
 # Blocks loops
 
-Handel (v0.2.0 and greater) supports block loops.  Block loops begin with the **block** keyword and end with the **endblock** keyword and a ```loop for digit``` or ```loop while condition``` customization.
+Handel supports block loops.  Block loops begin with the **block** keyword and end with the **endblock** keyword and a ```loop for digit``` or ```loop while condition``` customization.
 
 Here is an example two block loops in Handel.
 ```
@@ -277,7 +277,7 @@ Block loops are blocking (no pun intended), and should not be confused with Hand
 More on procedures below.
 
 # Conditionals (if - else blocks)
-Though booleans are not built in types in Handel, Handel (0.7.0) now supports conditonals.
+Though booleans are not built in types in Handel, Handel now supports conditonals.
 
 The syntax for an if - else block is as follows.
 
@@ -419,7 +419,7 @@ Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100
 (see reference below for addition customizations)
 
 ## Custom Instruments
-Handel (v0.4.0 and up) allows custom instruments to be loaded into Handel Programs. Instruments can be created and added to a run of a Handel program as follows.
+Handel allows custom instruments to be loaded into Handel Programs. Instruments can be created and added to a run of a Handel program as follows.
 
 ```
 let myinst = Handel.MakeInstrument({
