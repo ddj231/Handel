@@ -143,6 +143,8 @@ finish
 
 You can declare Variables in Handel. Variables store three builtin types in Handel: Notelists, Durations, Playables.
 
+A **Digit** is a positive or negative integer.
+
 A **Notelist** is a single note name, or a list of note names separated by commas.
 
 For example:
@@ -152,11 +154,9 @@ Bb3
 G#2, A2
 ```
 
-Next, a **Duration** is the keyword **for** followed by a beat.
+A **Duration** is the keyword **for** followed by a beat.
 
-A **beat** is any whole number followed by the letter 'b' 
-
-All together, here are some example durations: 
+Here are some example durations: 
 
 ```
 for 1b
