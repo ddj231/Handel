@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.6.0", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.0", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -1119,7 +1119,7 @@ export const Handel = (function () {
                 let condition;
                 if(this.currentToken.type === FOR){
                     this.eat(FOR);
-                    let token = this.currentToken;
+                    token = this.currentToken;
                     if(this.currentToken.type === DIGIT){
                         this.eat(DIGIT);
                     }
@@ -1866,43 +1866,40 @@ export const Handel = (function () {
         }
 
         visitStatementList(node) {
-            for (let child of node.children) {
-                if (child.token.type === PLAY) {
-                    this.visitPlay(child);
-                }
-                else if (child.token.type === REST) {
-                    this.visitRest(child);
-                }
-                else if (child.token.type === ID) {
-                    if (child.token.category) {
-                        this.visitProcedureCall(child);
+            try{
+                for (let child of node.children) {
+                    if (child.token.type === PLAY) {
+                        this.visitPlay(child);
                     }
-                    else {
-                        this.visitSectionDeclaration(child);
+                    else if (child.token.type === REST) {
+                        this.visitRest(child);
                     }
-                }
-                else if (child.token.type === ASSIGN) {
-                    this.visitSave(child);
-                }
-                else if (child.token.type === UPDATE) {
-                    this.visitUpdate(child);
-                }
-                else if (child.token.type === BLOCK) {
-                    this.visitBlockLoop(child);
-                }
-                else if (child.token.type === IF) {
-                    this.visitConditionalStatement(child);
-                }
-                else if (child.token.type === LOAD) {
-                    try {
-                        this.visitLoad(child);
+                    else if (child.token.type === ID) {
+                        if (child.token.category) {
+                            this.visitProcedureCall(child);
+                        }
+                        else {
+                            this.visitSectionDeclaration(child);
+                        }
                     }
-                    catch (ex) {
-                        throw ex;
+                    else if (child.token.type === ASSIGN) {
+                        this.visitSave(child);
+                    }
+                    else if (child.token.type === UPDATE) {
+                        this.visitUpdate(child);
+                    }
+                    else if (child.token.type === BLOCK) {
+                        this.visitBlockLoop(child);
+                    }
+                    else if (child.token.type === IF) {
+                        this.visitConditionalStatement(child);
+                    }
+                    else if (child.token.type === LOAD) {
+                            this.visitLoad(child);
                     }
                 }
             }
-            //this.currentComposition.play();
+            catch(ex){throw ex;}
         }
 
         visitLoad(node) {
@@ -1921,24 +1918,29 @@ export const Handel = (function () {
         }
 
         visitBlockLoop(node) {
-            let token = node.loopTimes;
-            let whileCondition = node.whileCondition;
-            let value;
-            if(token){
-                if(token.type === DIGIT){
-                    value = token.value;
+            try {
+                let token = node.loopTimes;
+                let whileCondition = node.whileCondition;
+                let value;
+                if(token){
+                    if(token.type === DIGIT){
+                        value = token.value;
+                    }
+                    else {
+                        value = this.callStack.peek().getItem(token.value);
+                    }
+                    for (let i = 0; i < value; i++) {
+                        this.visitStatementList(node.statementList);
+                    }
                 }
-                else {
-                    value = this.callStack.peek().getItem(token.value);
-                }
-                for (let i = 0; i < value; i++) {
-                    this.visitStatementList(node.statementList);
+                else if(whileCondition){
+                    while(this.visitCondition(whileCondition)){
+                        this.visitStatementList(node.statementList);
+                    }
                 }
             }
-            else if(whileCondition){
-                while(this.visitCondition(whileCondition)){
-                    this.visitStatementList(node.statementList);
-                }
+            catch(ex){
+                throw ex;
             }
         }
 

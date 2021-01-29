@@ -254,23 +254,49 @@ finish
 
 # Blocks loops
 
-Handel (v0.2.0 and greater) supports block loops.  Block loops begin with the **block** keyword and end with the **endblock** keyword and the amount of times a block should loop (a loop customization).
+Handel (v0.2.0 and greater) supports block loops.  Block loops begin with the **block** keyword and end with the **endblock** keyword and a ```loop for digit``` or ```loop while condition``` customization.
 
-Here is an example of a block loop in Handel.
+Here is an example two block loops in Handel.
 ```
 start
     block 
         play C3, E3, G3 for 1b 
         play D3, F3, A3 for 1b 
-    endblock loop for 10 
+    endblock loop for 2 
+
+    save note = C2
+    block 
+        play note for 1b 
+        update note rshift 1
+    endblock loop while note lessthan C3
 finish
 ```
-
-Block loops use the global scope, if used globally, or use the scope of the chunk they are in.
 
 Block loops are blocking (no pun intended), and should not be confused with Handel's procedures (chunks).
 
 More on procedures below.
+
+# Conditionals (if - else blocks)
+Though booleans are not built in types in Handel, Handel (0.7.0) now supports conditonals.
+
+The syntax for an if - else block is as follows.
+
+```
+start
+    if E4 > Cb3 then
+        play E4 for 1b 
+    else
+        play Cb3 for 1b
+    endif
+
+    save mydigit = -5
+    if mydigit equalto 5 then
+        play C2 for 5b
+    endif
+finish
+```
+
+The above (though it contains trivial conditionals) plays E4 for 1 beat. Note that else blocks are optional.
 
 # Procedures (I thought this was a procedural programming language?)
 
@@ -520,6 +546,16 @@ load someinst as instname
 
 <br/>
 
+**comparison operators**:
+
+```
+lessthan
+greaterthan
+equalto
+```
+
+<br/>
+
 **block**: Used to declare a loop. (see above section on block loops for more details)
 ```
 block
@@ -619,6 +655,22 @@ hihat
 ### load 
 
 ### as 
+
+### if
+
+### then 
+
+### else
+
+### endif
+
+### while
+
+### lessthan
+
+### greaterthan
+
+### equalto
 
 ### block 
 
