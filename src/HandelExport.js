@@ -266,8 +266,8 @@ export const Handel = (function () {
         as: new Token(AS, 'AS'),
         lshift: new Token(SHIFT, "lshift"),
         rshift: new Token(SHIFT, "rshift"),
-        true: new Token(BOOLEAN, true),
-        false: new Token(BOOLEAN, false),
+        //true: new Token(BOOLEAN, true),
+        //false: new Token(BOOLEAN, false),
         if: new Token(IF, "if"),
         then: new Token(THEN, "then"),
         else: new Token(ELSE, "else"),
@@ -1066,8 +1066,8 @@ export const Handel = (function () {
                 if(this.currentToken.type === DIGIT){
                     left = this.digit();
                 }
-                else if(this.currentToken.type === ID){
-                    left = new IdAST(this.id());
+                else {
+                    left = this.expr();
                 }
 
                 let token = this.currentToken;
@@ -1076,8 +1076,8 @@ export const Handel = (function () {
                 if(this.currentToken.type === DIGIT){
                     right = this.digit();
                 }
-                else if(this.currentToken.type === ID){
-                    right = new IdAST(this.id());
+                else {
+                    right = this.expr();
                 }
                 return new ConditionAST(token, op, left, right);
             }
@@ -1720,32 +1720,111 @@ export const Handel = (function () {
             try{
                 let leftValue;
                 let rightValue;
-                if(node.left.token === ID){
+                if(node.left.token.type === ID){
                     leftValue = this.visitId(node.left);
                 }
-                else{
+                else if (node.left.token.type === BEAT) {
+                    leftValue = this.visitBeat(node.left);
+                }
+                else if (node.left.token.type === FOR) {
+                    leftValue = this.visitFor(node.left);
+                }
+                else if (node.left.token.type === NOTE) {
+                    leftValue = this.visitNoteList(node.left);
+                    //console.log(value);
+                }
+                else if (node.left.token.type === DIGIT) {
                     leftValue = this.visitDigit(node.left);
                 }
 
-                if(node.right.token === ID){
+                if(node.right.token.type === ID){
                     rightValue = this.visitId(node.right);
                 }
-                else{
+                else if (node.right.token.type === BEAT) {
+                    rightValue = this.visitBeat(node.right);
+                }
+                else if (node.right.token.type === FOR) {
+                    rightValue = this.visitFor(node.right);
+                }
+                else if (node.right.token.type === NOTE) {
+                    rightValue = this.visitNoteList(node.right);
+                }
+                else if (node.right.token.type === DIGIT) {
                     rightValue = this.visitDigit(node.right);
                 }
+
                 let operation = this.visitComparisonOperator(node.operator); 
-                if(operation === "equalto"){
-                    return leftValue === rightValue;
+
+                if(typeof leftValue != typeof rightValue){
+                    throw Error(`Type error in condition statement at line: ${node.token.lineno}`);
                 }
-                else if(operation === "greaterthan"){
-                    return leftValue > rightValue;
+
+                if(Array.isArray(leftValue)){
+                    return this.compareNoteLists(operation, leftValue, rightValue);
                 }
-                else if(operation === "lessthan"){
-                    return leftValue < rightValue;
+                else if(typeof leftValue == "number"){
+                    return this.compareDigits(operation, leftValue, rightValue);
                 }
+                else if(typeof leftValue == "string"){
+                    return this.compareDigits(operation, parseInt(leftValue), parseInt(rightValue));
+                }
+                else if(leftValue instanceof PlayEvent){
+                    return this.comparePlayevents(operation, leftValue, rightValue);
+                }
+
             }
             catch(ex){
                 throw ex;
+            }
+        }
+
+        compareNoteLists(op, notelist1, notelist2){
+            if(op === "equalto"){
+                if(notelist1.length !== notelist2.length){
+                    return false;
+                }
+                let eq = true;
+                for(let i = 0; i < notelist1.length; i++){
+                    if(!notelist2.includes(notelist1[i])){
+                        eq = false;
+                    };
+                }
+                return eq;
+            }
+            else {
+                let leftsum = 0;
+                let rightsum = 0;
+                for(let i = 0; i < notelist1.length; i++){
+                    leftsum += Tone.Frequency(notelist1[i]).toFrequency();
+                }
+                for(let i = 0; i < notelist2.length; i++){
+                    rightsum += Tone.Frequency(notelist2[i]).toFrequency();
+                }
+                if(op === "greaterthan"){
+                    return leftsum > rightsum
+                }
+                else if(op === "lessthan"){
+                    return leftsum < rightsum;
+                }
+            }
+        }
+        comparePlayevents(op, event1, event2){
+            if(event1.notes && event2.notes){
+                return this.compareNoteLists(op, event1.notes, event2.notes);
+            }
+            else {
+                this.compareDigits(op, event1.numBeats, event2.numBeats);
+            }
+        }
+        compareDigits(op, val1, val2){
+            if(op === "equalto"){
+                return val1 === val2;
+            }
+            else if(op === "greaterthan"){
+                return val1 > val2;
+            }
+            else if(op === "lessthan"){
+                return val1 < val2;
             }
         }
 
@@ -1934,7 +2013,6 @@ export const Handel = (function () {
                         shiftTarget.notes = notes;
                     }
                     else {
-                        console.log("update num beats");
                         shiftTarget.numBeats += shiftAmt;
                     }
                 }
@@ -2029,7 +2107,6 @@ export const Handel = (function () {
         }
 
         visitCondition(node){
-            console.log(node);
             try{
                 if(node.left && node.left.token.type === ID){
                     this.visitId(node.left);
