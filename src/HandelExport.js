@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.3", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.4", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -2372,14 +2372,11 @@ export const Handel = (function () {
 
         visitConditionalStatement(node){
             try {
-                this.currentScope = new HandelSymbolTable("IF",
-                    this.currentScope.scopeLevel + 1, this.currentScope);
                 this.visitCondition(node.condition);
                 this.visitStatementList(node.ifStatementList);
                 if(node.elseStatementList){
                     this.visitStatementList(node.elseStatementList);
                 }
-                this.currentScope = this.currentScope.enclosingScope;
             }
             catch(ex){
                 throw ex;
@@ -2524,13 +2521,10 @@ export const Handel = (function () {
         }
 
         visitBlockLoop(node) {
-            this.currentScope = new HandelSymbolTable("LOOP",
-                this.currentScope.scopeLevel + 1, this.currentScope);
             this.visitStatementList(node.statementList);
             if(node.whileCondition){
                 this.visitCondition(node.whileCondition);
             }
-            this.currentScope = this.currentScope.enclosingScope;
         }
 
         visitPlay(node) {
