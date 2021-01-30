@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.2", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.3", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -1992,17 +1992,13 @@ export const Handel = (function () {
 
         visitConditionalStatement(node){
             try {
-                let ar = new HandelActivationRecord(node.value, ARTYPES.BLOCK);
-                ar.enclosingRecord = this.callStack.peek();
                 let decision = this.visitCondition(node.condition);
-                this.callStack.push(ar);
                 if(decision){
                     this.visitStatementList(node.ifStatementList);
                 }
                 else if(node.elseStatementList){
                     this.visitStatementList(node.elseStatementList);
                 }
-                this.callStack.pop();
             }
             catch(ex){
                 throw ex;
@@ -2076,8 +2072,6 @@ export const Handel = (function () {
 
         visitBlockLoop(node) {
             try {
-                let ar = new HandelActivationRecord(undefined, ARTYPES.BLOCK);
-                ar.enclosingRecord = this.callStack.peek();
                 let token = node.loopTimes;
                 let whileCondition = node.whileCondition;
                 let value;
@@ -2088,18 +2082,14 @@ export const Handel = (function () {
                     else {
                         value = this.callStack.peek().getItem(token.value);
                     }
-                    this.callStack.push(ar);
                     for (let i = 0; i < value; i++) {
                         this.visitStatementList(node.statementList);
                     }
-                    this.callStack.pop();
                 }
                 else if(whileCondition){
-                    this.callStack.push(ar);
                     while(this.visitCondition(whileCondition)){
                         this.visitStatementList(node.statementList);
                     }
-                    this.callStack.pop();
                 }
             }
             catch(ex){
