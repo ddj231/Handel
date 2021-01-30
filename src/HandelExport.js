@@ -216,13 +216,15 @@ export const Handel = (function () {
     // Token types
     const [NOTE, BPM, SOUND,
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO, INSTRUMENT, BEAT, RANDINT, DIGIT, FOR, SEP, CHUNK,
-        ENDCHUNK, ID, START, FINISH, SAVE, UPDATE, SHIFT, DOT, PLAY,
-        REST, WITH, RUN, TO, WHILE, IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
+        ENDCHUNK, ID, START, FINISH, SAVE, EVAL, UPDATE, SHIFT, DOT, PLAY,
+        REST, WITH, RUN, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN,
+        IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
             "DO", "INSTRUMENT",
             "BEAT", "RANDINT", "DIGIT", "FOR", "SEP", "CHUNK",
-            "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "UPDATE", "SHIFT", "DOT", "PLAY",
-            "REST", "WITH", "RUN", "TO","WHILE", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
+            "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "EVAL", "UPDATE", "SHIFT", "DOT", "PLAY",
+            "REST", "WITH", "RUN", "TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
+            "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
             "BOOLEAN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
@@ -275,7 +277,8 @@ export const Handel = (function () {
         equalto: new Token(EQUAL, "equalto"),
         randint: new Token(RANDINT, "randint"),
         to: new Token(TO, "to"),
-        while: new Token(WHILE, "while")
+        while: new Token(WHILE, "while"),
+        eval: new Token(EVAL, "eval"),
     }
 
     class HandelSymbol {
@@ -464,34 +467,67 @@ export const Handel = (function () {
                     this.advance();
                     return new Token(ASSIGN, 'assign', this.lineno);
                 }
+                
+                if (this.currentChar === '+') {
+                    this.advance();
+                    return new Token(PLUS, '+', this.lineno);
+                }
+
+                if (this.currentChar === '*') {
+                    this.advance();
+                    return new Token(MUL, '*', this.lineno);
+                }
+
+                if (this.currentChar === '/') {
+                    this.advance();
+                    return new Token(DIV, '/', this.lineno);
+                }
+                
+                if (this.currentChar === '%') {
+                    this.advance();
+                    return new Token(MOD, '/', this.lineno);
+                }
+                
+                if (this.currentChar === '(') {
+                    this.advance();
+                    return new Token(LPAREN, '(', this.lineno);
+                }
+                
+                if (this.currentChar === ')') {
+                    this.advance();
+                    return new Token(RPAREN, ')', this.lineno);
+                }
 
                 let idResult = this.id();
                 if (idResult) {
                     return idResult;
                 }
 
-                const beatValue = this.currentChar;
-                const parsed = Number.parseInt(beatValue);
+                const value = this.currentChar;
+                const parsed = Number.parseInt(value);
                 if (!Number.isNaN(parsed) || this.currentChar == '-') {
-                    this.advance();
-                    if (this.currentChar !== '-' && this.currentChar === 'b') {
+                    if(value === '-'){
                         this.advance();
-                        return new Token(BEAT, beatValue, this.lineno);
-                    }
-                    else {
-                        let digit = beatValue;
                         let current = Number.parseInt(this.currentChar);
-                        while (!Number.isNaN(current)) {
-                            digit += this.currentChar;
-                            this.advance();
-                            current = Number.parseInt(this.currentChar);
+                        if(Number.isNaN(current)){
+                            return new Token(MINUS, '-', this.lineno);
                         }
-                        if (this.currentChar === 'b') {
-                            this.advance();
-                            return new Token(BEAT, digit, this.lineno);
-                        }
-                        return new Token(DIGIT, Number.parseInt(digit), this.lineno);
                     }
+                    else{
+                        this.advance();
+                    }
+                    let digit = value;
+                    let current = Number.parseInt(this.currentChar);
+                    while (!Number.isNaN(current)) {
+                        digit += this.currentChar;
+                        this.advance();
+                        current = Number.parseInt(this.currentChar);
+                    }
+                    if (this.currentChar === 'b') {
+                        this.advance();
+                        return new Token(BEAT, digit, this.lineno);
+                    }
+                    return new Token(DIGIT, Number.parseInt(digit), this.lineno);
                 }
 
                 this.error();
@@ -635,6 +671,15 @@ export const Handel = (function () {
             this.token = token;
             this.value = loopTimes;
             this.loopTimes = loopTimes;
+        }
+    }
+
+    class BinOpAST {
+        constructor(token, left, right){
+            this.token = token;
+            this.op = token.value;
+            this.left = left;
+            this.right = right;
         }
     }
 
@@ -864,6 +909,71 @@ export const Handel = (function () {
             return programNode;
         }
 
+        digitExpression(){
+            try{
+                let node = this.term();
+                while(this.currentToken.type === PLUS || this.currentToken.type === MINUS){
+                    let token = this.currentToken;
+                    if(token.type === PLUS){
+                        this.eat(PLUS);
+                    }
+                    else if(token.type === MINUS){
+                        this.eat(MINUS);
+                    }
+                    node = new BinOpAST(token, node, this.term());
+                }
+                return node;
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        term(){
+            try{
+                let node = this.factor();
+                while(this.currentToken.type === MUL || this.currentToken.type === DIV || this.currentToken.type === MOD){
+                    let token = this.currentToken;
+                    if(token.type === MUL){
+                        this.eat(MUL);
+                    }
+                    else if(token.type === DIV){
+                        this.eat(DIV);
+                    }
+                    else if(token.type === MOD){
+                        this.eat(MOD);
+                    }
+                    node = new BinOpAST(token, node, this.factor());
+                }
+                return node;
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        factor(){
+            try {
+                if(this.currentToken.type === DIGIT){
+                    return this.digit();
+                }
+                else if(this.currentToken.type === ID){
+                    return new IdAST(this.id());
+                }
+                else if(this.currentToken.type === LPAREN){
+                    this.eat(LPAREN);
+                    let node = this.digitExpression();
+                    this.eat(RPAREN);
+                    return node;
+                }
+                else {
+                    this.error();
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
 
         sectionDeclaration() {
             this.chunk();
@@ -1253,25 +1363,30 @@ export const Handel = (function () {
         }
 
         randint(){
-            let token = this.currentToken;
-            this.eat(RANDINT);
-            let start;
-            let end;
-            if(this.currentToken.type === DIGIT){
-                start = this.digit();
-            }
-            else {
-                start = new IdAST(this.id());
-            }
+            try {
+                let token = this.currentToken;
+                this.eat(RANDINT);
+                let start;
+                let end;
+                if(this.currentToken.type === DIGIT){
+                    start = this.digit();
+                }
+                else {
+                    start = new IdAST(this.id());
+                }
 
-            this.eat(TO);
-            if(this.currentToken.type === DIGIT){
-                end = this.digit();
+                this.eat(TO);
+                if(this.currentToken.type === DIGIT){
+                    end = this.digit();
+                }
+                else {
+                    end = new IdAST(this.id());
+                }
+                return new RandAST(token, start, end);
             }
-            else {
-                end = new IdAST(this.id());
+            catch(ex){
+                throw ex;
             }
-            return new RandAST(token, start, end);
         }
 
         save() {
@@ -1297,6 +1412,11 @@ export const Handel = (function () {
                 }
                 else if(this.currentToken.type === RANDINT){
                     let node = this.randint();
+                    return new AssignAST(assignToken, varNode, node);
+                }
+                else if(this.currentToken.type === EVAL){
+                    this.eat(EVAL);
+                    let node = this.digitExpression();
                     return new AssignAST(assignToken, varNode, node);
                 }
             }
@@ -1541,7 +1661,7 @@ export const Handel = (function () {
         }
     }
 
-    class HandelInterpreterAST {
+    class HandelInterpreter {
         constructor(parser, config, midi) {
             this.parser = parser;
             this.beatToValue = {
@@ -2017,30 +2137,73 @@ export const Handel = (function () {
         error() {
         }
 
+
+        visitBinOp(node){
+            try {
+                let op = node.token; 
+                if(op.type === DIGIT){
+                    return this.visitDigit(node);
+                }
+                else if(op.type === ID){
+                    let value = this.visitId(node);
+                    if(typeof value !== "number"){
+                        throw Error(`Type error in eval expression in line: ${node.token.lineno}`);
+                    }
+                    return value;
+                }
+                else if(op.type === MUL){
+                    return this.visitBinOp(node.left) * this.visitBinOp(node.right);
+                }
+                else if(op.type === DIV){
+                    return Math.floor(this.visitBinOp(node.left) / this.visitBinOp(node.right));
+                }
+                else if(op.type === MOD){
+                    return this.visitBinOp(node.left) % this.visitBinOp(node.right);
+                }
+                else if(op.type === PLUS){
+                    return this.visitBinOp(node.left) + this.visitBinOp(node.right);
+                }
+                else if(op.type === MINUS){
+                    return this.visitBinOp(node.left) - this.visitBinOp(node.right);
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
         visitSave(node) {
-            let varNode = node.left;
-            let valueNode = node.right;
-            let value;
-            if (valueNode.token.type === ID) {
-                value = this.visitId(valueNode);
+            try {
+                let varNode = node.left;
+                let valueNode = node.right;
+                let value;
+                if (valueNode.token.type === ID) {
+                    value = this.visitId(valueNode);
+                }
+                else if (valueNode.token.type === BEAT) {
+                    value = this.visitBeat(valueNode);
+                }
+                else if (valueNode.token.type === FOR) {
+                    value = this.visitFor(valueNode);
+                }
+                else if (valueNode.token.type === NOTE) {
+                    value = this.visitNoteList(valueNode);
+                    //console.log(value);
+                }
+                else if (valueNode.token.type === DIGIT) {
+                    value = this.visitDigit(valueNode);
+                }
+                else if (valueNode.token.type === RANDINT) {
+                    value = this.visitRandint(valueNode);
+                }
+                else {
+                    value = this.visitBinOp(valueNode);
+                }
+                this.callStack.peek().setItem(varNode.value, value);
             }
-            else if (valueNode.token.type === BEAT) {
-                value = this.visitBeat(valueNode);
+            catch(ex){
+                throw ex;
             }
-            else if (valueNode.token.type === FOR) {
-                value = this.visitFor(valueNode);
-            }
-            else if (valueNode.token.type === NOTE) {
-                value = this.visitNoteList(valueNode);
-                //console.log(value);
-            }
-            else if (valueNode.token.type === DIGIT) {
-                value = this.visitDigit(valueNode);
-            }
-            else if (valueNode.token.type === RANDINT) {
-                value = this.visitRandint(valueNode);
-            }
-            this.callStack.peek().setItem(varNode.value, value);
         }
 
         visitDigit(node){
@@ -2458,10 +2621,29 @@ export const Handel = (function () {
                     this.visitRandint(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
                 }
+                else{
+                    this.visitBinOp(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
+                }
                 this.currentScope.define(varSymbol);
             }
             catch (ex) {
                 throw ex;
+            }
+        }
+        visitBinOp(node){
+            let op = node.token; 
+            if(op.type === DIGIT){
+                this.visitDigit(node);
+            }
+            else if(op.type === ID){
+                this.visitId(node);
+            }
+            if(node.left){
+                this.visitBinOp(node.left);
+            }
+            if(node.right){
+                this.visitBinOp(node.right);
             }
         }
 
@@ -2575,7 +2757,7 @@ export const Handel = (function () {
         }
     }
     return ({
-        Interpreter: HandelInterpreterAST,
+        Interpreter: HandelInterpreter,
         Lexer: HandelLexer,
         Parser: HandelParser,
         SymbolTableBuilder: SymbolTableBuilder,
