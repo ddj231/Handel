@@ -196,6 +196,15 @@ start
 finish
 ```
 
+When saving variables, Handel now also provides expressions for **generating random numbers** and for **evaluating expressions**.
+
+Here is an example of the syntax:
+
+```
+save somerandomdigit = randint -5 to 5
+save someint = eval 5 * 5 / (1 + 1) % 6
+```
+
 OK! So far so good!
 
 # Variable Reassignment
@@ -225,7 +234,8 @@ start
     update mynotelist lshift 1
     play mynotelist for 1b
 
-    update mynotelist rshift 2
+    save somenum = randint 1 to 5
+    update mynotelist rshift somenum 
     play mynotelist for 1b
 finish
 ```
