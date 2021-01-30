@@ -911,6 +911,9 @@ export const Handel = (function () {
 
         digitExpression(){
             try{
+                if(this.currentToken.type === EVAL){
+                    this.eat(EVAL);
+                }
                 let node = this.term();
                 while(this.currentToken.type === PLUS || this.currentToken.type === MINUS){
                     let token = this.currentToken;
@@ -954,6 +957,7 @@ export const Handel = (function () {
 
         factor(){
             try {
+                console.log(this.currentToken);
                 if(this.currentToken.type === DIGIT){
                     return this.digit();
                 }
@@ -1186,6 +1190,12 @@ export const Handel = (function () {
                 if(this.currentToken.type === DIGIT){
                     left = this.digit();
                 }
+                else if(this.currentToken.type === EVAL){
+                    left = this.digitExpression();
+                }
+                else if(this.currentToken.type === RANDINT){
+                    left = this.randint();
+                }
                 else {
                     left = this.expr();
                 }
@@ -1195,6 +1205,12 @@ export const Handel = (function () {
 
                 if(this.currentToken.type === DIGIT){
                     right = this.digit();
+                }
+                else if(this.currentToken.type === EVAL){
+                    right = this.digitExpression();
+                }
+                else if(this.currentToken.type === RANDINT){
+                    right = this.randint();
                 }
                 else {
                     right = this.expr();
@@ -1584,12 +1600,10 @@ export const Handel = (function () {
                             rightNode = this.beat();
                         }
                         else if (this.currentToken.type === ID) {
-                            //console.log("ID", this.currentToken);
                             const leftVarToken = this.id();
                             rightNode = new IdAST(leftVarToken);
                         }
                         let forNode = new ForAST(op, leftNode, rightNode);
-                        //console.log(forNode);
                         return forNode;
                     }
                     return new IdAST(varToken);
@@ -1893,10 +1907,15 @@ export const Handel = (function () {
                 }
                 else if (node.left.token.type === NOTE) {
                     leftValue = this.visitNoteList(node.left);
-                    //console.log(value);
                 }
                 else if (node.left.token.type === DIGIT) {
                     leftValue = this.visitDigit(node.left);
+                }
+                else if (node.left.token.type === RANDINT) {
+                    leftValue = this.visitRandint(node.left);
+                }
+                else {
+                    leftValue = this.visitBinOp(node.left);
                 }
 
                 if(node.right.token.type === ID){
@@ -1913,6 +1932,12 @@ export const Handel = (function () {
                 }
                 else if (node.right.token.type === DIGIT) {
                     rightValue = this.visitDigit(node.right);
+                }
+                else if (node.right.token.type === RANDINT) {
+                    rightValue = this.visitRandint(node.right);
+                }
+                else {
+                    rightValue = this.visitBinOp(node.right);
                 }
 
                 let operation = this.visitComparisonOperator(node.operator); 
@@ -1933,7 +1958,6 @@ export const Handel = (function () {
                 else if(leftValue instanceof PlayEvent){
                     return this.comparePlayevents(operation, leftValue, rightValue);
                 }
-
             }
             catch(ex){
                 throw ex;
@@ -2178,7 +2202,6 @@ export const Handel = (function () {
                 }
                 else if (valueNode.token.type === NOTE) {
                     value = this.visitNoteList(valueNode);
-                    //console.log(value);
                 }
                 else if (valueNode.token.type === DIGIT) {
                     value = this.visitDigit(valueNode);
@@ -2272,7 +2295,6 @@ export const Handel = (function () {
             if(node.shiftToken.type === ID){
                 shiftAmount = this.callStack.peek().getItem(node.shiftToken.value);
                 shiftAmount = parseInt(shiftAmount);
-                //console.log(shiftAmount);
             }
             else {
                 shiftAmount = node.shiftToken.value;
@@ -2302,7 +2324,6 @@ export const Handel = (function () {
                 if (node.right.token.type === ID) {
                     duration = this.visitId(node.right);
                 }
-                //console.log("note list", notelist);
                 let nl = notelist.slice();
                 return new PlayEvent(nl, this.beatToValue[duration], duration, value);
             }
@@ -2360,9 +2381,27 @@ export const Handel = (function () {
                 if(node.left && node.left.token.type === ID){
                     this.visitId(node.left);
                 }
+                else if(node.left && node.left.token.type === RANDINT){
+                    this.visitRandint(node.left);
+                }
+                else if(node.left && (node.left.token.type === MUL
+                    || node.left.token.type === DIV || node.left.token.type === MOD
+                    || node.left.token.type === PLUS || node.left.token.type === MINUS
+                    )){
+                    this.visitBinOp(node.left);
+                }
                 
                 if(node.right && node.right.token.type === ID){
                     this.visitId(node.right);
+                }
+                else if(node.right && node.right.token.type === RANDINT){
+                    this.visitRandint(node.right);
+                }
+                else if(node.right && (node.right.token.type === MUL
+                    || node.right.token.type === DIV || node.right.token.type === MOD
+                    || node.right.token.type === PLUS || node.right.token.type === MINUS
+                    )){
+                    this.visitBinOp(node.right);
                 }
             }
             catch(ex){
