@@ -198,6 +198,10 @@ finish
 
 When saving variables, Handel now also provides expressions for **generating random numbers** and for **evaluating expressions**.
 
+To generate a random number when setting a variable, use the ```randint``` keyword, followed by a range ```start to end```
+
+To evaluate an expression use the ```eval``` keyword followed by a mathematical expression (note division is integer division).
+
 Here is an example of the syntax:
 
 ```
