@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.4", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.5", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -957,7 +957,6 @@ export const Handel = (function () {
 
         factor(){
             try {
-                console.log(this.currentToken);
                 if(this.currentToken.type === DIGIT){
                     return this.digit();
                 }
@@ -1050,14 +1049,7 @@ export const Handel = (function () {
                 if (this.currentToken.type === BPM) {
                     let bpmToken = this.currentToken;
                     this.eat(BPM);
-                    let digit;
-                    if(this.currentToken.type === DIGIT){
-                        digit = this.currentToken;    
-                        this.eat(DIGIT);
-                    }
-                    else if(this.currentToken.type === ID){
-                        digit = this.id();
-                    }
+                    let digit = this.digitRepresenter();
                     return new BPMAST(bpmToken, digit);
                 }
                 else if (this.currentToken.type === SOUND) {
@@ -1076,53 +1068,25 @@ export const Handel = (function () {
                     let loopToken = this.currentToken;
                     this.eat(LOOP);
                     this.eat(FOR);
-                    let digit;
-                    if(this.currentToken.type === DIGIT){
-                        digit = this.currentToken;    
-                        this.eat(DIGIT);
-                    }
-                    else if(this.currentToken.type === ID){
-                        digit = this.id();
-                    }
+                    let digit = this.digitRepresenter();
                     return new LoopAST(loopToken, digit);
                 }
                 else if (this.currentToken.type === VOLUME) {
                     let volumeToken = this.currentToken;
                     this.eat(VOLUME);
-                    let digit;
-                    if(this.currentToken.type === DIGIT){
-                        digit = this.currentToken;    
-                        this.eat(DIGIT);
-                    }
-                    else if(this.currentToken.type === ID){
-                        digit = this.id();
-                    }
+                    let digit = this.digitRepresenter();
                     return new VolumeAST(volumeToken, digit);
                 }
                 else if (this.currentToken.type === PAN) {
                     let panToken = this.currentToken;
                     this.eat(PAN);
-                    let digit;
-                    if(this.currentToken.type === DIGIT){
-                        digit = this.currentToken;    
-                        this.eat(DIGIT);
-                    }
-                    else if(this.currentToken.type === ID){
-                        digit = this.id();
-                    }
+                    let digit = this.digitRepresenter();
                     return new PanAST(panToken, digit);
                 }
                 else if (this.currentToken.type === REVERB) {
                     let reverbToken = this.currentToken;
                     this.eat(REVERB);
-                    let digit;
-                    if(this.currentToken.type === DIGIT){
-                        digit = this.currentToken;    
-                        this.eat(DIGIT);
-                    }
-                    else if(this.currentToken.type === ID){
-                        digit = this.id();
-                    }
+                    let digit = this.digitRepresenter();
                     return new ReverbAST(reverbToken, digit);
                 }
                 else {
@@ -1132,6 +1096,23 @@ export const Handel = (function () {
             catch (ex) {
                 throw ex;
             }
+        }
+
+        digitRepresenter(){
+            let digit;
+            if(this.currentToken.type === DIGIT){
+                digit = this.digit();    
+            }
+            else if(this.currentToken.type === ID){
+                digit = new IdAST(this.id());
+            }
+            else if(this.currentToken.type === EVAL){
+                digit = this.digitExpression();
+            }
+            else if(this.currentToken.type === RANDINT){
+                digit = this.randint();
+            }
+            return digit;
         }
 
         customizationList() {
@@ -1387,16 +1368,30 @@ export const Handel = (function () {
                 if(this.currentToken.type === DIGIT){
                     start = this.digit();
                 }
-                else {
-                    start = new IdAST(this.id());
+                else if(this.currentToken.type === EVAL){
+                    start = this.digitExpression();
                 }
+                else if(this.currentToken.type === RANDINT){
+                    start = this.randint();
+                }
+                else {
+                    start = this.expr();
+                }
+                
 
                 this.eat(TO);
+                
                 if(this.currentToken.type === DIGIT){
                     end = this.digit();
                 }
+                else if(this.currentToken.type === EVAL){
+                    end = this.digitExpression();
+                }
+                else if(this.currentToken.type === RANDINT){
+                    end = this.randint();
+                }
                 else {
-                    end = new IdAST(this.id());
+                    end= this.expr();
                 }
                 return new RandAST(token, start, end);
             }
@@ -1784,18 +1779,26 @@ export const Handel = (function () {
 
         mapHelper(val, ogStart, ogEnd, newStart, newEnd) {
             let ratio = val / (Math.abs(ogStart) + Math.abs(ogEnd));
-            let output = newStart + ((Math.abs(newStart) + Math.abs(newEnd)) * ratio);
+            let output = newStart + ((Math.abs(newEnd) - Math.abs(newStart)) * ratio);
             return output;
         }
 
         visitReverb(node) {
-            let token = node.value;
+            let child = node.value;
             let value;
-            if(token.type === DIGIT){
-                value = token.value;
+            if(child.token.type === DIGIT){
+                value = this.visitDigit(child);
             }
-            else {
-                value = this.callStack.peek().getItem(token.value);
+            else if (child.token.type === ID){
+                value = this.visitId(child);
+            }
+            else if(child.token.type === RANDINT){
+                value = this.visitRandint(child)
+            }
+            else if(child.token.type === MUL || child.token.type === DIV
+                || child.token.type === PLUS || child.token.type === MINUS
+                || child.token.type === MOD){
+                value = this.visitBinOp(child)
             }
             if (value < 1) {
                 return
@@ -1805,46 +1808,73 @@ export const Handel = (function () {
         }
 
         visitPan(node) {
-            let token = node.value;
-            let panAmt;
-            if(token.type === DIGIT){
-                panAmt = token.value;
+            let child = node.value;
+            let value;
+            if(child.token.type === DIGIT){
+                value = this.visitDigit(child);
             }
-            else {
-                panAmt = this.callStack.peek().getItem(token.value);
+            else if (child.token.type === ID){
+                value = this.visitId(child);
             }
-            if (panAmt > 100 || panAmt < 0) {
+            else if(child.token.type === RANDINT){
+                value = this.visitRandint(child)
+            }
+            else if(child.token.type === MUL || child.token.type === DIV
+                || child.token.type === PLUS || child.token.type === MINUS
+                || child.token.type === MOD){
+                value = this.visitBinOp(child)
+            }
+
+            if (value > 100 || value < 0) {
                 return
             }
-            let pan = this.mapHelper(panAmt, 0, 100, -1, 1);
+            let pan = this.mapHelper(value, 0, 100, -1, 1);
             this.currentComposition.pan = pan;
         }
 
         visitVolume(node) {
-            let token = node.value;
-            let percentage;
-            if(token.type === DIGIT){
-                percentage = token.value;
+            let child = node.value;
+            let value;
+            if(child.token.type === DIGIT){
+                value = this.visitDigit(child);
             }
-            else {
-                percentage = this.callStack.peek().getItem(token.value);
+            else if (child.token.type === ID){
+                value = this.visitId(child);
+            }
+            else if(child.token.type === RANDINT){
+                value = this.visitRandint(child)
+            }
+            else if(child.token.type === MUL || child.token.type === DIV
+                || child.token.type === PLUS || child.token.type === MINUS
+                || child.token.type === MOD){
+                value = this.visitBinOp(child)
             }
 
-            if (percentage > 100 || percentage < 0) {
+            if (value > 100 || value < 0) {
                 return
             }
-            let vol = this.mapHelper(percentage, 0, 100, -70, 70);
+            let vol = this.mapHelper(value, 0, 100, -70, 70);
             this.currentComposition.volume = vol;
         }
 
         visitBPM(node) {
-            let bpmToken = node.bpm;
-            if(bpmToken.type === DIGIT){
-                this.currentComposition.bpm = bpmToken.value;
+            let child = node.value;
+            let value;
+            if(child.token.type === DIGIT){
+                value = this.visitDigit(child);
             }
-            else {
-                this.currentComposition.bpm = this.callStack.peek().getItem(bpmToken.value);
+            else if (child.token.type === ID){
+                value = this.visitId(child);
             }
+            else if(child.token.type === RANDINT){
+                value = this.visitRandint(child)
+            }
+            else if(child.token.type === MUL || child.token.type === DIV
+                || child.token.type === PLUS || child.token.type === MINUS
+                || child.token.type === MOD){
+                value = this.visitBinOp(child)
+            }
+            this.currentComposition.bpm = value;
             return
         }
 
@@ -2030,15 +2060,27 @@ export const Handel = (function () {
         }
 
         visitLoop(node) {
-            let token = node.value;
-            let loopTimes;
-            if(token.type === DIGIT){
-                loopTimes = token.value;
+            let child = node.value;
+            let value;
+            if(child.token.type === DIGIT){
+                value = this.visitDigit(child);
             }
-            else {
-                loopTimes = this.callStack.peek().getItem(token.value);
+            else if (child.token.type === ID){
+                value = this.visitId(child);
             }
-            this.currentComposition.loopTimes = loopTimes;
+            else if(child.token.type === RANDINT){
+                value = this.visitRandint(child)
+            }
+            else if(child.token.type === MUL || child.token.type === DIV
+                || child.token.type === PLUS || child.token.type === MINUS
+                || child.token.type === MOD){
+                value = this.visitBinOp(child)
+            }
+            if(value < 1){
+                return;
+            }
+
+            this.currentComposition.loopTimes = value;
             return;
         }
 
@@ -2232,16 +2274,31 @@ export const Handel = (function () {
             if(start.token.type === ID){
                 startval = this.visitId(start);
             }
-            else {
-                startval = this.visitDigit(start);
+            else if(start.token.type === RANDINT){
+                startval = this.visitRandint(start);
             }
-            
+            else if((start.token.type === MUL
+                || start.token.type === DIV || start.token.type === MOD
+                || start.token.type === PLUS || start.token.type === MINUS
+                || start.token.type === DIGIT
+                )){
+                startval = this.visitBinOp(start);
+            }
+
             if(end.token.type === ID){
                 endval = this.visitId(end);
             }
-            else {
-                endval = this.visitDigit(end);
+            else if(end.token.type === RANDINT){
+                endval = this.visitRandint(end);
             }
+            else if((end.token.type === MUL
+                || end.token.type === DIV || end.token.type === MOD
+                || end.token.type === PLUS || end.token.type === MINUS
+                || end.token.type === DIGIT
+                )){
+                endval = this.visitBinOp(end);
+            }
+            
             if(typeof startval !== "number" || typeof endval !== "number"){
                 throw Error(`Type error in randint expression in line: ${node.token.lineno}`);
             }
@@ -2387,6 +2444,7 @@ export const Handel = (function () {
                 else if(node.left && (node.left.token.type === MUL
                     || node.left.token.type === DIV || node.left.token.type === MOD
                     || node.left.token.type === PLUS || node.left.token.type === MINUS
+                    || node.left.token.type === DIGIT
                     )){
                     this.visitBinOp(node.left);
                 }
@@ -2400,6 +2458,7 @@ export const Handel = (function () {
                 else if(node.right && (node.right.token.type === MUL
                     || node.right.token.type === DIV || node.right.token.type === MOD
                     || node.right.token.type === PLUS || node.right.token.type === MINUS
+                    || node.right.token.type === DIGIT
                     )){
                     this.visitBinOp(node.right);
                 }
@@ -2453,22 +2512,46 @@ export const Handel = (function () {
             }
         }
 
+        genericDigitVisit(node){
+            let child = node.value;
+            let value;
+            if(child.token.type === DIGIT){
+                value = this.visitDigit(child);
+            }
+            else if (child.token.type === ID){
+                value = this.visitId(child);
+            }
+            else if(child.token.type === RANDINT){
+                value = this.visitRandint(child)
+            }
+            else if(child.token.type === MUL || child.token.type === DIV
+                || child.token.type === PLUS || child.token.type === MINUS
+                || child.token.type === MOD){
+                value = this.visitBinOp(child)
+            }
+        }
+
         visitBPM(node) {
+            this.genericDigitVisit(node);
         }
 
         visitLoop(node) {
+            this.genericDigitVisit(node);
         }
 
         visitSound(node) {
         }
 
         visitVolume(node) {
+            this.genericDigitVisit(node);
         }
 
         visitReverb(node) {
+            this.genericDigitVisit(node);
         }
 
         visitPan(node) {
+            this.genericDigitVisit(node);
         }
 
         visitDigit(node){
@@ -2671,14 +2754,37 @@ export const Handel = (function () {
         }
 
         visitRandint(node){
-            let start = node.start;
-            let end = node.end;
-            if(start.token.type === ID){
-                this.visitId(start);
-            }
+            try {
+                let start = node.start;
+                let end = node.end;
+                if(start.token.type === ID){
+                    this.visitId(start);
+                }
+                else if(start.token.type === RANDINT){
+                    this.visitRandint(start);
+                }
+                else if((start.token.type === MUL
+                    || start.token.type === DIV || start.token.type === MOD
+                    || start.token.type === PLUS || start.token.type === MINUS
+                    )){
+                    this.visitBinOp(start);
+                }
 
-            if(end.token.type === ID){
-                this.visitId(end);
+                if(end.token.type === ID){
+                    this.visitId(end);
+                }
+                else if(end.token.type === RANDINT){
+                    this.visitRandint(end);
+                }
+                else if((end.token.type === MUL
+                    || end.token.type === DIV || end.token.type === MOD
+                    || end.token.type === PLUS || end.token.type === MINUS
+                    )){
+                    this.visitBinOp(end);
+                }
+            }
+            catch(ex){
+                throw ex;
             }
         }
 
