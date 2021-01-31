@@ -432,7 +432,7 @@ finish
 
 Above we've got a chord, played with a piano, looping 8 times, with a bpm of 100!
 
-(see the [language reference](https://ddj231.github.io/Handel-Documentation/docs/language-features) for additional customizations)
+(see the [Language Features reference](https://ddj231.github.io/Handel-Documentation/docs/language-features) for additional customizations)
 
 ## Custom Instruments
 Handel allows custom instruments to be loaded into Handel Programs. Instruments can be created and added to a run of a Handel program as follows.
