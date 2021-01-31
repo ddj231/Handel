@@ -1455,7 +1455,14 @@ export const Handel = (function () {
                 this.eat(ID);
                 if (this.currentToken.type === ASSIGN) {
                     this.eat(ASSIGN);
-                    let exprNode = this.expr();
+                    let exprNode; 
+                    if(this.currentToken.type === NOTE || this.currentToken.type === FOR 
+                        || this.currentToken.type === BEAT ){
+                            exprNode = this.expr();
+                    }
+                    else {
+                        exprNode = this.digitExpression();
+                    }
                     return new UpdateAST(updateToken, varNode, exprNode, false);
                 }
                 else if (this.currentToken.type === SHIFT) {
