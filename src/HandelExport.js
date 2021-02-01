@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.7", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.8", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -597,10 +597,10 @@ export const Handel = (function () {
     }
 
     class ShiftAST {
-        constructor(token, shiftToken) {
+        constructor(token, shiftNode) {
             this.token = token;
             this.value = token.value;
-            this.shiftToken = shiftToken;
+            this.shiftNode = shiftNode;
         }
     }
 
@@ -1483,16 +1483,23 @@ export const Handel = (function () {
                 let shiftToken = this.currentToken;
                 this.eat(SHIFT);
                 let token = this.currentToken;
+                let node;
                 if(token.type === DIGIT){
-                    this.eat(DIGIT);
+                    node = this.digit();
                 }
                 else if(token.type === ID){
-                    this.eat(ID);
+                    node = new IdAST(this.id());
+                }
+                else if(token.type === RANDINT){
+                    node = this.randint();
+                }
+                else if(token.type === EVAL){
+                    node = this.digitExpression();
                 }
                 else {
                     this.error();
                 }
-                return new ShiftAST(shiftToken, token);
+                return new ShiftAST(shiftToken, node);
             }
             catch (ex) {
                 throw ex;
@@ -1785,8 +1792,13 @@ export const Handel = (function () {
         }
 
         mapHelper(val, ogStart, ogEnd, newStart, newEnd) {
+            if(newStart > newEnd){
+                let temp = newStart;
+                newStart = newEnd;
+                newEnd = temp;
+            }
             let ratio = val / (Math.abs(ogStart) + Math.abs(ogEnd));
-            let output = newStart + ((Math.abs(newEnd) - Math.abs(newStart)) * ratio);
+            let output = newStart + ((Math.abs(newEnd - newStart)) * ratio);
             return output;
         }
 
@@ -2356,13 +2368,18 @@ export const Handel = (function () {
         }
         visitShift(node) {
             let shiftAmount;
-            if(node.shiftToken.type === ID){
-                shiftAmount = this.callStack.peek().getItem(node.shiftToken.value);
+            let shiftNode = node.shiftNode;
+            if(shiftNode.token.type === ID){
+                shiftAmount = this.visitId(node.shiftNode);
                 shiftAmount = parseInt(shiftAmount);
             }
-            else {
-                shiftAmount = node.shiftToken.value;
+            else if(shiftNode.token.type === RANDINT){
+                shiftAmount = this.visitRandint(shiftNode);
             }
+            else{
+                shiftAmount = this.visitBinOp(shiftNode);
+            }
+
             if (node.token.value === 'lshift') {
                 return -1 * shiftAmount;
             }
@@ -2797,14 +2814,25 @@ export const Handel = (function () {
 
         visitShift(node) {
             try {
-                if(node.shiftToken.type === ID){
-                    let found = this.currentScope.lookup(node.shiftToken.value);
+                let shiftNode = node.shiftNode;
+                let shiftToken = shiftNode.token;
+                if(shiftNode.token.type === ID){
+                    let found = this.currentScope.lookup(shiftToken.value);
                     if(!found){
-                        throw Error(`Name error in line ${node.shiftToken.lineno}: ${node.shiftToken.value} does not exist`);
+                        throw Error(`Name error in line ${shiftToken.lineno}: ${shiftToken.value} does not exist`);
                     }
                     if(found.type.name !== "DIGIT"){
-                        throw Error(`Type error in line ${node.shiftToken.lineno}: ${node.shiftToken.value} is not of type DIGIT`);
+                        throw Error(`Type error in line ${shiftToken.lineno}: ${shiftToken.value} is not of type DIGIT`);
                     }
+                }
+                else if(shiftNode.token.type === RANDINT){
+                    this.visitRandint(node.shiftNode);
+                }
+                else if((shiftNode.token.type === MUL
+                    || shiftNode.token.type === DIV || shiftNode.token.type === MOD
+                    || shiftNode.token.type === PLUS || shiftNode.token.type === MINUS
+                    )){
+                    this.visitBinOp(shiftNode);
                 }
             }
             catch(ex){
