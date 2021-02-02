@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.10", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.12", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -1847,10 +1847,11 @@ export const Handel = (function () {
                 notelist = this.visitNoteList(notesNode);
             }
             let output = [];
-            while(amt > 0 && notelist.length > 0){
-                let i = Math.floor(Math.random() * notelist.length);
-                output.push(notelist[i]);
-                notelist.splice(i, 1);
+            let copy = notelist.slice();
+            while(amt > 0 && copy.length > 0){
+                let i = Math.floor(Math.random() * copy.length);
+                output.push(copy[i]);
+                copy.splice(i, 1);
                 amt -= 1;
             }
             return output;
@@ -2416,7 +2417,7 @@ export const Handel = (function () {
                     this.callStack.peek().setItem(varNode.value, shiftTarget + shiftAmt);
                 }
                 else if(typeof shiftTarget == "string"){
-                    this.callStack.peek().setItem(varNode.value, parseInt(shiftTarget) + shiftAmt);
+                    this.callStack.peek().setItem(varNode.value, JSON.stringify(parseInt(shiftTarget) + shiftAmt));
                 }
                 else if(shiftTarget instanceof PlayEvent){
                     if(shiftTarget.notes){
