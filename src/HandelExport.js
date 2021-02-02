@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.8", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.9", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -215,12 +215,13 @@ export const Handel = (function () {
 
     // Token types
     const [NOTE, BPM, SOUND,
-        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, DO, INSTRUMENT, BEAT, RANDINT, DIGIT, FOR, SEP, CHUNK,
+        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, INSTRUMENT, CHOOSE, FROM,
+        BEAT, RANDINT, DIGIT, FOR, SEP, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, EVAL, UPDATE, SHIFT, DOT, PLAY,
         REST, WITH, RUN, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN,
         IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
-            "DO", "INSTRUMENT",
+            "INSTRUMENT", "CHOOSE", "FROM",
             "BEAT", "RANDINT", "DIGIT", "FOR", "SEP", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "EVAL", "UPDATE", "SHIFT", "DOT", "PLAY",
             "REST", "WITH", "RUN", "TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
@@ -279,6 +280,8 @@ export const Handel = (function () {
         to: new Token(TO, "to"),
         while: new Token(WHILE, "while"),
         eval: new Token(EVAL, "eval"),
+        choose: new Token(CHOOSE, "choose"),
+        from: new Token(FROM, "from"),
     }
 
     class HandelSymbol {
@@ -790,6 +793,14 @@ export const Handel = (function () {
         }
     }
 
+    class ChooseAST {
+        constructor(token, digitNode, notesNode){
+            this.token = token;
+            this.digitNode = digitNode;
+            this.notesNode = notesNode;
+        }
+    }
+
     class RandAST {
         constructor(token, start, end){
             this.token = token;
@@ -926,6 +937,26 @@ export const Handel = (function () {
                     node = new BinOpAST(token, node, this.term());
                 }
                 return node;
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        chooseExpression(){
+            try {
+                let token = this.currentToken;
+                this.eat(CHOOSE);
+                let digitNode = this.digitExpression();
+                this.eat(FROM);
+                let notesNode;
+                if(this.currentToken.type === ID){
+                    notesNode = new IdAST(this.id());
+                }
+                else if(this.currentToken.type === NOTE){
+                    notesNode = this.noteList();
+                }
+                return new ChooseAST(token, digitNode, notesNode);
             }
             catch(ex){
                 throw ex;
@@ -1168,14 +1199,14 @@ export const Handel = (function () {
                 let left;
                 let right;
 
-                if(this.currentToken.type === DIGIT){
-                    left = this.digit();
-                }
-                else if(this.currentToken.type === EVAL){
+                if(this.currentToken.type === EVAL || this.currentToken.type === DIGIT){
                     left = this.digitExpression();
                 }
                 else if(this.currentToken.type === RANDINT){
                     left = this.randint();
+                }
+                else if(this.currentToken.type === CHOOSE){
+                    left = this.chooseExpression();
                 }
                 else {
                     left = this.expr();
@@ -1184,14 +1215,14 @@ export const Handel = (function () {
                 let token = this.currentToken;
                 let op = this.comparison_operator();
 
-                if(this.currentToken.type === DIGIT){
-                    right = this.digit();
-                }
-                else if(this.currentToken.type === EVAL){
+                if(this.currentToken.type === EVAL || this.currentToken.type === DIGIT){
                     right = this.digitExpression();
                 }
                 else if(this.currentToken.type === RANDINT){
                     right = this.randint();
+                }
+                else if(this.currentToken.type === CHOOSE){
+                    right = this.chooseExpression();
                 }
                 else {
                     right = this.expr();
@@ -1232,21 +1263,22 @@ export const Handel = (function () {
                 this.eat(LOOP);
                 let token;
                 let condition;
+                let node;
                 if(this.currentToken.type === FOR){
                     this.eat(FOR);
                     token = this.currentToken;
-                    if(this.currentToken.type === DIGIT){
-                        this.eat(DIGIT);
+                    if(this.currentToken.type === DIGIT || this.currentToken.type === EVAL){
+                        node = this.digitExpression();
                     }
                     else if(this.currentToken.type === ID){
-                        this.eat(ID);
+                        node = new IdAST(token);
                     }
                 }
                 else if(this.currentToken.type === WHILE){
                     this.eat(WHILE);
                     condition = this.condition();
                 }
-                return new BlockLoopAST(blockToken, statementList, token, condition);
+                return new BlockLoopAST(blockToken, statementList, node, condition);
             }
             catch (ex) {
                 throw ex;
@@ -1365,10 +1397,8 @@ export const Handel = (function () {
                 this.eat(RANDINT);
                 let start;
                 let end;
-                if(this.currentToken.type === DIGIT){
-                    start = this.digit();
-                }
-                else if(this.currentToken.type === EVAL){
+
+                if(this.currentToken.type === EVAL || this.currentToken.type === DIGIT){
                     start = this.digitExpression();
                 }
                 else if(this.currentToken.type === RANDINT){
@@ -1380,9 +1410,9 @@ export const Handel = (function () {
                 
 
                 this.eat(TO);
-                
-                if(this.currentToken.type === DIGIT){
-                    end = this.digit();
+
+                if(this.currentToken.type === EVAL || this.currentToken.type === DIGIT){
+                    end = this.digitExpression();
                 }
                 else if(this.currentToken.type === EVAL){
                     end = this.digitExpression();
@@ -1417,17 +1447,16 @@ export const Handel = (function () {
                     let beat = this.beat();
                     return new AssignAST(assignToken, varNode, beat);
                 }
-                else if(this.currentToken.type === DIGIT){
-                    let node = this.digit();
-                    return new AssignAST(assignToken, varNode, node);
-                }
                 else if(this.currentToken.type === RANDINT){
                     let node = this.randint();
                     return new AssignAST(assignToken, varNode, node);
                 }
-                else if(this.currentToken.type === EVAL){
-                    this.eat(EVAL);
+                else if(this.currentToken.type === DIGIT || this.currentToken.type === EVAL){
                     let node = this.digitExpression();
+                    return new AssignAST(assignToken, varNode, node);
+                }
+                else if(this.currentToken.type === CHOOSE){
+                    let node = this.chooseExpression();
                     return new AssignAST(assignToken, varNode, node);
                 }
             }
@@ -1484,16 +1513,14 @@ export const Handel = (function () {
                 this.eat(SHIFT);
                 let token = this.currentToken;
                 let node;
-                if(token.type === DIGIT){
-                    node = this.digit();
-                }
-                else if(token.type === ID){
+
+                if(token.type === ID){
                     node = new IdAST(this.id());
                 }
                 else if(token.type === RANDINT){
                     node = this.randint();
                 }
-                else if(token.type === EVAL){
+                else if(token.type === DIGIT || token.type === EVAL){
                     node = this.digitExpression();
                 }
                 else {
@@ -1580,8 +1607,15 @@ export const Handel = (function () {
 
         expr() {
             try {
-                if (this.currentToken.type === NOTE) {
-                    const noteRoot = this.noteList();
+                if (this.currentToken.type === NOTE || this.currentToken.type === CHOOSE) {
+                    let noteRoot;
+                    if(this.currentToken.type === NOTE){
+                        noteRoot = this.noteList();
+                    }
+                    else {
+                        noteRoot = this.chooseExpression();
+                    }
+
                     if (this.currentToken.type === FOR) {
                         let op = this.for();
                         let beat;
@@ -1802,6 +1836,28 @@ export const Handel = (function () {
             return output;
         }
 
+        visitChoose(node){
+            let amt = this.visitBinOp(node.digitNode);
+            let notesNode = node.notesNode;
+            let notelist;
+            if(notesNode.token.type === ID){
+                notelist = this.visitId(notesNode);
+            }
+            else{
+                notelist = this.visitNoteList(notesNode);
+            }
+            console.log(notelist);
+            let output = [];
+            while(amt > 0 && notelist.length > 0){
+                let i = Math.floor(Math.random() * notelist.length);
+                output.push(notelist[i]);
+                notelist.splice(i, 1);
+                amt -= 1;
+            }
+            console.log(output);
+            return output;
+        }
+
         visitReverb(node) {
             let child = node.value;
             let value;
@@ -1963,6 +2019,9 @@ export const Handel = (function () {
                 else if (node.left.token.type === RANDINT) {
                     leftValue = this.visitRandint(node.left);
                 }
+                else if (node.left.token.type === CHOOSE) {
+                    leftValue = this.visitChoose(node.left);
+                }
                 else {
                     leftValue = this.visitBinOp(node.left);
                 }
@@ -1984,6 +2043,9 @@ export const Handel = (function () {
                 }
                 else if (node.right.token.type === RANDINT) {
                     rightValue = this.visitRandint(node.right);
+                }
+                else if (node.right.token.type === RANDINT) {
+                    rightValue = this.visitChoose(node.right);
                 }
                 else {
                     rightValue = this.visitBinOp(node.right);
@@ -2157,15 +2219,18 @@ export const Handel = (function () {
 
         visitBlockLoop(node) {
             try {
-                let token = node.loopTimes;
+                let loopNode = node.loopTimes;
                 let whileCondition = node.whileCondition;
                 let value;
-                if(token){
-                    if(token.type === DIGIT){
-                        value = token.value;
+                if(loopNode){
+                    if(loopNode.token.type === DIGIT){
+                        value = this.visitDigit(loopNode);
+                    }
+                    else if(loopNode.token.type === ID){
+                        value = this.visitId(loopNode);
                     }
                     else {
-                        value = this.callStack.peek().getItem(token.value);
+                        value = this.visitBinOp(loopNode);
                     }
                     for (let i = 0; i < value; i++) {
                         this.visitStatementList(node.statementList);
@@ -2269,6 +2334,9 @@ export const Handel = (function () {
                 }
                 else if (valueNode.token.type === RANDINT) {
                     value = this.visitRandint(valueNode);
+                }
+                else if (valueNode.token.type === CHOOSE) {
+                    value = this.visitChoose(valueNode);
                 }
                 else {
                     value = this.visitBinOp(valueNode);
@@ -2399,7 +2467,10 @@ export const Handel = (function () {
                 if (node.left.token.type === ID) {
                     notelist = this.visitId(node.left);
                 }
-                else {
+                else if(node.left.token.type === CHOOSE){
+                    notelist = this.visitChoose(node.left);
+                }
+                else{
                     notelist = this.visitNoteList(node.left);
                 }
                 if (node.right.token.type === ID) {
@@ -2465,6 +2536,9 @@ export const Handel = (function () {
                 else if(node.left && node.left.token.type === RANDINT){
                     this.visitRandint(node.left);
                 }
+                else if(node.left && node.left.token.type === CHOOSE){
+                    this.visitChoose(node.left);
+                }
                 else if(node.left && (node.left.token.type === MUL
                     || node.left.token.type === DIV || node.left.token.type === MOD
                     || node.left.token.type === PLUS || node.left.token.type === MINUS
@@ -2478,6 +2552,9 @@ export const Handel = (function () {
                 }
                 else if(node.right && node.right.token.type === RANDINT){
                     this.visitRandint(node.right);
+                }
+                else if(node.right && node.right.token.type === CHOOSE){
+                    this.visitChoose(node.right);
                 }
                 else if(node.right && (node.right.token.type === MUL
                     || node.right.token.type === DIV || node.right.token.type === MOD
@@ -2498,6 +2575,23 @@ export const Handel = (function () {
                 this.visitStatementList(node.ifStatementList);
                 if(node.elseStatementList){
                     this.visitStatementList(node.elseStatementList);
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
+        visitChoose(node){
+            try{
+                this.visitBinOp(node.digitNode);
+                let notesNode = node.notesNode;
+                if(notesNode.token.type === ID){
+                    this.visitId(notesNode);
+                    let varSymbol = this.currentScope.lookup(node.notesNode);
+                    if(varSymbol.type.name !== "NOTELIST"){
+                        throw Error(`Type error in the choose expression at line: ${notesNode.token.lineno}`);
+                    }
                 }
             }
             catch(ex){
@@ -2670,7 +2764,24 @@ export const Handel = (function () {
             this.visitStatementList(node.statementList);
             if(node.whileCondition){
                 this.visitCondition(node.whileCondition);
+                return;
             }
+            let loopNode = node.loopTimes;
+            if(loopNode.token.type === ID){
+                this.visitId(loopNode);
+            }
+            else if(this.isBinOp(loopNode.token)){
+                this.visitBinOp(loopNode);
+            }
+
+        }
+
+        isBinOp(token){
+            if(token.type === MUL || token.type === DIV || token.type === PLUS || token.type === MINUS
+                || token.type === MOD){
+                    return true;
+                }
+            return false;
         }
 
         visitPlay(node) {
@@ -2750,6 +2861,10 @@ export const Handel = (function () {
                 else if (valueNode.token.type === RANDINT) {
                     this.visitRandint(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
+                }
+                else if (valueNode.token.type === CHOOSE) {
+                    this.visitChoose(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
                 }
                 else{
                     this.visitBinOp(valueNode);
@@ -2895,6 +3010,9 @@ export const Handel = (function () {
                 }
                 else if (left && left.token.type === BEAT) {
                     this.visitBeat(left);
+                }
+                else if(left && left.token.type === CHOOSE){
+                    this.visitChoose(left);
                 }
                 if (right && right.token.type === ID) {
                     this.visitId(right);
