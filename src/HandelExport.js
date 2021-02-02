@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.9", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.10", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -1846,7 +1846,6 @@ export const Handel = (function () {
             else{
                 notelist = this.visitNoteList(notesNode);
             }
-            console.log(notelist);
             let output = [];
             while(amt > 0 && notelist.length > 0){
                 let i = Math.floor(Math.random() * notelist.length);
@@ -1854,7 +1853,6 @@ export const Handel = (function () {
                 notelist.splice(i, 1);
                 amt -= 1;
             }
-            console.log(output);
             return output;
         }
 
@@ -2588,7 +2586,7 @@ export const Handel = (function () {
                 let notesNode = node.notesNode;
                 if(notesNode.token.type === ID){
                     this.visitId(notesNode);
-                    let varSymbol = this.currentScope.lookup(node.notesNode);
+                    let varSymbol = this.currentScope.lookup(notesNode.token.value);
                     if(varSymbol.type.name !== "NOTELIST"){
                         throw Error(`Type error in the choose expression at line: ${notesNode.token.lineno}`);
                     }
