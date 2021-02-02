@@ -464,7 +464,8 @@ load configInstrumentName as nameOfInstrumentWithinHandel```
 
 **Note**: this feature makes your Handel program less portable but gives you the freedom of using arbitrary instruments in your Handel program.
 
-# Inspired by
+# Inspiration
 
 [Sonic Pi](https://sonic-pi.net)
+
 [Tone.js](https://tonejs.github.io)
