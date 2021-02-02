@@ -1743,7 +1743,6 @@ export const Handel = (function () {
         }
 
         visitProgram(node) {
-            Tone.Transport.cancel(0);
             Tone.Transport.bpm.value = 1000
             let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
             ar.enclosingRecord = null;
@@ -1759,7 +1758,7 @@ export const Handel = (function () {
                 this.exportMidi();
             }
             else {
-                Tone.Transport.start(Tone.now() + 0.1);
+                Tone.Transport.start("+0.1");
             }
         }
 
@@ -3067,6 +3066,7 @@ export async function RunHandel(code, config) {
 }
 
 export function StopHandel() {
+    Tone.Transport.cancel(0);
     Tone.Transport.stop();
 }
 
