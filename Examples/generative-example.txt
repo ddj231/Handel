@@ -1,0 +1,12 @@
+start
+	save cmajor = C2, E2, G2, B2
+    
+	chunk example
+      block 
+          save note = choose 1 from cmajor
+          play note for 2b
+      endblock loop for 100
+	endchunk
+
+	run example with sound piano
+finish

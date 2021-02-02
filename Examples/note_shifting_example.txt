@@ -1,18 +1,24 @@
 start
   chunk majorscale using startnote
     save mynote = startnote
+
     block
     play mynote for 1b
     update mynote rshift 2
     endblock loop for 3
+
     update mynote lshift 1
+
     block
     play mynote for 1b
     update mynote rshift 2
     endblock loop for 4
+
     update mynote lshift 1
     play mynote for 1b
+
   endchunk
+
   save startnote = Bb2
   run majorscale using startnote with sound piano 
 finish
