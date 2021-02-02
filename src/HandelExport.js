@@ -12,7 +12,10 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.12", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.13", "background: crimson; color: #fff; padding: 2px;");
+    let samplesCount = 0;
+    let totalSamples = 0;
+
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -35,6 +38,9 @@ export const Handel = (function () {
                     D2: snareD,
                 },
                 //baseUrl: baseUrl,
+                onload: () => {
+                    samplesCount += 1
+                }
             }).toDestination();
             this.synth.volume.value = -3;
         }
@@ -47,6 +53,9 @@ export const Handel = (function () {
                     A4: pianoA4,
                 },
                 //baseUrl: baseUrl,
+                onload: () => {
+                    samplesCount += 1
+                }
             }).toDestination();
         }
     }
@@ -57,6 +66,9 @@ export const Handel = (function () {
                 urls: {
                     D3: guitarD,
                 },
+                onload: () => {
+                    samplesCount += 1
+                }
                 //baseUrl: baseUrl,
             }).toDestination();
         }
@@ -68,6 +80,9 @@ export const Handel = (function () {
                 urls: {
                     C1: kickC,
                 },
+                onload: () => {
+                    samplesCount += 1
+                }
                 //baseUrl: baseUrl,
             }).toDestination();
         }
@@ -79,6 +94,9 @@ export const Handel = (function () {
                 urls: {
                     G3: hihatG,
                 },
+                onload: () => {
+                    samplesCount += 1
+                }
                 //baseUrl: baseUrl,
             }).toDestination();
         }
@@ -90,6 +108,9 @@ export const Handel = (function () {
                 urls: {
                     A1: "A1.mp3",
                     A2: "A2.mp3",
+                },
+                onload: () => {
+                    samplesCount += 1
                 },
                 baseUrl: "https://tonejs.github.io/audio/casio/",
             }).toDestination();
@@ -1742,6 +1763,15 @@ export const Handel = (function () {
             URL.revokeObjectURL(a.href);
         }
 
+        waitForSamples(){
+            if(totalSamples === samplesCount){
+                Tone.Transport.start("+0.1");
+            }
+            else {
+                setTimeout(this.waitForSamples, 300);
+            }
+        }
+
         visitProgram(node) {
             Tone.Transport.bpm.value = 1000
             let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
@@ -1758,7 +1788,7 @@ export const Handel = (function () {
                 this.exportMidi();
             }
             else {
-                Tone.Transport.start("+0.1");
+                this.waitForSamples();
             }
         }
 
@@ -1955,18 +1985,22 @@ export const Handel = (function () {
             let instrument = node.instrument;
             if (instrument === 'kick') {
                 let kick = new Kick().synth;
+                totalSamples += 1;
                 this.currentComposition.synth = kick;
             }
             else if (instrument === 'snare') {
                 let snare = new Snare().synth;
+                totalSamples += 1;
                 this.currentComposition.synth = snare;
             }
             else if (instrument === 'hihat') {
                 let hihat = new HiHat().synth;
+                totalSamples += 1;
                 this.currentComposition.synth = hihat;
             }
             else if (instrument === 'casio') {
                 let casio = new Casio().synth;
+                totalSamples += 1;
                 this.currentComposition.synth = casio;
             }
             else if (instrument === 'synth') {
@@ -1975,14 +2009,17 @@ export const Handel = (function () {
             }
             else if (instrument === 'piano') {
                 let piano = new Piano().synth;
+                totalSamples += 1;
                 this.currentComposition.synth = piano;
             }
             else if (instrument === 'guitar') {
                 let piano = new Guitar().synth;
+                totalSamples += 1;
                 this.currentComposition.synth = piano;
             }
             else {
                 let synth = this.callStack.peek().getItem(instrument);
+                totalSamples += 1;
                 this.currentComposition.synth = synth;
             }
         }
@@ -3072,7 +3109,10 @@ export function StopHandel() {
 
 export function MakeInstrument(urls) {
     let sampler = new Tone.Sampler({
-        urls: urls
+        urls: urls,
+        onload: () => {
+            samplesCount += 1
+        },
     }).toDestination()
     return sampler
 }
