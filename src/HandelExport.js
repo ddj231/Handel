@@ -10,12 +10,10 @@ import snareD from './Sounds/Snare_D2.wav'
 import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
 import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
+let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.13", "background: crimson; color: #fff; padding: 2px;");
-    let samplesCount = 0;
-    let totalSamples = 0;
-
+    console.log("%c Handel v0.7.16", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -32,21 +30,21 @@ export const Handel = (function () {
     }
 
     class Snare {
-        constructor() {
+        constructor(increment) {
             this.synth = new Tone.Sampler({
                 urls: {
                     D2: snareD,
                 },
                 //baseUrl: baseUrl,
                 onload: () => {
-                    samplesCount += 1
+                    increment();
                 }
             }).toDestination();
             this.synth.volume.value = -3;
         }
     }
     class Piano {
-        constructor() {
+        constructor(increment) {
             this.synth = new Tone.Sampler({
                 urls: {
                     C5: pianoC5,
@@ -54,20 +52,20 @@ export const Handel = (function () {
                 },
                 //baseUrl: baseUrl,
                 onload: () => {
-                    samplesCount += 1
+                    increment();
                 }
             }).toDestination();
         }
     }
 
     class Guitar {
-        constructor() {
+        constructor(increment) {
             this.synth = new Tone.Sampler({
                 urls: {
                     D3: guitarD,
                 },
                 onload: () => {
-                    samplesCount += 1
+                    increment();
                 }
                 //baseUrl: baseUrl,
             }).toDestination();
@@ -75,13 +73,13 @@ export const Handel = (function () {
     }
 
     class Kick {
-        constructor() {
+        constructor(increment) {
             this.synth = new Tone.Sampler({
                 urls: {
                     C1: kickC,
                 },
                 onload: () => {
-                    samplesCount += 1
+                    increment();
                 }
                 //baseUrl: baseUrl,
             }).toDestination();
@@ -89,13 +87,13 @@ export const Handel = (function () {
     }
 
     class HiHat {
-        constructor() {
+        constructor(increment) {
             this.synth = new Tone.Sampler({
                 urls: {
                     G3: hihatG,
                 },
                 onload: () => {
-                    samplesCount += 1
+                    increment();
                 }
                 //baseUrl: baseUrl,
             }).toDestination();
@@ -103,14 +101,14 @@ export const Handel = (function () {
     }
 
     class Casio {
-        constructor() {
+        constructor(increment) {
             this.synth = new Tone.Sampler({
                 urls: {
                     A1: "A1.mp3",
                     A2: "A2.mp3",
                 },
                 onload: () => {
-                    samplesCount += 1
+                    increment();
                 },
                 baseUrl: "https://tonejs.github.io/audio/casio/",
             }).toDestination();
@@ -1752,6 +1750,9 @@ export const Handel = (function () {
             this.config = config;
             this.midi = midi;
             this.callStack = new HandelCallStack();
+            this.totalSamples = 0;
+            this.samplesCount = 0;
+            this.increment = this.increment.bind(this);
         }
 
         exportMidi() {
@@ -1764,31 +1765,46 @@ export const Handel = (function () {
         }
 
         waitForSamples(){
-            if(totalSamples === samplesCount){
+            if(this.totalSamples === this.samplesCount){
+                this.totalSamples = 0;
+                this.samplesCount = 0;
+                //Tone.Transport.stop(Tone.now());
                 Tone.Transport.start("+0.1");
             }
             else {
-                setTimeout(this.waitForSamples, 300);
+                waiter = setTimeout(this.waitForSamples.bind(this), 300);
             }
         }
 
+        increment(){
+            this.samplesCount += 1;
+        }
+
         visitProgram(node) {
-            Tone.Transport.bpm.value = 1000
-            let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
-            ar.enclosingRecord = null;
-            this.currentComposition = new Composition(Tone.AMSynth, 140,
-                { trackName: 'global', midi: this.midi });
-            this.currentComposition.enclosingComposition = null;
-            this.callStack.push(ar);
-            this.visitStatementList(node.child);
-            this.currentComposition.play();
-            this.callStack.pop();
-            Tone.Transport.stop();
-            if (this.config && this.config.outputMidi) {
-                this.exportMidi();
-            }
-            else {
-                this.waitForSamples();
+            try {
+                Tone.Transport.bpm.value = 1000
+                let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
+                ar.enclosingRecord = null;
+                this.currentComposition = new Composition(Tone.AMSynth, 140,
+                    { trackName: 'global', midi: this.midi });
+                this.currentComposition.enclosingComposition = null;
+                this.callStack.push(ar);
+                this.visitStatementList(node.child);
+                this.currentComposition.play();
+                this.callStack.pop();
+                //Tone.Transport.stop();
+                if (this.config && this.config.outputMidi) {
+                    this.exportMidi();
+                }
+                else {
+                    if(waiter){
+                        clearInterval(waiter);
+                    }
+                    this.waitForSamples();
+                }
+            }   
+            catch(ex){
+                throw ex;
             }
         }
 
@@ -1984,23 +2000,23 @@ export const Handel = (function () {
         visitSound(node) {
             let instrument = node.instrument;
             if (instrument === 'kick') {
-                let kick = new Kick().synth;
-                totalSamples += 1;
+                let kick = new Kick(this.increment).synth;
+                this.totalSamples += 1;
                 this.currentComposition.synth = kick;
             }
             else if (instrument === 'snare') {
-                let snare = new Snare().synth;
-                totalSamples += 1;
+                let snare = new Snare(this.increment).synth;
+                this.totalSamples += 1;
                 this.currentComposition.synth = snare;
             }
             else if (instrument === 'hihat') {
-                let hihat = new HiHat().synth;
-                totalSamples += 1;
+                let hihat = new HiHat(this.increment).synth;
+                this.totalSamples += 1;
                 this.currentComposition.synth = hihat;
             }
             else if (instrument === 'casio') {
-                let casio = new Casio().synth;
-                totalSamples += 1;
+                let casio = new Casio(this.increment).synth;
+                this.totalSamples += 1;
                 this.currentComposition.synth = casio;
             }
             else if (instrument === 'synth') {
@@ -2008,18 +2024,18 @@ export const Handel = (function () {
                 this.currentComposition.synth = synth;
             }
             else if (instrument === 'piano') {
-                let piano = new Piano().synth;
-                totalSamples += 1;
+                let piano = new Piano(this.increment).synth;
+                this.totalSamples += 1;
                 this.currentComposition.synth = piano;
             }
             else if (instrument === 'guitar') {
-                let piano = new Guitar().synth;
-                totalSamples += 1;
+                let piano = new Guitar(this.increment).synth;
+                this.totalSamples += 1;
                 this.currentComposition.synth = piano;
             }
             else {
                 let synth = this.callStack.peek().getItem(instrument);
-                totalSamples += 1;
+                //this.totalSamples += 1;
                 this.currentComposition.synth = synth;
             }
         }
@@ -3081,9 +3097,10 @@ export const Handel = (function () {
     })
 })();
 
-export async function RunHandel(code, config) {
-    await Tone.start();
+export function RunHandel(code, config) {
     try {
+        StopHandel();
+
         const lexer = new Handel.Lexer(code);
         const parser = new Handel.Parser(lexer);
 
@@ -3091,7 +3108,7 @@ export async function RunHandel(code, config) {
         let midi;
         if (config && config.outputMidi) { midi = new Midi() }
         const interpreter = new Handel.Interpreter(parser, config, midi);
-
+        
         const symTableBuilder = new Handel.SymbolTableBuilder();
         const programNode = parser.program();
         symTableBuilder.visitProgram(programNode);
@@ -3104,14 +3121,14 @@ export async function RunHandel(code, config) {
 
 export function StopHandel() {
     Tone.Transport.cancel(0);
-    Tone.Transport.stop();
+    Tone.Transport.stop(Tone.now());
 }
 
-export function MakeInstrument(urls) {
+export function MakeInstrument(urls, increment) {
     let sampler = new Tone.Sampler({
         urls: urls,
         onload: () => {
-            samplesCount += 1
+            //increment();
         },
     }).toDestination()
     return sampler
