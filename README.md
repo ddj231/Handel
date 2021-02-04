@@ -6,7 +6,7 @@ The Handel Interpreter interprets Handel programs and plays compositions in brow
 
 Try the Handel Web Editor here: [Handel Web Editor](https://ddj231.github.io/Handel-Web-Editor/)
 
-Access the most up to date Handel documentation here: [Handel Documentation](https://ddj231.github.io/Handel-Documentation/)
+See the language documentation (including latest features): [Handel Documentation](https://ddj231.github.io/Handel-Documentation/)
 
 Join the [Handel forum](https://groups.google.com/g/handel-pl) to ask questions and showcase compositions. Also check out the [Contributing](./Contributing.md) guidelines.
 
