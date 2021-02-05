@@ -13,7 +13,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.17", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.0", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -237,14 +237,14 @@ export const Handel = (function () {
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, INSTRUMENT, CHOOSE, FROM,
         BEAT, RANDINT, DIGIT, FOR, SEP, VERTICAL, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, EVAL, UPDATE, SHIFT, DOT, PLAY,
-        REST, WITH, RUN, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN,
+        REST, WITH, RUN, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN, SELECT,
         IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
             "INSTRUMENT", "CHOOSE", "FROM",
             "BEAT", "RANDINT", "DIGIT", "FOR", "SEP","VERTICAL", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "EVAL", "UPDATE", "SHIFT", "DOT", "PLAY",
             "REST", "WITH", "RUN", "TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
-            "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
+            "SELECT", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL", 
             "BOOLEAN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
@@ -301,6 +301,7 @@ export const Handel = (function () {
         eval: new Token(EVAL, "eval"),
         choose: new Token(CHOOSE, "choose"),
         from: new Token(FROM, "from"),
+        select: new Token(SELECT, "select"),
     }
 
     class HandelSymbol {
@@ -833,6 +834,14 @@ export const Handel = (function () {
             this.notesNode = notesNode;
         }
     }
+    
+    class SelectAST {
+        constructor(token, digitNode, notesNode){
+            this.token = token;
+            this.digitNode = digitNode;
+            this.notesNode = notesNode;
+        }
+    }
 
     class RandAST {
         constructor(token, start, end){
@@ -974,6 +983,30 @@ export const Handel = (function () {
             catch(ex){
                 throw ex;
             }
+        }
+
+        selectExpression(){
+            try {
+                let token = this.currentToken;
+                this.eat(SELECT);
+                let digitNode = this.digitExpression();
+                this.eat(FROM);
+                let notesNode;
+                if(this.currentToken.type === ID){
+                    notesNode = new IdAST(this.id());
+                }
+                else if(this.currentToken.type === NOTE){
+                    notesNode = this.noteList();
+                }
+                else if(this.currentToken.type === VERTICAL){
+                    notesNode = this.noteGroup();
+                }
+                return new SelectAST(token, digitNode, notesNode);
+            }
+            catch(ex){
+                throw ex;
+            }
+
         }
 
         chooseExpression(){
@@ -1266,6 +1299,9 @@ export const Handel = (function () {
                 else if(this.currentToken.type === CHOOSE){
                     left = this.chooseExpression();
                 }
+                else if(this.currentToken.type === SELECT){
+                    left = this.selectExpression();
+                }
                 else {
                     left = this.expr();
                 }
@@ -1281,6 +1317,9 @@ export const Handel = (function () {
                 }
                 else if(this.currentToken.type === CHOOSE){
                     right = this.chooseExpression();
+                }
+                else if(this.currentToken.type === SELECT){
+                    right = this.selectExpression();
                 }
                 else {
                     right = this.expr();
@@ -1517,6 +1556,10 @@ export const Handel = (function () {
                     let node = this.chooseExpression();
                     return new AssignAST(assignToken, varNode, node);
                 }
+                else if(this.currentToken.type === SELECT){
+                    let node = this.selectExpression();
+                    return new AssignAST(assignToken, varNode, node);
+                }
                 else if(this.currentToken.type === VERTICAL){
                     let node = this.noteGroup();
                     return new AssignAST(assignToken, varNode, node);
@@ -1669,13 +1712,17 @@ export const Handel = (function () {
 
         expr() {
             try {
-                if (this.currentToken.type === NOTE || this.currentToken.type === CHOOSE) {
+                if (this.currentToken.type === NOTE || this.currentToken.type === CHOOSE ||
+                    this.currentToken.type === SELECT) {
                     let noteRoot;
                     if(this.currentToken.type === NOTE){
                         noteRoot = this.noteList();
                     }
-                    else {
+                    else if(this.currentToken.type === CHOOSE){
                         noteRoot = this.chooseExpression();
+                    }
+                    else {
+                        noteRoot = this.selectExpression();
                     }
 
                     if (this.currentToken.type === FOR) {
@@ -1938,8 +1985,40 @@ export const Handel = (function () {
                 copy.splice(i, 1);
                 amt -= 1;
             }
-            console.log(output);
+            //console.log(output);
             return output;
+        }
+        
+        visitSelect(node){
+            let ind = this.visitBinOp(node.digitNode);
+            let notesNode = node.notesNode;
+            let noteContainer;
+            let isGroup = false;
+            if(notesNode.token.type === ID){
+                noteContainer = this.visitId(notesNode);
+                if(noteContainer.length > 0 && Array.isArray(noteContainer[0])){
+                    isGroup = true;
+                }
+            }
+            else if(notesNode.token.type === VERTICAL){
+                noteContatiner = this.visitNoteGroup(notesNode);
+                isGroup = true;
+            }
+            else {
+                noteContainer = this.visitNoteList(notesNode);
+            }
+
+            if(ind < 0){
+                ind = 0;
+            }
+            if(isGroup){
+                return noteContainer[Math.min(ind, noteContainer.length - 1)];
+            }
+            else {
+                let arr = []; 
+                arr.push(noteContainer[Math.min(ind, noteContainer.length - 1)]);
+                return arr;
+            }
         }
 
         visitChoose(node){
@@ -2140,6 +2219,9 @@ export const Handel = (function () {
                 else if (node.left.token.type === CHOOSE) {
                     leftValue = this.visitChoose(node.left);
                 }
+                else if (node.left.token.type === SELECT) {
+                    leftValue = this.visitSelect(node.left);
+                }
                 else {
                     leftValue = this.visitBinOp(node.left);
                 }
@@ -2162,8 +2244,11 @@ export const Handel = (function () {
                 else if (node.right.token.type === RANDINT) {
                     rightValue = this.visitRandint(node.right);
                 }
-                else if (node.right.token.type === RANDINT) {
+                else if (node.right.token.type === CHOOSE) {
                     rightValue = this.visitChoose(node.right);
+                }
+                else if (node.right.token.type === SELECT) {
+                    rightValue = this.visitSelect(node.left);
                 }
                 else {
                     rightValue = this.visitBinOp(node.right);
@@ -2474,6 +2559,9 @@ export const Handel = (function () {
                 else if (valueNode.token.type === CHOOSE) {
                     value = this.visitChoose(valueNode);
                 }
+                else if (valueNode.token.type === SELECT) {
+                    value = this.visitSelect(valueNode);
+                }
                 else if (valueNode.token.type === VERTICAL) {
                     value = this.visitNoteGroup(valueNode);
                 }
@@ -2609,6 +2697,9 @@ export const Handel = (function () {
                 else if(node.left.token.type === CHOOSE){
                     notelist = this.visitChoose(node.left);
                 }
+                else if(node.left.token.type === SELECT){
+                    notelist = this.visitSelect(node.left);
+                }
                 else{
                     notelist = this.visitNoteList(node.left);
                 }
@@ -2678,6 +2769,9 @@ export const Handel = (function () {
                 else if(node.left && node.left.token.type === CHOOSE){
                     this.visitChoose(node.left);
                 }
+                else if(node.left && node.left.token.type === SELECT){
+                    this.visitSelect(node.left);
+                }
                 else if(node.left && (node.left.token.type === MUL
                     || node.left.token.type === DIV || node.left.token.type === MOD
                     || node.left.token.type === PLUS || node.left.token.type === MINUS
@@ -2694,6 +2788,9 @@ export const Handel = (function () {
                 }
                 else if(node.right && node.right.token.type === CHOOSE){
                     this.visitChoose(node.right);
+                }
+                else if(node.right && node.right.token.type === SELECT){
+                    this.visitSelect(node.right);
                 }
                 else if(node.right && (node.right.token.type === MUL
                     || node.right.token.type === DIV || node.right.token.type === MOD
@@ -2728,6 +2825,15 @@ export const Handel = (function () {
                         this.visitId(listNode);
                     }
                 }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+        
+        visitSelect(node){
+            try{
+                this.visitChoose(node);
             }
             catch(ex){
                 throw ex;
@@ -3018,6 +3124,10 @@ export const Handel = (function () {
                     this.visitChoose(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
                 }
+                else if (valueNode.token.type === SELECT) {
+                    this.visitSelect(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
+                }
                 else if (valueNode.token.type === VERTICAL) {
                     this.visitNoteGroup(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTEGROUP'));
@@ -3169,6 +3279,9 @@ export const Handel = (function () {
                 }
                 else if(left && left.token.type === CHOOSE){
                     this.visitChoose(left);
+                }
+                else if(left && left.token.type === SELECT){
+                    this.visitSelect(left);
                 }
                 if (right && right.token.type === ID) {
                     this.visitId(right);
