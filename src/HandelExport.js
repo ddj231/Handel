@@ -13,7 +13,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.7.16", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.7.17", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -235,13 +235,13 @@ export const Handel = (function () {
     // Token types
     const [NOTE, BPM, SOUND,
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, INSTRUMENT, CHOOSE, FROM,
-        BEAT, RANDINT, DIGIT, FOR, SEP, CHUNK,
+        BEAT, RANDINT, DIGIT, FOR, SEP, VERTICAL, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, EVAL, UPDATE, SHIFT, DOT, PLAY,
         REST, WITH, RUN, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN,
         IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
             "INSTRUMENT", "CHOOSE", "FROM",
-            "BEAT", "RANDINT", "DIGIT", "FOR", "SEP", "CHUNK",
+            "BEAT", "RANDINT", "DIGIT", "FOR", "SEP","VERTICAL", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "EVAL", "UPDATE", "SHIFT", "DOT", "PLAY",
             "REST", "WITH", "RUN", "TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
             "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL",
@@ -343,12 +343,14 @@ export const Handel = (function () {
             let playable = new BuiltInTypeSymbol('PLAYABLE');
             let digit = new BuiltInTypeSymbol('DIGIT');
             let notelist = new BuiltInTypeSymbol('NOTELIST');
+            let notegroup = new BuiltInTypeSymbol('NOTEGROUP');
             let any = new BuiltInTypeSymbol('ANY');
             this.define(duration);
             this.define(playable);
             this.define(any);
             this.define(digit);
             this.define(notelist);
+            this.define(notegroup);
         }
         define(symbol) {
             symbol.scopeLevel = this.scopeLevel;
@@ -483,6 +485,11 @@ export const Handel = (function () {
                 if (this.currentChar === '.') {
                     this.advance();
                     return new Token(DOT, 'dot', this.lineno);
+                }
+
+                if (this.currentChar === '|') {
+                    this.advance();
+                    return new Token(VERTICAL, '|', this.lineno);
                 }
 
                 if (this.currentChar === '=') {
@@ -677,6 +684,13 @@ export const Handel = (function () {
             this.value = this.token.value;
             this.parameterList = parameterList;
             this.statementList = statementList;
+        }
+    }
+
+    class NoteGroupAST {
+        constructor(token, notelists){
+            this.token = token;
+            this.notelists = notelists;
         }
     }
 
@@ -975,6 +989,9 @@ export const Handel = (function () {
                 else if(this.currentToken.type === NOTE){
                     notesNode = this.noteList();
                 }
+                else if(this.currentToken.type === VERTICAL){
+                    notesNode = this.noteGroup();
+                }
                 return new ChooseAST(token, digitNode, notesNode);
             }
             catch(ex){
@@ -1092,6 +1109,28 @@ export const Handel = (function () {
             catch (ex) {
                 throw ex;
             }
+        }
+
+        noteGroup(){
+            let token = this.currentToken;
+            this.eat(VERTICAL);
+            let notelists = [];
+            if(this.currentToken.type === ID) {
+                notelists.push(this.id());
+            }
+            else {
+                notelists.push(this.noteList());
+            }
+            while(this.currentToken.type === VERTICAL){
+                this.eat(VERTICAL);
+                if(this.currentToken.type === ID) {
+                    notelists.push(this.id());
+                }
+                else {
+                    notelists.push(this.noteList());
+                }
+            }
+            return new NoteGroupAST(token, notelists);
         }
 
         customization() {
@@ -1476,6 +1515,10 @@ export const Handel = (function () {
                 }
                 else if(this.currentToken.type === CHOOSE){
                     let node = this.chooseExpression();
+                    return new AssignAST(assignToken, varNode, node);
+                }
+                else if(this.currentToken.type === VERTICAL){
+                    let node = this.noteGroup();
                     return new AssignAST(assignToken, varNode, node);
                 }
             }
@@ -1881,18 +1924,42 @@ export const Handel = (function () {
             return output;
         }
 
+        chooseFromGroup(amt, notelists){
+            let output = [];
+            let copy = [] ;
+            for(let i = 0; i < notelists.length; i++){
+                copy.push(notelists[i].slice());
+            }
+            while(amt > 0 && copy.length > 0){
+                let i = Math.floor(Math.random() * copy.length);
+                for(let j = 0;  j < copy[i].length; j++){
+                    output.push(copy[i][j]);
+                }
+                copy.splice(i, 1);
+                amt -= 1;
+            }
+            console.log(output);
+            return output;
+        }
+
         visitChoose(node){
             let amt = this.visitBinOp(node.digitNode);
             let notesNode = node.notesNode;
-            let notelist;
+            let noteContainer;
             if(notesNode.token.type === ID){
-                notelist = this.visitId(notesNode);
+                noteContainer = this.visitId(notesNode);
+                if(noteContainer.length > 0 && Array.isArray(noteContainer[0])){
+                    return this.chooseFromGroup(amt, noteContainer);
+                }
             }
-            else{
-                notelist = this.visitNoteList(notesNode);
+            else if(notesNode.token.type === VERTICAL){
+                return this.chooseFromGroup(amt, this.visitNoteGroup(notesNode));
+            }
+            else {
+                noteContainer = this.visitNoteList(notesNode);
             }
             let output = [];
-            let copy = notelist.slice();
+            let copy = noteContainer.slice();
             while(amt > 0 && copy.length > 0){
                 let i = Math.floor(Math.random() * copy.length);
                 output.push(copy[i]);
@@ -2363,6 +2430,24 @@ export const Handel = (function () {
             }
         }
 
+
+        visitNoteGroup(node){
+            let arr = [];
+            for(let listNode of node.notelists){
+                if(listNode.token.type === ID){
+                    let curr = this.visitId(listNode);
+                    if(!Array.isArray(curr)){
+                        throw Error(`Type error non notelist in notegroup: ${listNode.token.lineno}`);
+                    }
+                    arr.push(curr);
+                }
+                else {
+                    arr.push(this.visitNoteList(listNode));
+                }
+            }
+            return arr;
+        }
+
         visitSave(node) {
             try {
                 let varNode = node.left;
@@ -2388,6 +2473,9 @@ export const Handel = (function () {
                 }
                 else if (valueNode.token.type === CHOOSE) {
                     value = this.visitChoose(valueNode);
+                }
+                else if (valueNode.token.type === VERTICAL) {
+                    value = this.visitNoteGroup(valueNode);
                 }
                 else {
                     value = this.visitBinOp(valueNode);
@@ -2633,6 +2721,19 @@ export const Handel = (function () {
             }
         }
 
+        visitNoteGroup(node){
+            try {
+                for(let listNode of node.notelists) {
+                    if(listNode.token.type === ID){
+                        this.visitId(listNode);
+                    }
+                }
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
         visitChoose(node){
             try{
                 this.visitBinOp(node.digitNode);
@@ -2640,7 +2741,7 @@ export const Handel = (function () {
                 if(notesNode.token.type === ID){
                     this.visitId(notesNode);
                     let varSymbol = this.currentScope.lookup(notesNode.token.value);
-                    if(varSymbol.type.name !== "NOTELIST"){
+                    if(varSymbol.type.name !== "NOTELIST" && varSymbol.type.name !== "NOTEGROUP"){
                         throw Error(`Type error in the choose expression at line: ${notesNode.token.lineno}`);
                     }
                 }
@@ -2917,6 +3018,10 @@ export const Handel = (function () {
                     this.visitChoose(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
                 }
+                else if (valueNode.token.type === VERTICAL) {
+                    this.visitNoteGroup(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTEGROUP'));
+                }
                 else{
                     this.visitBinOp(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
@@ -3097,9 +3202,16 @@ export const Handel = (function () {
     })
 })();
 
-export function RunHandel(code, config) {
+export async function RunHandel(code, config) {
+    Tone.start();
     try {
-        StopHandel();
+
+        if(config.layer){
+            Tone.Transport.stop(Tone.now());
+        }
+        else{
+            StopHandel();
+        }
 
         const lexer = new Handel.Lexer(code);
         const parser = new Handel.Parser(lexer);
