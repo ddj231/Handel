@@ -156,7 +156,7 @@ Bb3
 G#2, A2
 ```
 
-A **Notegroup** is a group of notelists (or conceptually an array of notelists), separated by a vertical line .
+A **Notegroup** is a group of notelists (or conceptually an array of notelists). Each notelist is separated by a vertical line.
 
 For example:
 
