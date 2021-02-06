@@ -13,7 +13,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.1", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.2", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -3316,7 +3316,7 @@ export const Handel = (function () {
 })();
 
 export async function RunHandel(code, config) {
-    Tone.start();
+    await Tone.start();
     try {
 
         if(config && config.layer){
