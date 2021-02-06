@@ -13,7 +13,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.4", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.5", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -2038,9 +2038,17 @@ export const Handel = (function () {
             else if(notesNode.token.type === VERTICAL){
                 return this.chooseFromGroup(amt, this.visitNoteGroup(notesNode));
             }
-            else {
+            else if(notesNode.token.type === NOTE){
                 noteContainer = this.visitNoteList(notesNode);
             }
+            else {
+                throw Error(`Type error in choose expression at line: ${node.token.lineno}`);
+            }
+
+            if(!Array.isArray(noteContainer)){
+                throw Error(`Type error in choose expression at line: ${node.token.lineno}`);
+            }
+
             let output = [];
             let copy = noteContainer.slice();
             while(amt > 0 && copy.length > 0){
@@ -2851,7 +2859,7 @@ export const Handel = (function () {
                 if(notesNode.token.type === ID){
                     this.visitId(notesNode);
                     let varSymbol = this.currentScope.lookup(notesNode.token.value);
-                    if(varSymbol.type.name !== "NOTELIST" && varSymbol.type.name !== "NOTEGROUP"){
+                    if(varSymbol.type.name !== "ANY" && varSymbol.type.name !== "NOTELIST" && varSymbol.type.name !== "NOTEGROUP"){
                         throw Error(`Type error in the choose expression at line: ${notesNode.token.lineno}`);
                     }
                 }
