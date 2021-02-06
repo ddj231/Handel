@@ -13,7 +13,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.2", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.4", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -129,8 +129,10 @@ export const Handel = (function () {
             this.reverb;
             // Create Part
             this.part = new Tone.Part((time, value) => {
-                this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
-            });
+                Tone.ToneAudioBuffer.loaded().then(() =>{
+                    this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
+                });
+            })
             //each composition also represents a midi track
             if (midiOption.midi) {
                 this.midi = midiOption.midi;
@@ -1854,17 +1856,19 @@ export const Handel = (function () {
             URL.revokeObjectURL(a.href);
         }
 
+        /*
         waitForSamples(){
             if(this.totalSamples === this.samplesCount){
                 this.totalSamples = 0;
                 this.samplesCount = 0;
                 //Tone.Transport.stop(Tone.now());
-                Tone.Transport.start("+0.1");
+                Tone.Transport.start("+0.3");
             }
             else {
                 waiter = setTimeout(this.waitForSamples.bind(this), 300);
             }
         }
+        */
 
         increment(){
             this.samplesCount += 1;
@@ -1887,10 +1891,10 @@ export const Handel = (function () {
                     this.exportMidi();
                 }
                 else {
-                    if(waiter){
-                        clearInterval(waiter);
-                    }
-                    this.waitForSamples();
+                    Tone.ToneAudioBuffer.loaded().then(() => {
+                        Tone.Transport.stop();
+                        Tone.Transport.start(Tone.now());
+                    });
                 }
             }   
             catch(ex){
