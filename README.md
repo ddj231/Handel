@@ -143,7 +143,7 @@ play myotherplayable
 finish
 ```
 
-You can declare Variables in Handel. Variables store three builtin types in Handel: Notelists, Notegroup, Durations, Playables.
+You can declare Variables in Handel. Variables store three builtin types in Handel: Notelists, Notegroups, Durations, Playables.
 
 A **Digit** is a positive or negative integer.
 
