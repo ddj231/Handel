@@ -13,7 +13,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.6", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.7", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -991,7 +991,13 @@ export const Handel = (function () {
             try {
                 let token = this.currentToken;
                 this.eat(SELECT);
-                let digitNode = this.digitExpression();
+                let digitNode;
+                if(this.currentToken.type === RANDINT){
+                    digitNode = this.randint();
+                }
+                else{
+                    digitNode = this.digitExpression();
+                }
                 this.eat(FROM);
                 let notesNode;
                 if(this.currentToken.type === ID){
@@ -1015,7 +1021,13 @@ export const Handel = (function () {
             try {
                 let token = this.currentToken;
                 this.eat(CHOOSE);
-                let digitNode = this.digitExpression();
+                let digitNode;
+                if(this.currentToken.type === RANDINT){
+                    digitNode = this.randint();
+                }
+                else{
+                    digitNode = this.digitExpression();
+                }
                 this.eat(FROM);
                 let notesNode;
                 if(this.currentToken.type === ID){
@@ -1994,7 +2006,13 @@ export const Handel = (function () {
         }
         
         visitSelect(node){
-            let ind = this.visitBinOp(node.digitNode);
+            let ind;
+            if(node.digitNode.token.type === RANDINT){
+                ind = this.visitRandint(node.digitNode);
+            }
+            else {
+                ind = this.visitBinOp(node.digitNode);
+            }
             let notesNode = node.notesNode;
             let noteContainer;
             let isGroup = false;
@@ -2026,7 +2044,13 @@ export const Handel = (function () {
         }
 
         visitChoose(node){
-            let amt = this.visitBinOp(node.digitNode);
+            let amt;
+            if(node.digitNode.token.type === RANDINT){
+                amt = this.visitRandint(node.digitNode);
+            }
+            else {
+                amt = this.visitBinOp(node.digitNode);
+            }
             let notesNode = node.notesNode;
             let noteContainer;
             if(notesNode.token.type === ID){
@@ -2854,7 +2878,13 @@ export const Handel = (function () {
 
         visitChoose(node){
             try{
-                this.visitBinOp(node.digitNode);
+                let ind;
+                if(node.digitNode.token.type === RANDINT){
+                    this.visitRandint(node.digitNode);
+                }
+                else {
+                    this.visitBinOp(node.digitNode);
+                }
                 let notesNode = node.notesNode;
                 if(notesNode.token.type === ID){
                     this.visitId(notesNode);
