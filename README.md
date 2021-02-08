@@ -237,9 +237,9 @@ All variables in Handel can be shifted using the ```rshift``` and ```lshift``` k
 
 For variables storing digits, this shifting is exactly the equivalent of addition and subtraction.
 
-For variables storing notelists, shifting changes the note, left or right by a number of semitones.
+For variables storing notelists and notegroups, shifting changes the notes, left or right by a number of semitones.
 
-The following example reassigns (or shifts) ```mynotelist`` down/left by one semitone. Then up/right by two semitones.
+The following example reassigns (or shifts) ```mynotelist`` left by one semitone. Then right by two semitones.
 
 ```
 start
@@ -258,7 +258,7 @@ Variables storing **Durations** and **Playables** can also be shifted.
 
 Shifting a duration increases or decreases its beat value.
 
-Shifting a playable increases or decreass its notelist.
+Shifting a playable (which contains a notelist) increases or decreass its notelist.
 
 For example:
 
