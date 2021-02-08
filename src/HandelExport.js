@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.8", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.9", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -448,10 +448,21 @@ export const Handel = (function () {
             }
         }
 
+        skipComments(){
+            if(this.currentChar === "/"){
+                this.advance();
+                while(this.currentChar !== "/"){
+                    this.advance();
+                }
+                this.advance();
+            }
+            this.skipWhitespace();
+        }
         getNextToken() {
             // Lexical analyzer
             try {
                 this.skipWhitespace();
+                this.skipComments();
 
                 if (this.pos >= this.text.length) {
                     return new Token(EOF, null, this.lineno);
