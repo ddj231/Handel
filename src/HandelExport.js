@@ -10,10 +10,9 @@ import snareD from './Sounds/Snare_D2.wav'
 import { ToneWithContext } from 'tone/build/esm/core/context/ToneWithContext';
 import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
-let waiter;
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.7", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.8", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -2661,6 +2660,12 @@ export const Handel = (function () {
             }
         }
 
+        transposeNotelist(varNode, shiftAmt, shiftTarget){
+            for (let i = 0; i < shiftTarget.length; i++) {
+                shiftTarget[i] = Tone.Frequency(shiftTarget[i]).transpose(shiftAmt);
+            }
+            return shiftTarget.slice();
+        }
         visitUpdate(node) {
             if (!node.isShift) {
                 this.visitSave(node);
@@ -2672,10 +2677,17 @@ export const Handel = (function () {
                 let shiftAmt = this.visitShift(valueNode);
                 let shiftTarget = this.callStack.peek().getItem(varNode.value);
                 if(Array.isArray(shiftTarget)){
-                    for (let i = 0; i < shiftTarget.length; i++) {
-                        shiftTarget[i] = Tone.Frequency(shiftTarget[i]).transpose(shiftAmt);
+                    let output = [];
+                    if(shiftTarget.length > 0 && Array.isArray(shiftTarget[0])){
+                        for(let i = 0; i < shiftTarget.length; i++){
+                            output.push(this.transposeNotelist(varNode, shiftAmt, shiftTarget[i]));
+                        }
+                        this.callStack.peek().setItem(varNode.value, output);
                     }
-                    this.callStack.peek().setItem(varNode.value, shiftTarget.slice());
+                    else{
+                        output = this.transposeNotelist(varNode, shiftAmt, shiftTarget);
+                        this.callStack.peek().setItem(varNode.value, output);
+                    }
                 }
                 else if(typeof shiftTarget == "number"){
                     this.callStack.peek().setItem(varNode.value, shiftTarget + shiftAmt);
@@ -3268,6 +3280,8 @@ export const Handel = (function () {
                 let varNode = node.left;
                 let varName = varNode.token.value;
                 let valueNode = node.right;
+
+                this.visitId(varNode);
 
                 if (node.isShift) {
                     this.visitShift(valueNode);
