@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.9", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.10", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -238,13 +238,13 @@ export const Handel = (function () {
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, INSTRUMENT, CHOOSE, FROM,
         BEAT, RANDINT, DIGIT, FOR, SEP, VERTICAL, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, EVAL, UPDATE, SHIFT, DOT, PLAY,
-        REST, WITH, RUN, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN, SELECT,
+        REST, WITH, RUN,CALL, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN, SELECT,
         IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
             "INSTRUMENT", "CHOOSE", "FROM",
             "BEAT", "RANDINT", "DIGIT", "FOR", "SEP","VERTICAL", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "EVAL", "UPDATE", "SHIFT", "DOT", "PLAY",
-            "REST", "WITH", "RUN", "TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
+            "REST", "WITH", "RUN", "CALL","TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
             "SELECT", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL", 
             "BOOLEAN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
@@ -303,6 +303,7 @@ export const Handel = (function () {
         choose: new Token(CHOOSE, "choose"),
         from: new Token(FROM, "from"),
         select: new Token(SELECT, "select"),
+        call: new Token(CALL, "call"),
     }
 
     class HandelSymbol {
@@ -601,6 +602,8 @@ export const Handel = (function () {
         }
     }
 
+
+
     class PlayAST {
         constructor(token, child = null, rep = null) {
             this.token = token;
@@ -676,6 +679,7 @@ export const Handel = (function () {
             this.whileCondition = whileCondition;
         }
     }
+
 
     class ParameterListAST {
         constructor() {
@@ -778,6 +782,15 @@ export const Handel = (function () {
             this.value = this.token.value;
             this.actualParams = actualParams;
             this.customizationList = customizationList;
+            this.procSymbol = null;
+        }
+    }
+
+    class SyncProcedureCallAST {
+        constructor(token, actualParams) {
+            this.token = token;
+            this.value = this.token.value;
+            this.actualParams = actualParams;
             this.procSymbol = null;
         }
     }
@@ -954,6 +967,7 @@ export const Handel = (function () {
                     this.currentToken.type === PLAY ||
                     this.currentToken.type === REST ||
                     this.currentToken.type === RUN ||
+                    this.currentToken.type === CALL||
                     this.currentToken.type === LOAD ||
                     this.currentToken.type === BLOCK ||
                     this.currentToken.type === UPDATE ||
@@ -1406,11 +1420,31 @@ export const Handel = (function () {
             }
         }
 
+        syncProcedureCall(){
+            try {
+                this.eat(CALL);
+                let procedureToken = this.currentToken;
+                procedureToken.category = "SYNC";
+                this.eat(ID);
+                let actualParams = [];
+                if (this.currentToken.type === USING) {
+                    this.eat(USING);
+                    if (this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID) {
+                        actualParams = this.argumentList();
+                    }
+                }
+                return new SyncProcedureCallAST(procedureToken, actualParams);
+            }
+            catch(ex){
+                throw ex;
+            }
+        }
+
         procedureCall() {
             try {
                 this.eat(RUN);
                 let procedureToken = this.currentToken;
-                procedureToken.category = "PROCEDURECALL";
+                procedureToken.category = "ASYNC";
                 this.eat(ID);
                 let actualParams = [];
                 if (this.currentToken.type === USING) {
@@ -1439,6 +1473,7 @@ export const Handel = (function () {
                         this.currentToken.type === PLAY ||
                         this.currentToken.type === REST ||
                         this.currentToken.type === RUN ||
+                        this.currentToken.type === CALL||
                         this.currentToken.type === LOAD ||
                         this.currentToken.type === BLOCK ||
                         this.currentToken.type === UPDATE ||
@@ -1485,6 +1520,9 @@ export const Handel = (function () {
                 }
                 else if (this.currentToken.type === RUN) {
                     return this.procedureCall();
+                }
+                else if (this.currentToken.type === CALL) {
+                    return this.syncProcedureCall();
                 }
                 else if (this.currentToken.type === BLOCK) {
                     return this.blockLoop();
@@ -1927,14 +1965,20 @@ export const Handel = (function () {
         visitSectionDeclaration(node) {
         }
 
-        visitProcedureCall(node) {
+        visitSyncProcedureCall(node){
+            this.visitProcedureCall(node, true);
+        }
+
+        visitProcedureCall(node, isSync) {
             let procSymbol = node.procSymbol;
             let ar = new HandelActivationRecord(node.value, ARTYPES.PROCEDURE, procSymbol.scopeLevel + 1);
             ar.enclosingRecord = this.callStack.peek();
 
             let prevCompositon = this.currentComposition;
-            this.currentComposition = new Composition(Tone.AMSynth, 140, { trackName: node.value, midi: this.midi });
-            this.currentComposition.enclosingComposition = prevCompositon;
+            if(!isSync){
+                this.currentComposition = new Composition(Tone.AMSynth, 140, { trackName: node.value, midi: this.midi });
+                this.currentComposition.enclosingComposition = prevCompositon;
+            }
 
             let formalParams = procSymbol.params;
             let actualParams = node.actualParams;
@@ -1955,24 +1999,26 @@ export const Handel = (function () {
                 ar.setItem(formalParams[i].name, actualValue);
             }
 
-            for (let customization of node.customizationList) {
-                if (customization.token.type === BPM) {
-                    this.visitBPM(customization);
-                }
-                else if (customization.token.type === SOUND) {
-                    this.visitSound(customization);
-                }
-                else if (customization.token.type === LOOP) {
-                    this.visitLoop(customization);
-                }
-                else if (customization.token.type === VOLUME) {
-                    this.visitVolume(customization);
-                }
-                else if (customization.token.type === PAN) {
-                    this.visitPan(customization);
-                }
-                else if (customization.token.type === REVERB) {
-                    this.visitReverb(customization);
+            if(node.customizationList){
+                for (let customization of node.customizationList) {
+                    if (customization.token.type === BPM) {
+                        this.visitBPM(customization);
+                    }
+                    else if (customization.token.type === SOUND) {
+                        this.visitSound(customization);
+                    }
+                    else if (customization.token.type === LOOP) {
+                        this.visitLoop(customization);
+                    }
+                    else if (customization.token.type === VOLUME) {
+                        this.visitVolume(customization);
+                    }
+                    else if (customization.token.type === PAN) {
+                        this.visitPan(customization);
+                    }
+                    else if (customization.token.type === REVERB) {
+                        this.visitReverb(customization);
+                    }
                 }
             }
 
@@ -1983,7 +2029,9 @@ export const Handel = (function () {
             this.currentComposition.play();
 
             this.callStack.pop(ar);
-            this.currentComposition = this.currentComposition.enclosingComposition;
+            if(!isSync){
+                this.currentComposition = this.currentComposition.enclosingComposition;
+            }
         }
 
         mapHelper(val, ogStart, ogEnd, newStart, newEnd) {
@@ -2424,7 +2472,10 @@ export const Handel = (function () {
                         this.visitRest(child);
                     }
                     else if (child.token.type === ID) {
-                        if (child.token.category) {
+                        if (child.token.category === "SYNC") {
+                            this.visitSyncProcedureCall(child);
+                        }
+                        else if(child.token.category){
                             this.visitProcedureCall(child);
                         }
                         else {
@@ -3011,24 +3062,26 @@ export const Handel = (function () {
 
                 node.procSymbol = procSymbol;
 
-                for (let customization of node.customizationList) {
-                    if (customization.token.type === BPM) {
-                        this.visitBPM(customization);
-                    }
-                    else if (customization.token.type === SOUND) {
-                        this.visitSound(customization);
-                    }
-                    else if (customization.token.type === LOOP) {
-                        this.visitLoop(customization);
-                    }
-                    else if (customization.token.type === VOLUME) {
-                        this.visitVolume(customization);
-                    }
-                    else if (customization.token.type === PAN) {
-                        this.visitPan(customization);
-                    }
-                    else if (customization.token.type === REVERB) {
-                        this.visitReverb(customization);
+                if(node.customizationList){
+                    for (let customization of node.customizationList) {
+                        if (customization.token.type === BPM) {
+                            this.visitBPM(customization);
+                        }
+                        else if (customization.token.type === SOUND) {
+                            this.visitSound(customization);
+                        }
+                        else if (customization.token.type === LOOP) {
+                            this.visitLoop(customization);
+                        }
+                        else if (customization.token.type === VOLUME) {
+                            this.visitVolume(customization);
+                        }
+                        else if (customization.token.type === PAN) {
+                            this.visitPan(customization);
+                        }
+                        else if (customization.token.type === REVERB) {
+                            this.visitReverb(customization);
+                        }
                     }
                 }
             }

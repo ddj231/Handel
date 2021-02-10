@@ -356,6 +356,7 @@ behavior allows multitrack songs to be created with Handel.
 
 Note that each chunk has its own scope.
 
+
 # More on procedures (chunks) and their syntax
 
 
@@ -376,32 +377,35 @@ Lastly the chunk must be ended with the **endchunk** keyword.
 
 ## Running Procedures 
 
-You can run a chunk using the **run** keyword.
+There are two ways to run a chunk in Handel. 
 
-To run a chunk use the **run** command followed by the name of the chunk. 
+You can run a chunk using the **run** keyword. This conceptually creates a new song track, and plays the chunk synchronously with all running chunks.
 
-If the chunk has parameters, a you must use a matching number of comma separated arguments.
+You can also run a chunk using the **call** keyword. This runs the chunk in place (in the songtrack the chunk is called in).
+
+The syntax for running a chunk is the **run** or **call** command followed by the name of the chunk. 
+
+If the chunk has parameters, a you must use the ```using`` keyword followed by a matching number of comma separated arguments. 
 
 Here is an example running two chunks. One chunk requires arguments the other does not.
 
 ```
 start
     chunk noargs
-        play C3 for 1b
+        play C4 for 1b
+        call playtwo using E4 for 1b, Cb6 for 1b 
     endchunk
 
-    chunk withtwoargs using argone, argtwo
+    chunk playtwo using argone, argtwo
         play argone
         play argtwo
     endchunk
 
     run noargs
-    save somevar = Cb4 for 1b
-    run withtwoargs using E3 for 1b,  somevar
 finish
 ```
 
-Note that saved variables, playables, or durations, can be used as arguments when running a chunk.
+Note that saved variables (containing any built-in type in Handel), digits, playables, durations, can be used as arguments when running a chunk.
 
 OK! Now to configuring a run of a chunk.
 
