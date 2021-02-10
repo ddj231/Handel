@@ -391,17 +391,17 @@ Here is an example running two chunks. One chunk requires arguments the other do
 
 ```
 start
-    chunk noargs
-        play C4 for 1b
-        call playtwo using E4 for 1b, Cb6 for 1b 
-    endchunk
-
     chunk playtwo using argone, argtwo
         play argone
         play argtwo
     endchunk
 
-    run noargs
+    chunk noargs
+        play C4 for 1b
+        call playtwo using E4 for 1b, Cb6 for 1b 
+    endchunk
+
+    run noargs with sound piano
 finish
 ```
 
