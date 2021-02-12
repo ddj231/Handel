@@ -1,6 +1,8 @@
 import * as Tone from 'tone';
 import { Midi } from '@tonejs/midi'
 
+import {Perlin} from './PerlinNoise.js';
+
 import pianoA4 from './Sounds/Piano_A4.wav'
 import pianoC5 from './Sounds/Piano_C5.wav'
 import kickC from './Sounds/Kick_C.wav'
@@ -12,7 +14,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.10", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.14", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -236,17 +238,17 @@ export const Handel = (function () {
     // Token types
     const [NOTE, BPM, SOUND,
         VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, INSTRUMENT, CHOOSE, FROM,
-        BEAT, RANDINT, DIGIT, FOR, SEP, VERTICAL, CHUNK,
+        NOISE, BEAT, RANDINT, DIGIT, FOR, SEP, VERTICAL, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, EVAL, UPDATE, SHIFT, DOT, PLAY,
         REST, WITH, RUN,CALL, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN, SELECT,
-        IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, BOOLEAN, LOAD, AS, ASSIGN, USING, EOF] = [
+        IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, GREATEQ, LESSEQ, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
-            "INSTRUMENT", "CHOOSE", "FROM",
+            "INSTRUMENT", "CHOOSE", "FROM", "NOISE",
             "BEAT", "RANDINT", "DIGIT", "FOR", "SEP","VERTICAL", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "EVAL", "UPDATE", "SHIFT", "DOT", "PLAY",
             "REST", "WITH", "RUN", "CALL","TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
-            "SELECT", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL", 
-            "BOOLEAN", "LOAD", "AS", "ASSIGN", "USING", "EOF"];
+            "SELECT", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL", "GREATEQ", "LESSEQ",
+            "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
     class Token {
@@ -293,9 +295,6 @@ export const Handel = (function () {
         then: new Token(THEN, "then"),
         else: new Token(ELSE, "else"),
         endif: new Token(ENDIF, "endif"),
-        lessthan: new Token(LESS, "lessthan"),
-        greaterthan: new Token(GREAT, "greaterthan"),
-        equalto: new Token(EQUAL, "equalto"),
         randint: new Token(RANDINT, "randint"),
         to: new Token(TO, "to"),
         while: new Token(WHILE, "while"),
@@ -304,6 +303,7 @@ export const Handel = (function () {
         from: new Token(FROM, "from"),
         select: new Token(SELECT, "select"),
         call: new Token(CALL, "call"),
+        noise: new Token(NOISE, "noise"),
     }
 
     class HandelSymbol {
@@ -494,6 +494,30 @@ export const Handel = (function () {
                 if (this.currentChar === ',') {
                     this.advance();
                     return new Token(SEP, 'sep', this.lineno);
+                }
+
+                if (this.currentChar === '>') {
+                    this.advance();
+                    if(this.currentChar === '=') {
+                        this.advance();
+                        return new Token(GREATEQ, 'greatereq', this.lineno)
+                    }
+                    return new Token(GREAT, 'greaterthan', this.lineno);
+                }
+
+                if (this.currentChar === '<') {
+                    this.advance();
+                    if(this.currentChar === '=') {
+                        this.advance();
+                        return new Token(GREATEQ, 'lesseq', this.lineno);
+                    }
+                    return new Token(LESS, 'lessthan', this.lineno);
+                }
+
+                if (this.currentChar === '=' && this.peek() === '=') {
+                    this.advance();
+                    this.advance();
+                    return new Token(EQUAL, 'equalto', this.lineno);
                 }
 
                 if (this.currentChar === '.') {
@@ -868,6 +892,16 @@ export const Handel = (function () {
         }
     }
 
+    class NoiseAST {
+        constructor(token, offset, start, end){
+            this.token = token;
+            this.digitNode = offset;
+            this.offset = offset;
+            this.start = start;
+            this.end = end;
+        }
+    }
+
     class RandAST {
         constructor(token, start, end){
             this.token = token;
@@ -1039,6 +1073,40 @@ export const Handel = (function () {
                 throw ex;
             }
 
+        }
+        
+        noiseExpression(){
+            try {
+                let token = this.currentToken;
+                this.eat(NOISE);
+                let offset;
+                if (this.currentToken.type === RANDINT) {
+                    offset = this.randint();
+                }
+                else {
+                    offset = this.digitExpression();
+                }
+                this.eat(FROM);
+                let start;
+                if (this.currentToken.type === RANDINT) {
+                    start = this.randint();
+                }
+                else {
+                    start = this.digitExpression();
+                }
+                this.eat(TO);
+                let end;
+                if (this.currentToken.type === RANDINT) {
+                    end = this.randint();
+                }
+                else {
+                    end = this.digitExpression();
+                }
+                return new NoiseAST(token, offset, start, end);
+            }
+            catch (ex) {
+                throw ex;
+            }
         }
 
         chooseExpression(){
@@ -1310,8 +1378,14 @@ export const Handel = (function () {
                 if(this.currentToken.type === LESS){
                     this.eat(LESS);
                 }
+                if(this.currentToken.type === LESSEQ){
+                    this.eat(LESS);
+                }
                 else if(this.currentToken.type === GREAT){
                     this.eat(GREAT);
+                }
+                else if(this.currentToken.type === GREATEQ){
+                    this.eat(GREATEQ);
                 }
                 else if(this.currentToken.type === EQUAL){
                     this.eat(EQUAL);
@@ -1449,9 +1523,7 @@ export const Handel = (function () {
                 let actualParams = [];
                 if (this.currentToken.type === USING) {
                     this.eat(USING);
-                    if (this.currentToken.type === FOR || this.currentToken.type === NOTE || this.currentToken.type === ID) {
-                        actualParams = this.argumentList();
-                    }
+                    actualParams = this.argumentList();
                 }
                 let customizationList = [];
                 if (this.currentToken.type === WITH) {
@@ -1616,6 +1688,10 @@ export const Handel = (function () {
                 }
                 else if(this.currentToken.type === CHOOSE){
                     let node = this.chooseExpression();
+                    return new AssignAST(assignToken, varNode, node);
+                }
+                else if(this.currentToken.type === NOISE){
+                    let node = this.noiseExpression();
                     return new AssignAST(assignToken, varNode, node);
                 }
                 else if(this.currentToken.type === SELECT){
@@ -1783,6 +1859,9 @@ export const Handel = (function () {
                     else if(this.currentToken.type === CHOOSE){
                         noteRoot = this.chooseExpression();
                     }
+                    else if(this.currentToken.type === NOISE){
+                        noteRoot = this.noiseExpression();
+                    }
                     else {
                         noteRoot = this.selectExpression();
                     }
@@ -1828,6 +1907,12 @@ export const Handel = (function () {
                     let beat = this.beat();
                     //let forNode = new ForAST(forToken, beat, null);
                     return beat;
+                }
+                else if (this.currentToken.type === DIGIT || this.currentToken.type === EVAL) {
+                    return this.digitExpression();
+                }
+                else if (this.currentToken.type === VERTICAL) {
+                    return this.noteGroup();
                 }
             } catch (ex) {
                 throw ex;
@@ -1996,6 +2081,24 @@ export const Handel = (function () {
                 else if (actualParams[i].token.type === NOTE) {
                     actualValue = this.visitNoteList(actualParams[i]);
                 }
+                else if (actualParams[i].token.type === VERTICAL) {
+                    actualValue = this.visitNoteGroup(actualParams[i]);
+                }
+                else if (actualParams[i].token.type === RANDINT) {
+                    actualValue = this.visitRandint(actualParams[i]);
+                }
+                else if (actualParams[i].token.type === NOISE) {
+                    actualValue = this.visitNoise(actualParams[i]);
+                }
+                else if (actualParams[i].token.type === CHOOSE) {
+                    actualValue = this.visitChoose(actualParams[i]);
+                }
+                else if (actualParams[i].token.type === SELECT) {
+                    actualValue = this.visitSelect(actualParams[i]);
+                }
+                else {
+                    actualValue = this.visitBinOp(actualParams[i]);
+                }
                 ar.setItem(formalParams[i].name, actualValue);
             }
 
@@ -2026,7 +2129,10 @@ export const Handel = (function () {
 
             //execute body
             this.visitStatementList(procSymbol.statementList);
-            this.currentComposition.play();
+
+            if(!isSync){
+                this.currentComposition.play();
+            }
 
             this.callStack.pop(ar);
             if(!isSync){
@@ -2068,6 +2174,9 @@ export const Handel = (function () {
             if(node.digitNode.token.type === RANDINT){
                 ind = this.visitRandint(node.digitNode);
             }
+            else if(node.digitNode.token.type === NOISE){
+                ind = this.visitNoise(node.digitNode);
+            }
             else {
                 ind = this.visitBinOp(node.digitNode);
             }
@@ -2099,6 +2208,51 @@ export const Handel = (function () {
                 arr.push(noteContainer[Math.min(ind, noteContainer.length - 1)]);
                 return arr;
             }
+        }
+
+        visitNoise(node){
+            let generator = new Perlin();
+            let offset;
+            if(node.offset.token.type === RANDINT){
+                offset = this.visitRandint(node.offset);
+            }
+            else if(node.offset.token.type === NOISE){
+                offset = this.visitNoise(node.offset);
+            }
+            else {
+                offset = this.visitBinOp(node.offset);
+            }
+            let start;
+            let end;
+            if(node.start.token.type === RANDINT){
+                start = this.visitRandint(node.start);
+            }
+            else if(node.start.token.type === NOISE){
+                start = this.visitNoise(node.start);
+            }
+            else {
+                start = this.visitBinOp(node.start);
+            }
+
+            if(node.end.token.type === RANDINT){
+                end = this.visitRandint(node.end);
+            }
+            else if(node.end.token.type === NOISE){
+                end = this.visitNoise(node.end);
+            }
+            else {
+                end = this.visitBinOp(node.end);
+            }
+
+            let loc = 0.1 * offset
+            let start1 = -1;
+            let start2 = start;
+            let stop1 = 1;
+            let stop2 = end;
+            let trueOffset = generator.getValue(loc)
+            const val = (trueOffset - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+            let output = Math.floor(val);
+            return output;
         }
 
         visitChoose(node){
@@ -2154,6 +2308,9 @@ export const Handel = (function () {
             else if(child.token.type === RANDINT){
                 value = this.visitRandint(child)
             }
+            else if(child.token.type === NOISE){
+                value = this.visitNoise(child)
+            }
             else if(child.token.type === MUL || child.token.type === DIV
                 || child.token.type === PLUS || child.token.type === MINUS
                 || child.token.type === MOD){
@@ -2177,6 +2334,9 @@ export const Handel = (function () {
             }
             else if(child.token.type === RANDINT){
                 value = this.visitRandint(child)
+            }
+            else if(child.token.type === NOISE){
+                value = this.visitNoise(child)
             }
             else if(child.token.type === MUL || child.token.type === DIV
                 || child.token.type === PLUS || child.token.type === MINUS
@@ -2203,6 +2363,9 @@ export const Handel = (function () {
             else if(child.token.type === RANDINT){
                 value = this.visitRandint(child)
             }
+            else if(child.token.type === NOISE){
+                value = this.visitNoise(child)
+            }
             else if(child.token.type === MUL || child.token.type === DIV
                 || child.token.type === PLUS || child.token.type === MINUS
                 || child.token.type === MOD){
@@ -2227,6 +2390,9 @@ export const Handel = (function () {
             }
             else if(child.token.type === RANDINT){
                 value = this.visitRandint(child)
+            }
+            else if(child.token.type === NOISE){
+                value = this.visitNoise(child)
             }
             else if(child.token.type === MUL || child.token.type === DIV
                 || child.token.type === PLUS || child.token.type === MINUS
@@ -2310,6 +2476,9 @@ export const Handel = (function () {
                 else if (node.left.token.type === RANDINT) {
                     leftValue = this.visitRandint(node.left);
                 }
+                else if (node.left.token.type === NOISE) {
+                    leftValue = this.visitNoise(node.left);
+                }
                 else if (node.left.token.type === CHOOSE) {
                     leftValue = this.visitChoose(node.left);
                 }
@@ -2337,6 +2506,9 @@ export const Handel = (function () {
                 }
                 else if (node.right.token.type === RANDINT) {
                     rightValue = this.visitRandint(node.right);
+                }
+                else if (node.right.token.type === RANDINT) {
+                    rightValue = this.visitNoise(node.right);
                 }
                 else if (node.right.token.type === CHOOSE) {
                     rightValue = this.visitChoose(node.right);
@@ -2397,6 +2569,12 @@ export const Handel = (function () {
                 if(op === "greaterthan"){
                     return leftsum > rightsum
                 }
+                if(op === "greatereq"){
+                    return leftsum >= rightsum
+                }
+                if(op === "lesseq"){
+                    return leftsum <= rightsum
+                }
                 else if(op === "lessthan"){
                     return leftsum < rightsum;
                 }
@@ -2416,6 +2594,12 @@ export const Handel = (function () {
             }
             else if(op === "greaterthan"){
                 return val1 > val2;
+            }
+            else if(op === "greatereq"){
+                return val1 >= val2;
+            }
+            else if(op === "lesseq"){
+                return val1 <= val2;
             }
             else if(op === "lessthan"){
                 return val1 < val2;
@@ -2448,6 +2632,9 @@ export const Handel = (function () {
             }
             else if(child.token.type === RANDINT){
                 value = this.visitRandint(child)
+            }
+            else if(child.token.type === NOISE){
+                value = this.visitNoise(child)
             }
             else if(child.token.type === MUL || child.token.type === DIV
                 || child.token.type === PLUS || child.token.type === MINUS
@@ -2653,6 +2840,9 @@ export const Handel = (function () {
                 else if (valueNode.token.type === RANDINT) {
                     value = this.visitRandint(valueNode);
                 }
+                else if (valueNode.token.type === NOISE) {
+                    value = this.visitNoise(valueNode);
+                }
                 else if (valueNode.token.type === CHOOSE) {
                     value = this.visitChoose(valueNode);
                 }
@@ -2688,6 +2878,9 @@ export const Handel = (function () {
             else if(start.token.type === RANDINT){
                 startval = this.visitRandint(start);
             }
+            else if(start.token.type === NOISE){
+                startval = this.visitNoise(start);
+            }
             else if((start.token.type === MUL
                 || start.token.type === DIV || start.token.type === MOD
                 || start.token.type === PLUS || start.token.type === MINUS
@@ -2698,6 +2891,9 @@ export const Handel = (function () {
 
             if(end.token.type === ID){
                 endval = this.visitId(end);
+            }
+            else if(start.token.type === NOISE){
+                endval = this.visitNoise(end);
             }
             else if(end.token.type === RANDINT){
                 endval = this.visitRandint(end);
@@ -2780,6 +2976,9 @@ export const Handel = (function () {
             }
             else if(shiftNode.token.type === RANDINT){
                 shiftAmount = this.visitRandint(shiftNode);
+            }
+            else if(shiftNode.token.type === NOISE){
+                shiftAmount = this.visitNoise(shiftNode);
             }
             else{
                 shiftAmount = this.visitBinOp(shiftNode);
@@ -2876,6 +3075,9 @@ export const Handel = (function () {
                 else if(node.left && node.left.token.type === RANDINT){
                     this.visitRandint(node.left);
                 }
+                else if(node.left && node.left.token.type === NOISE){
+                    this.visitNoise(node.left);
+                }
                 else if(node.left && node.left.token.type === CHOOSE){
                     this.visitChoose(node.left);
                 }
@@ -2895,6 +3097,9 @@ export const Handel = (function () {
                 }
                 else if(node.right && node.right.token.type === RANDINT){
                     this.visitRandint(node.right);
+                }
+                else if(node.right && node.right.token.type === NOISE){
+                    this.visitNoise(node.right);
                 }
                 else if(node.right && node.right.token.type === CHOOSE){
                     this.visitChoose(node.right);
@@ -2950,11 +3155,45 @@ export const Handel = (function () {
             }
         }
 
+        visitNoise(node){
+            if(node.offset.token.type === RANDINT){
+               this.visitRandint(node.offset);
+            }
+            else if(node.offset.token.type === NOISE){
+                this.visitNoise(node.offset);
+            }
+            else {
+                this.visitBinOp(node.offset);
+            }
+            if(node.start.token.type === RANDINT){
+                this.visitRandint(node.start);
+            }
+            else if(node.start.token.type === NOISE){
+                this.visitNoise(node.start);
+            }
+            else {
+                this.visitBinOp(node.start);
+            }
+
+            if(node.end.token.type === RANDINT){
+                this.visitRandint(node.end);
+            }
+            else if(node.end.token.type === NOISE){
+                this.visitNoise(node.end);
+            }
+            else {
+                this.visitBinOp(node.end);
+            }
+        }
+
         visitChoose(node){
             try{
                 let ind;
                 if(node.digitNode.token.type === RANDINT){
                     this.visitRandint(node.digitNode);
+                }
+                else if(node.digitNode.token.type === NOISE){
+                    this.visitNoise(node.digitNode);
                 }
                 else {
                     this.visitBinOp(node.digitNode);
@@ -3016,6 +3255,9 @@ export const Handel = (function () {
             else if(child.token.type === RANDINT){
                 value = this.visitRandint(child)
             }
+            else if(child.token.type === NOISE){
+                value = this.visitNoise(child)
+            }
             else if(child.token.type === MUL || child.token.type === DIV
                 || child.token.type === PLUS || child.token.type === MINUS
                 || child.token.type === MOD){
@@ -3061,6 +3303,39 @@ export const Handel = (function () {
                 }
 
                 node.procSymbol = procSymbol;
+                let actualParams = node.actualParams;
+                for (let i = 0; i < formalParams.length; i++) {
+                    if (actualParams[i].token.type === FOR) {
+                        this.visitFor(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === BEAT) {
+                        this.visitBeat(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === ID) {
+                        this.visitId(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === NOTE) {
+                        this.visitNoteList(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === VERTICAL) {
+                        this.visitNoteGroup(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === RANDINT) {
+                        this.visitRandint(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === NOISE) {
+                        this.visitNoise(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === CHOOSE) {
+                        this.visitChoose(actualParams[i]);
+                    }
+                    else if (actualParams[i].token.type === SELECT) {
+                        this.visitSelect(actualParams[i]);
+                    }
+                    else {
+                        this.visitBinOp(actualParams[i]);
+                    }
+                }
 
                 if(node.customizationList){
                     for (let customization of node.customizationList) {
@@ -3238,6 +3513,10 @@ export const Handel = (function () {
                     this.visitRandint(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
                 }
+                else if (valueNode.token.type === NOISE) {
+                    this.visitNoise(valueNode);
+                    varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('DIGIT'));
+                }
                 else if (valueNode.token.type === CHOOSE) {
                     this.visitChoose(valueNode);
                     varSymbol = new VarSymbol(varNode.token.value, this.currentScope.lookup('NOTELIST'));
@@ -3286,6 +3565,9 @@ export const Handel = (function () {
                 else if(start.token.type === RANDINT){
                     this.visitRandint(start);
                 }
+                else if(start.token.type === NOISE){
+                    this.visitNoise(start);
+                }
                 else if((start.token.type === MUL
                     || start.token.type === DIV || start.token.type === MOD
                     || start.token.type === PLUS || start.token.type === MINUS
@@ -3298,6 +3580,9 @@ export const Handel = (function () {
                 }
                 else if(end.token.type === RANDINT){
                     this.visitRandint(end);
+                }
+                else if(end.token.type === NOISE){
+                    this.visitNoise(end);
                 }
                 else if((end.token.type === MUL
                     || end.token.type === DIV || end.token.type === MOD
@@ -3326,6 +3611,9 @@ export const Handel = (function () {
                 }
                 else if(shiftNode.token.type === RANDINT){
                     this.visitRandint(node.shiftNode);
+                }
+                else if(shiftNode.token.type === NOISE){
+                    this.visitNoise(node.shiftNode);
                 }
                 else if((shiftNode.token.type === MUL
                     || shiftNode.token.type === DIV || shiftNode.token.type === MOD

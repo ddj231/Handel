@@ -301,26 +301,26 @@ Block loops are blocking (no pun intended), and should not be confused with Hand
 More on procedures below.
 
 # Conditionals (if - else blocks)
-Though booleans are not built in types in Handel, Handel now supports conditonals.
+Though booleans are not built in types in Handel, Handel now supports conditonals. ```> < >= <= ==```
 
 The syntax for an if - else block is as follows.
 
 ```
 start
-    if E4 greaterthan Cb3 then
+    if E4 > Cb3 then
         play E4 for 1b 
     else
         play Cb3 for 1b
     endif
 
-    save mydigit = -5
-    if mydigit equalto 5 then
+    save mydigit = 5
+    if mydigit == 5 then
         play C2 for 5b
     endif
 finish
 ```
 
-The above (though it contains trivial conditionals) plays E4 for 1 beat. Note that else blocks are optional.
+The above plays E4 for 1 beat. Note that else blocks are optional.
 
 # Procedures (I thought this was a procedural programming language?)
 
@@ -405,6 +405,10 @@ start
 finish
 ```
 
+The run command is used to run noargs in its own conceptual song track. 
+
+Within (```noargs```), 1 note plays, and the playtwo chunk is called in place.
+
 Note that saved variables (containing any built-in type in Handel), digits, playables, durations, can be used as arguments when running a chunk.
 
 OK! Now to configuring a run of a chunk.
@@ -412,7 +416,7 @@ OK! Now to configuring a run of a chunk.
 
 ## Configuring a run of a chunk
 
-You can configure a run of chunk by adding the **with** keyword and a comma separated list of customizations to the end of a run command.
+You can configure a run of chunk by adding the **with** keyword and a comma separated list of customizations to the end of a run command. (customizations cannot be used with the call command as the chunk is being played in place)
 
 There are three main customizations: **bpm**, **sound**, and **loop**.
 
