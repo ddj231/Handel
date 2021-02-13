@@ -12,7 +12,7 @@ import { theWindow } from 'tone/build/esm/core/context/AudioContext';
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.14", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.15", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -235,17 +235,17 @@ export const Handel = (function () {
 
     // Token types
     const [NOTE, BPM, SOUND,
-        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, INSTRUMENT, CHOOSE, FROM,
+        VOLUME, PAN, REVERB, LOOP, BLOCK, ENDBLOCK, INSTRUMENT, CHOOSE, FROM, AND, OR,
         BEAT, RANDINT, DIGIT, FOR, SEP, VERTICAL, CHUNK,
         ENDCHUNK, ID, START, FINISH, SAVE, EVAL, UPDATE, SHIFT, DOT, PLAY,
         REST, WITH, RUN,CALL, TO, WHILE, MUL, DIV, MOD, PLUS, MINUS, LPAREN, RPAREN, SELECT,
-        IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, GREATEQ, LESSEQ, LOAD, AS, ASSIGN, USING, EOF] = [
+        IF, THEN, ELSE, ENDIF, LESS, GREAT, EQUAL, NOTEQUAL, GREATEQ, LESSEQ, LOAD, AS, ASSIGN, USING, EOF] = [
             "NOTE", "BPM", "SOUND", "VOLUME", "PAN", "REVERB", "LOOP", "BLOCK", "ENDBLOCK",
-            "INSTRUMENT", "CHOOSE", "FROM",
+            "INSTRUMENT", "CHOOSE", "FROM", "AND", "OR",
             "BEAT", "RANDINT", "DIGIT", "FOR", "SEP","VERTICAL", "CHUNK",
             "ENDCHUNK", "ID", "START", "FINISH", "SAVE", "EVAL", "UPDATE", "SHIFT", "DOT", "PLAY",
             "REST", "WITH", "RUN", "CALL","TO","WHILE", "MUL", "DIV", "MOD", "PLUS", "MINUS", "LPAREN", "RPAREN",
-            "SELECT", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL", "GREATEQ", "LESSEQ",
+            "SELECT", "IF", "THEN", "ELSE", "ENDIF", "LESS", "GREAT", "EQUAL", "NOTEQUAL", "GREATEQ", "LESSEQ",
             "LOAD", "AS", "ASSIGN", "USING", "EOF"];
 
 
@@ -301,6 +301,8 @@ export const Handel = (function () {
         from: new Token(FROM, "from"),
         select: new Token(SELECT, "select"),
         call: new Token(CALL, "call"),
+        and: new Token(AND, "and"),
+        or: new Token(OR, "or"),
     }
 
     class HandelSymbol {
@@ -517,6 +519,12 @@ export const Handel = (function () {
                     return new Token(EQUAL, 'equalto', this.lineno);
                 }
 
+                if (this.currentChar === '!' && this.peek() === '=') {
+                    this.advance();
+                    this.advance();
+                    return new Token(NOTEQUAL, 'notequal', this.lineno);
+                }
+
                 if (this.currentChar === '.') {
                     this.advance();
                     return new Token(DOT, 'dot', this.lineno);
@@ -670,14 +678,6 @@ export const Handel = (function () {
         }
     }
 
-    class StatementAST {
-        constructor(token, child) {
-            this.token = token;
-            this.value = token.value;
-            this.child = child;
-        }
-    }
-
     class StatementListAST {
         constructor() {
             this.children = [];
@@ -700,6 +700,7 @@ export const Handel = (function () {
             this.whileCondition = whileCondition;
         }
     }
+
 
 
     class ParameterListAST {
@@ -749,6 +750,15 @@ export const Handel = (function () {
     }
 
     class BinOpAST {
+        constructor(token, left, right){
+            this.token = token;
+            this.op = token.value;
+            this.left = left;
+            this.right = right;
+        }
+    }
+
+    class ConditionExpressionAST {
         constructor(token, left, right){
             this.token = token;
             this.op = token.value;
@@ -1031,6 +1041,35 @@ export const Handel = (function () {
             catch(ex){
                 throw ex;
             }
+        }
+
+        conditionExpression(){
+            let token = this.currentToken;
+            let node = this.conditionFactor();
+            while(this.currentToken.type === AND || this.currentToken.type === OR){
+                let token = this.currentToken;
+                if(token.type === AND){
+                    this.eat(AND);
+                }
+                else if(token.type === OR){
+                    this.eat(OR);
+                }
+                node = new ConditionExpressionAST(token, node, this.conditionFactor());
+            }
+            return node;
+        }
+
+        conditionFactor(){
+            let node;
+            if(this.currentToken.type === LPAREN){
+                this.eat(LPAREN);
+                node = this.conditionExpression();
+                this.eat(RPAREN);
+            }
+            else {
+                node = this.condition(); 
+            }
+            return node;
         }
 
         selectExpression(){
@@ -1345,6 +1384,9 @@ export const Handel = (function () {
                 else if(this.currentToken.type === EQUAL){
                     this.eat(EQUAL);
                 }
+                else if(this.currentToken.type === NOTEQUAL){
+                    this.eat(NOTEQUAL);
+                }
                 return new ComparisonAST(token);
             }
             catch(ex){
@@ -1402,7 +1444,7 @@ export const Handel = (function () {
             try {
                 let token = this.currentToken;
                 this.eat(IF);
-                let condition = this.condition();
+                let condition = this.conditionExpression();
                 this.eat(THEN);
                 let ifStatementList = this.statementList();
                 let elseStatementList; 
@@ -1440,7 +1482,7 @@ export const Handel = (function () {
                 }
                 else if(this.currentToken.type === WHILE){
                     this.eat(WHILE);
-                    condition = this.condition();
+                    condition = this.conditionExpression();
                 }
                 return new BlockLoopAST(blockToken, statementList, node, condition);
             }
@@ -2340,6 +2382,27 @@ export const Handel = (function () {
             return node.value;
         }
 
+        visitConditionExpression(node){
+           if(node.token.type === AND){
+               return this.visitConditionFactor(node.left) && this.visitConditionFactor(node.right);
+           } 
+           else if(node.token.type === OR){
+               return this.visitConditionFactor(node.left) || this.visitConditionFactor(node.right);
+           }
+           else {
+                return this.visitConditionFactor(node);
+           }
+        }
+
+        visitConditionFactor(node){
+            if(node.token.type === AND || node.token.type === OR){
+                return this.visitConditionExpression(node);
+            }
+            else {
+                return this.visitCondition(node);
+            }
+        }
+
         visitCondition(node){
             try{
                 let leftValue;
@@ -2425,7 +2488,7 @@ export const Handel = (function () {
         }
 
         compareNoteLists(op, notelist1, notelist2){
-            if(op === "equalto"){
+            if(op === "equalto" || op === "notequal"){
                 if(notelist1.length !== notelist2.length){
                     return false;
                 }
@@ -2434,6 +2497,10 @@ export const Handel = (function () {
                     if(!notelist2.includes(notelist1[i])){
                         eq = false;
                     };
+                }
+
+                if(op === "notequal"){
+                    return !eq;
                 }
                 return eq;
             }
@@ -2472,6 +2539,9 @@ export const Handel = (function () {
             if(op === "equalto"){
                 return val1 === val2;
             }
+            else if(op === "notequal"){
+                return val1 !== val2;
+            }
             else if(op === "greaterthan"){
                 return val1 > val2;
             }
@@ -2488,7 +2558,7 @@ export const Handel = (function () {
 
         visitConditionalStatement(node){
             try {
-                let decision = this.visitCondition(node.condition);
+                let decision = this.visitConditionExpression(node.condition);
                 if(decision){
                     this.visitStatementList(node.ifStatementList);
                 }
@@ -2601,7 +2671,7 @@ export const Handel = (function () {
                     }
                 }
                 else if(whileCondition){
-                    while(this.visitCondition(whileCondition)){
+                    while(this.visitConditionExpression(whileCondition)){
                         this.visitStatementList(node.statementList);
                     }
                 }
@@ -2932,6 +3002,29 @@ export const Handel = (function () {
         visitComparisonOperator(node){
         }
 
+        visitConditionExpression(node){
+           if(node.token.type === AND){
+               this.visitConditionFactor(node.left);
+               this.visitConditionFactor(node.right);
+           } 
+           else if(node.token.type === OR) {
+               this.visitConditionFactor(node.left); 
+               this.visitConditionFactor(node.right);
+           }
+           else {
+               this.visitConditionFactor(node);
+           }
+        }
+
+        visitConditionFactor(node){
+            if(node.token.type === AND || node.token.type === OR){
+                this.visitConditionExpression(node);
+            }
+            else {
+                this.visitCondition(node);
+            }
+        }
+
         visitCondition(node){
             try{
                 if(node.left && node.left.token.type === ID){
@@ -2981,7 +3074,7 @@ export const Handel = (function () {
 
         visitConditionalStatement(node){
             try {
-                this.visitCondition(node.condition);
+                this.visitConditionExpression(node.condition);
                 this.visitStatementList(node.ifStatementList);
                 if(node.elseStatementList){
                     this.visitStatementList(node.elseStatementList);
@@ -3234,7 +3327,7 @@ export const Handel = (function () {
         visitBlockLoop(node) {
             this.visitStatementList(node.statementList);
             if(node.whileCondition){
-                this.visitCondition(node.whileCondition);
+                this.visitConditionExpression(node.whileCondition);
                 return;
             }
             let loopNode = node.loopTimes;
