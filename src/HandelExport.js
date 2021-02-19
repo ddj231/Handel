@@ -10,7 +10,7 @@ import snareD from './Sounds/Snare_D2.wav'
 
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.16", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.17", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
