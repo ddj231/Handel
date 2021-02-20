@@ -8,9 +8,8 @@ import guitarD from './Sounds/Guitar_D_extended.wav'
 import hihatG from './Sounds/HiHat_G.wav'
 import snareD from './Sounds/Snare_D2.wav'
 
-
 export const Handel = (function () {
-    console.log("%c Handel v0.8.17", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.18", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -33,9 +32,6 @@ export const Handel = (function () {
                     D2: snareD,
                 },
                 //baseUrl: baseUrl,
-                onload: () => {
-                    increment();
-                }
             }).toDestination();
             this.synth.volume.value = -3;
         }
@@ -48,9 +44,6 @@ export const Handel = (function () {
                     A4: pianoA4,
                 },
                 //baseUrl: baseUrl,
-                onload: () => {
-                    increment();
-                }
             }).toDestination();
         }
     }
@@ -61,9 +54,6 @@ export const Handel = (function () {
                 urls: {
                     D3: guitarD,
                 },
-                onload: () => {
-                    increment();
-                }
                 //baseUrl: baseUrl,
             }).toDestination();
         }
@@ -75,10 +65,6 @@ export const Handel = (function () {
                 urls: {
                     C1: kickC,
                 },
-                onload: () => {
-                    increment();
-                }
-                //baseUrl: baseUrl,
             }).toDestination();
         }
     }
@@ -89,9 +75,6 @@ export const Handel = (function () {
                 urls: {
                     G3: hihatG,
                 },
-                onload: () => {
-                    increment();
-                }
                 //baseUrl: baseUrl,
             }).toDestination();
         }
@@ -103,9 +86,6 @@ export const Handel = (function () {
                 urls: {
                     A1: "A1.mp3",
                     A2: "A2.mp3",
-                },
-                onload: () => {
-                    increment();
                 },
                 baseUrl: "https://tonejs.github.io/audio/casio/",
             }).toDestination();
@@ -124,10 +104,11 @@ export const Handel = (function () {
             this.volume;
             this.pan;
             this.reverb;
+            this.offset = 0.1
             // Create Part
             this.part = new Tone.Part((time, value) => {
-                Tone.ToneAudioBuffer.loaded().then(() =>{
-                    this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time));
+                Tone.loaded().then(() =>{
+                    this.synth.triggerAttackRelease(value.notes, value.length, Tone.Time(time) + this.offset);
                 });
             })
             //each composition also represents a midi track
@@ -3644,9 +3625,6 @@ export function StopHandel() {
 export function MakeInstrument(urls, increment) {
     let sampler = new Tone.Sampler({
         urls: urls,
-        onload: () => {
-            //increment();
-        },
     }).toDestination()
     return sampler
 }
