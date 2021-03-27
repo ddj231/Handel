@@ -23,7 +23,7 @@ const sampleManager = new SampleMangager();
 let samplers = [];
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.18", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.19", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
