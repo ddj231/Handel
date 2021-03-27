@@ -8,6 +8,20 @@ import guitarD from './Sounds/Guitar_D_extended.wav'
 import hihatG from './Sounds/HiHat_G.wav'
 import snareD from './Sounds/Snare_D2.wav'
 
+class SampleMangager {
+    constructor(){
+        this.samplers = [];
+    }
+    cleanup(){
+        for(const sampler of this.samplers){
+            sampler.synth.dispose();
+        }
+        this.samplers = [];
+    }
+}
+const sampleManager = new SampleMangager();
+let samplers = [];
+
 export const Handel = (function () {
     console.log("%c Handel v0.8.18", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
@@ -22,6 +36,7 @@ export const Handel = (function () {
                 }
             }).toDestination();
             this.synth.volume.value = -12;
+            sampleManager.samplers.push(this);
         }
     }
 
@@ -34,6 +49,7 @@ export const Handel = (function () {
                 //baseUrl: baseUrl,
             }).toDestination();
             this.synth.volume.value = -3;
+            sampleManager.samplers.push(this);
         }
     }
     class Piano {
@@ -45,6 +61,7 @@ export const Handel = (function () {
                 },
                 //baseUrl: baseUrl,
             }).toDestination();
+            sampleManager.samplers.push(this);
         }
     }
 
@@ -56,6 +73,7 @@ export const Handel = (function () {
                 },
                 //baseUrl: baseUrl,
             }).toDestination();
+            sampleManager.samplers.push(this);
         }
     }
 
@@ -66,6 +84,7 @@ export const Handel = (function () {
                     C1: kickC,
                 },
             }).toDestination();
+            sampleManager.samplers.push(this);
         }
     }
 
@@ -77,6 +96,7 @@ export const Handel = (function () {
                 },
                 //baseUrl: baseUrl,
             }).toDestination();
+            sampleManager.samplers.push(this);
         }
     }
 
@@ -89,6 +109,7 @@ export const Handel = (function () {
                 },
                 baseUrl: "https://tonejs.github.io/audio/casio/",
             }).toDestination();
+            sampleManager.samplers.push(this);
         }
     }
 
@@ -3594,6 +3615,7 @@ export async function RunHandel(code, config) {
 
         if(config && config.layer){
             Tone.Transport.stop(Tone.now());
+            sampleManager.cleanup();
         }
         else{
             StopHandel();
@@ -3620,11 +3642,13 @@ export async function RunHandel(code, config) {
 export function StopHandel() {
     Tone.Transport.cancel(0);
     Tone.Transport.stop(Tone.now());
+    sampleManager.cleanup();
 }
 
 export function MakeInstrument(urls, increment) {
     let sampler = new Tone.Sampler({
         urls: urls,
     }).toDestination()
+    sampleManager.samplers.push(sampler);
     return sampler
 }
