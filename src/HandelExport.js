@@ -14,16 +14,17 @@ class SampleMangager {
     }
     cleanup(){
         for(const sampler of this.samplers){
-            sampler.synth.dispose();
+            if(sampler){
+                sampler.dispose();
+            }
         }
         this.samplers = [];
     }
 }
 const sampleManager = new SampleMangager();
-let samplers = [];
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.19", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.20", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -36,7 +37,7 @@ export const Handel = (function () {
                 }
             }).toDestination();
             this.synth.volume.value = -12;
-            sampleManager.samplers.push(this);
+            sampleManager.samplers.push(this.synth);
         }
     }
 
@@ -49,7 +50,7 @@ export const Handel = (function () {
                 //baseUrl: baseUrl,
             }).toDestination();
             this.synth.volume.value = -3;
-            sampleManager.samplers.push(this);
+            sampleManager.samplers.push(this.synth);
         }
     }
     class Piano {
@@ -61,7 +62,7 @@ export const Handel = (function () {
                 },
                 //baseUrl: baseUrl,
             }).toDestination();
-            sampleManager.samplers.push(this);
+            sampleManager.samplers.push(this.synth);
         }
     }
 
@@ -96,7 +97,7 @@ export const Handel = (function () {
                 },
                 //baseUrl: baseUrl,
             }).toDestination();
-            sampleManager.samplers.push(this);
+            sampleManager.samplers.push(this.synth);
         }
     }
 
@@ -109,7 +110,7 @@ export const Handel = (function () {
                 },
                 baseUrl: "https://tonejs.github.io/audio/casio/",
             }).toDestination();
-            sampleManager.samplers.push(this);
+            sampleManager.samplers.push(this.synth);
         }
     }
 
