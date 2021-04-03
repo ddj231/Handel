@@ -24,7 +24,7 @@ class SampleMangager {
 const sampleManager = new SampleMangager();
 
 export const Handel = (function () {
-    console.log("%c Handel v0.8.20", "background: crimson; color: #fff; padding: 2px;");
+    console.log("%c Handel v0.8.22", "background: crimson; color: #fff; padding: 2px;");
     class FMSynth {
         constructor() {
             this.synth = new Tone.PolySynth({
@@ -37,12 +37,11 @@ export const Handel = (function () {
                 }
             }).toDestination();
             this.synth.volume.value = -12;
-            sampleManager.samplers.push(this.synth);
         }
     }
 
     class Snare {
-        constructor(increment) {
+        constructor() {
             this.synth = new Tone.Sampler({
                 urls: {
                     D2: snareD,
@@ -54,7 +53,7 @@ export const Handel = (function () {
         }
     }
     class Piano {
-        constructor(increment) {
+        constructor() {
             this.synth = new Tone.Sampler({
                 urls: {
                     C5: pianoC5,
@@ -67,30 +66,30 @@ export const Handel = (function () {
     }
 
     class Guitar {
-        constructor(increment) {
+        constructor() {
             this.synth = new Tone.Sampler({
                 urls: {
                     D3: guitarD,
                 },
                 //baseUrl: baseUrl,
             }).toDestination();
-            sampleManager.samplers.push(this);
+            sampleManager.samplers.push(this.synth);
         }
     }
 
     class Kick {
-        constructor(increment) {
+        constructor() {
             this.synth = new Tone.Sampler({
                 urls: {
                     C1: kickC,
                 },
             }).toDestination();
-            sampleManager.samplers.push(this);
+            sampleManager.samplers.push(this.synth);
         }
     }
 
     class HiHat {
-        constructor(increment) {
+        constructor() {
             this.synth = new Tone.Sampler({
                 urls: {
                     G3: hihatG,
@@ -102,7 +101,7 @@ export const Handel = (function () {
     }
 
     class Casio {
-        constructor(increment) {
+        constructor() {
             this.synth = new Tone.Sampler({
                 urls: {
                     A1: "A1.mp3",
@@ -2001,7 +2000,7 @@ export const Handel = (function () {
                 Tone.Transport.bpm.value = 1000
                 let ar = new HandelActivationRecord('program', ARTYPES.PROGRAM, 1);
                 ar.enclosingRecord = null;
-                this.currentComposition = new Composition(Tone.AMSynth, 140,
+                this.currentComposition = new Composition(Tone.FMSynth, 140,
                     { trackName: 'global', midi: this.midi });
                 this.currentComposition.enclosingComposition = null;
                 this.callStack.push(ar);
@@ -2038,7 +2037,7 @@ export const Handel = (function () {
 
             let prevCompositon = this.currentComposition;
             if(!isSync){
-                this.currentComposition = new Composition(Tone.AMSynth, 140, { trackName: node.value, midi: this.midi });
+                this.currentComposition = new Composition(Tone.FMSynth, 140, { trackName: node.value, midi: this.midi });
                 this.currentComposition.enclosingComposition = prevCompositon;
             }
 
