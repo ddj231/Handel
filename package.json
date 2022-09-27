@@ -1,6 +1,6 @@
 {
   "name": "handel-pl",
-  "version": "0.8.22",
+  "version": "0.8.23",
   "description": "",
   "main": "dist/HandelExport.js",
   "scripts": {
@@ -29,6 +29,6 @@
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.25",
-    "tone": "^14.7.58"
+    "tone": "^14.7.77"
   }
 }
