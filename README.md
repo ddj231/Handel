@@ -1,6 +1,6 @@
 # Handel
 
-Handel is a small procedural programming language for writting songs in browser. 
+Handel is a procedural programming language for writting songs in browser. 
 
 The Handel Interpreter interprets Handel programs and plays compositions in browser, thanks to [Tone.js](https://tonejs.github.io/).
 
